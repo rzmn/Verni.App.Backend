@@ -895,7 +895,7 @@ WHERE
 	return result, nil
 }
 
-func (s *Storage) StoreAvatarBase64(uid storage.UserId, data string) error {
+func (s *Storage) StoreAvatarBase64(uid storage.UserId, data string) (storage.AvatarId, error) {
 	const op = "storage.ydb.StoreAvatar"
 	log.Printf("%s: start", op)
 	var (
@@ -946,9 +946,9 @@ WHERE
 	})
 	if err != nil {
 		log.Printf("%s: unexpected err %v", op, err)
-		return err
+		return "", err
 	}
-	return nil
+	return storage.AvatarId(avatarId), nil
 }
 
 func (s *Storage) GetRefreshToken(uid storage.UserId) (*string, error) {

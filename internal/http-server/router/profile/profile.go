@@ -50,7 +50,7 @@ func (h *setAvatarRequestHandler) Validate(c *gin.Context, request setAvatar.Req
 	return nil
 }
 
-func (h *setAvatarRequestHandler) Handle(c *gin.Context, request setAvatar.Request) *setAvatar.Error {
+func (h *setAvatarRequestHandler) Handle(c *gin.Context, request setAvatar.Request) (storage.AvatarId, *setAvatar.Error) {
 	const op = "router.profile.setAvatarRequestHandler.Handle"
 	log.Printf("%s: start with request %v", op, request)
 	token := helpers.ExtractBearerToken(c)
@@ -58,14 +58,15 @@ func (h *setAvatarRequestHandler) Handle(c *gin.Context, request setAvatar.Reque
 	if err != nil || subject == nil {
 		log.Printf("%s: cannot get access token %v", op, err)
 		outError := setAvatar.ErrInternal()
-		return &outError
+		return "", &outError
 	}
-	if err := h.storage.StoreAvatarBase64(storage.UserId(*subject), request.DataBase64); err != nil {
+	aid, err := h.storage.StoreAvatarBase64(storage.UserId(*subject), request.DataBase64)
+	if err != nil {
 		log.Printf("%s: cannot store avatar data %v", op, err)
 		outError := setAvatar.ErrInternal()
-		return &outError
+		return aid, &outError
 	}
-	return nil
+	return aid, nil
 }
 
 type setDisplayNameRequestHandler struct {

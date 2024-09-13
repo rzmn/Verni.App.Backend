@@ -92,7 +92,7 @@ type Storage interface {
 	GetPushToken(uid UserId) (*string, error)
 
 	StoreDisplayName(uid UserId, displayName string) error
-	StoreAvatarBase64(uid UserId, avatarBase64 string) error
+	StoreAvatarBase64(uid UserId, avatarBase64 string) (AvatarId, error)
 	GetAvatarsBase64(aids []AvatarId) (map[AvatarId]AvatarData, error)
 
 	StoreRefreshToken(token string, uid UserId) error

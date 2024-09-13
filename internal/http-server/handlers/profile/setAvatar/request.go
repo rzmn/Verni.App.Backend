@@ -2,6 +2,7 @@ package setAvatar
 
 import (
 	"accounty/internal/http-server/responses"
+	"accounty/internal/storage"
 	"fmt"
 	"net/http"
 
@@ -10,7 +11,7 @@ import (
 
 type RequestHandler interface {
 	Validate(c *gin.Context, request Request) *Error
-	Handle(c *gin.Context, request Request) *Error
+	Handle(c *gin.Context, request Request) (storage.AvatarId, *Error)
 }
 
 func handleError(c *gin.Context, err Error) {
@@ -36,10 +37,11 @@ func New(requestHandler RequestHandler) func(c *gin.Context) {
 			handleError(c, *err)
 			return
 		}
-		if err := requestHandler.Handle(c, request); err != nil {
+		aid, err := requestHandler.Handle(c, request)
+		if err != nil {
 			handleError(c, *err)
 			return
 		}
-		c.JSON(http.StatusCreated, Success())
+		c.JSON(http.StatusCreated, Success(aid))
 	}
 }

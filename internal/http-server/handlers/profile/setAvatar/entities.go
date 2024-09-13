@@ -2,6 +2,7 @@ package setAvatar
 
 import (
 	"accounty/internal/http-server/responses"
+	"accounty/internal/storage"
 )
 
 type Request struct {
@@ -12,8 +13,8 @@ type Error struct {
 	responses.Error
 }
 
-func Success() responses.VoidResponse {
-	return responses.OK()
+func Success(aid storage.AvatarId) responses.Response[storage.AvatarId] {
+	return responses.Success(aid)
 }
 
 func Failure(err Error) responses.Response[responses.Error] {

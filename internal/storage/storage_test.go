@@ -218,7 +218,8 @@ func TestUpdateAvatar(t *testing.T) {
 		t.Fatalf("unexpected non-nil avatar, found %s", *info.User.Avatar.Id)
 	}
 	newAvatar := "xxx"
-	if err := s.StoreAvatarBase64(uid, newAvatar); err != nil {
+	_, err = s.StoreAvatarBase64(uid, newAvatar)
+	if err != nil {
 		t.Fatalf("unexpected err: %v", err)
 	}
 	info, err = s.GetAccountInfo(uid)
