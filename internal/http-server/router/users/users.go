@@ -10,7 +10,6 @@ import (
 
 	"accounty/internal/http-server/handlers/users/get"
 	"accounty/internal/http-server/handlers/users/search"
-	"accounty/internal/http-server/helpers"
 	"accounty/internal/http-server/middleware"
 )
 
@@ -21,14 +20,8 @@ type getRequestHandler struct {
 func (h *getRequestHandler) Handle(c *gin.Context, request get.Request) ([]storage.User, *get.Error) {
 	const op = "router.users.getRequestHandler.Handle"
 	log.Printf("%s: start with request %v", op, request)
-	token := helpers.ExtractBearerToken(c)
-	subject, err := jwt.GetAccessTokenSubject(token)
-	if err != nil || subject == nil {
-		log.Printf("%s: cannot get access token %v", op, err)
-		outError := get.ErrInternal()
-		return nil, &outError
-	}
-	users, err := h.storage.GetUsers(storage.UserId(*subject), request.Ids)
+	subject := storage.UserId(c.Request.Header.Get(middleware.LoggedInSubjectKey))
+	users, err := h.storage.GetUsers(subject, request.Ids)
 	if err != nil {
 		log.Printf("%s: cannot read from db %v", op, err)
 		outError := get.ErrInternal()
@@ -44,14 +37,8 @@ type searchRequestHandler struct {
 func (h *searchRequestHandler) Handle(c *gin.Context, request search.Request) ([]storage.User, *search.Error) {
 	const op = "router.users.searchRequestHandler.Handle"
 	log.Printf("%s: start with request %v", op, request)
-	token := helpers.ExtractBearerToken(c)
-	subject, err := jwt.GetAccessTokenSubject(token)
-	if err != nil || subject == nil {
-		log.Printf("%s: cannot get access token %v", op, err)
-		outError := search.ErrInternal()
-		return nil, &outError
-	}
-	users, err := h.storage.SearchUsers(storage.UserId(*subject), request.Query)
+	subject := storage.UserId(c.Request.Header.Get(middleware.LoggedInSubjectKey))
+	users, err := h.storage.SearchUsers(subject, request.Query)
 	if err != nil {
 		log.Printf("%s: cannot read from db %v", op, err)
 		outError := search.ErrInternal()
@@ -60,8 +47,8 @@ func (h *searchRequestHandler) Handle(c *gin.Context, request search.Request) ([
 	return users, nil
 }
 
-func RegisterRoutes(e *gin.Engine, storage storage.Storage) {
-	group := e.Group("/users", middleware.EnsureLoggedIn(storage))
+func RegisterRoutes(e *gin.Engine, storage storage.Storage, jwtService jwt.Service) {
+	group := e.Group("/users", middleware.EnsureLoggedIn(storage, jwtService))
 	group.GET("/get", get.New(&getRequestHandler{storage: storage}))
 	group.GET("/search", search.New(&searchRequestHandler{storage: storage}))
 }

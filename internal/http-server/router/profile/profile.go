@@ -5,7 +5,6 @@ import (
 	"accounty/internal/http-server/handlers/profile/getInfo"
 	"accounty/internal/http-server/handlers/profile/setAvatar"
 	"accounty/internal/http-server/handlers/profile/setDisplayName"
-	"accounty/internal/http-server/helpers"
 	"accounty/internal/http-server/middleware"
 	"accounty/internal/storage"
 	"log"
@@ -20,15 +19,8 @@ type getInfoRequestHandler struct {
 
 func (h *getInfoRequestHandler) Handle(c *gin.Context) (storage.ProfileInfo, *getInfo.Error) {
 	const op = "router.profile.getInfoRequestHandler.Handle"
-	token := helpers.ExtractBearerToken(c)
-
-	subject, err := jwt.GetAccessTokenSubject(token)
-	if err != nil || subject == nil {
-		log.Printf("%s: cannot get access token %v", op, err)
-		outError := getInfo.ErrInternal()
-		return storage.ProfileInfo{}, &outError
-	}
-	info, err := h.storage.GetAccountInfo(storage.UserId(*subject))
+	subject := storage.UserId(c.Request.Header.Get(middleware.LoggedInSubjectKey))
+	info, err := h.storage.GetAccountInfo(subject)
 	if err != nil {
 		log.Printf("%s: cannot get host info %v", op, err)
 		outError := getInfo.ErrInternal()
@@ -53,14 +45,8 @@ func (h *setAvatarRequestHandler) Validate(c *gin.Context, request setAvatar.Req
 func (h *setAvatarRequestHandler) Handle(c *gin.Context, request setAvatar.Request) (storage.AvatarId, *setAvatar.Error) {
 	const op = "router.profile.setAvatarRequestHandler.Handle"
 	log.Printf("%s: start with request %v", op, request)
-	token := helpers.ExtractBearerToken(c)
-	subject, err := jwt.GetAccessTokenSubject(token)
-	if err != nil || subject == nil {
-		log.Printf("%s: cannot get access token %v", op, err)
-		outError := setAvatar.ErrInternal()
-		return "", &outError
-	}
-	aid, err := h.storage.StoreAvatarBase64(storage.UserId(*subject), request.DataBase64)
+	subject := storage.UserId(c.Request.Header.Get(middleware.LoggedInSubjectKey))
+	aid, err := h.storage.StoreAvatarBase64(subject, request.DataBase64)
 	if err != nil {
 		log.Printf("%s: cannot store avatar data %v", op, err)
 		outError := setAvatar.ErrInternal()
@@ -84,14 +70,8 @@ func (h *setDisplayNameRequestHandler) Validate(c *gin.Context, request setDispl
 func (h *setDisplayNameRequestHandler) Handle(c *gin.Context, request setDisplayName.Request) *setDisplayName.Error {
 	const op = "router.profile.setDisplayNameRequestHandler.Handle"
 	log.Printf("%s: start with request %v", op, request)
-	token := helpers.ExtractBearerToken(c)
-	subject, err := jwt.GetAccessTokenSubject(token)
-	if err != nil || subject == nil {
-		log.Printf("%s: cannot get access token %v", op, err)
-		outError := setDisplayName.ErrInternal()
-		return &outError
-	}
-	if err := h.storage.StoreDisplayName(storage.UserId(*subject), request.DisplayName); err != nil {
+	subject := storage.UserId(c.Request.Header.Get(middleware.LoggedInSubjectKey))
+	if err := h.storage.StoreDisplayName(subject, request.DisplayName); err != nil {
 		log.Printf("%s: cannot store avatar data %v", op, err)
 		outError := setDisplayName.ErrInternal()
 		return &outError
@@ -99,8 +79,8 @@ func (h *setDisplayNameRequestHandler) Handle(c *gin.Context, request setDisplay
 	return nil
 }
 
-func RegisterRoutes(e *gin.Engine, storage storage.Storage) {
-	group := e.Group("/profile", middleware.EnsureLoggedIn(storage))
+func RegisterRoutes(e *gin.Engine, storage storage.Storage, jwtService jwt.Service) {
+	group := e.Group("/profile", middleware.EnsureLoggedIn(storage, jwtService))
 	group.GET("/getInfo", getInfo.New(&getInfoRequestHandler{storage: storage}))
 	group.PUT("/setAvatar", setAvatar.New(&setAvatarRequestHandler{storage: storage}))
 	group.PUT("/setDisplayName", setDisplayName.New(&setDisplayNameRequestHandler{storage: storage}))

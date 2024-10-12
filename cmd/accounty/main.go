@@ -5,8 +5,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"accounty/internal/apns"
+	"accounty/internal/auth/jwt"
 	"accounty/internal/config"
 	"accounty/internal/http-server/router/aasa"
 	"accounty/internal/http-server/router/auth"
@@ -36,13 +38,21 @@ func main() {
 	// migrate(sqlStorage)
 	// return
 
+	jwtService := jwt.DefaultService(
+		time.Hour*24*30,
+		time.Hour,
+		func() time.Time {
+			return time.Now()
+		},
+	)
+
 	gin.SetMode(cfg.Server.RunMode)
 	router := gin.New()
-	auth.RegisterRoutes(router, storage)
-	users.RegisterRoutes(router, storage)
-	friends.RegisterRoutes(router, storage, pushSender)
-	spendings.RegisterRoutes(router, storage, pushSender)
-	profile.RegisterRoutes(router, storage)
+	auth.RegisterRoutes(router, storage, jwtService)
+	users.RegisterRoutes(router, storage, jwtService)
+	friends.RegisterRoutes(router, storage, pushSender, jwtService)
+	spendings.RegisterRoutes(router, storage, pushSender, jwtService)
+	profile.RegisterRoutes(router, storage, jwtService)
 	aasa.RegisterRoutes(router, storage)
 	avatars.RegisterRoutes(router, storage)
 

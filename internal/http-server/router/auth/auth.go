@@ -23,7 +23,6 @@ import (
 	"accounty/internal/http-server/handlers/auth/signup"
 	"accounty/internal/http-server/handlers/auth/updateEmail"
 	"accounty/internal/http-server/handlers/auth/updatePassword"
-	"accounty/internal/http-server/helpers"
 	"accounty/internal/http-server/middleware"
 )
 
@@ -49,7 +48,8 @@ func validateEmailFormat(email string) error {
 }
 
 type loginRequestHandler struct {
-	storage storage.Storage
+	storage    storage.Storage
+	jwtService jwt.Service
 }
 
 func (h *loginRequestHandler) Validate(request login.Request) *login.Error {
@@ -95,15 +95,21 @@ func (h *loginRequestHandler) Handle(request login.Request) (*storage.Authentica
 		return nil, &outError
 	}
 	log.Printf("%s: issuing tokens", op)
-	tokens, err := jwt.IssueTokens(string(*uid))
+	accessToken, err := h.jwtService.IssueAccessToken(jwt.Subject(*uid))
 	if err != nil {
-		log.Printf("%s: issuing tokens failed %v", op, err)
+		log.Printf("%s: issuing access token failed %v", op, err)
+		outError := login.ErrInternal()
+		return nil, &outError
+	}
+	refreshToken, err := h.jwtService.IssueRefreshToken(jwt.Subject(*uid))
+	if err != nil {
+		log.Printf("%s: issuing refresh token failed %v", op, err)
 		outError := login.ErrInternal()
 		return nil, &outError
 	}
 	log.Printf("%s: issued tokens ok", op)
 	log.Printf("%s: storing refresh token", op)
-	if err := h.storage.StoreRefreshToken(tokens.Refresh, *uid); err != nil {
+	if err := h.storage.StoreRefreshToken(string(refreshToken), *uid); err != nil {
 		log.Printf("%s: storing refresh token failed %v", op, err)
 		outError := login.ErrInternal()
 		return nil, &outError
@@ -111,13 +117,14 @@ func (h *loginRequestHandler) Handle(request login.Request) (*storage.Authentica
 	log.Printf("%s: storing refresh token ok", op)
 	return &storage.AuthenticatedSession{
 		Id:           *uid,
-		AccessToken:  tokens.Access,
-		RefreshToken: tokens.Refresh,
+		AccessToken:  string(accessToken),
+		RefreshToken: string(refreshToken),
 	}, nil
 }
 
 type signupRequestHandler struct {
-	storage storage.Storage
+	storage    storage.Storage
+	jwtService jwt.Service
 }
 
 func (h *signupRequestHandler) Validate(request signup.Request) *signup.Error {
@@ -155,14 +162,22 @@ func (h *signupRequestHandler) Handle(request signup.Request) (*storage.Authenti
 		return nil, &outError
 	}
 	log.Printf("%s: credentials stored", op)
-	tokens, err := jwt.IssueTokens(string(uid))
+	log.Printf("%s: issuing tokens", op)
+	accessToken, err := h.jwtService.IssueAccessToken(jwt.Subject(uid))
 	if err != nil {
-		log.Printf("issue tokens failed %v", err)
+		log.Printf("%s: issuing access token failed %v", op, err)
 		outError := signup.ErrInternal()
 		return nil, &outError
 	}
-	log.Printf("%s: tokens issued", op)
-	if err := h.storage.StoreRefreshToken(tokens.Refresh, uid); err != nil {
+	refreshToken, err := h.jwtService.IssueRefreshToken(jwt.Subject(uid))
+	if err != nil {
+		log.Printf("%s: issuing refresh token failed %v", op, err)
+		outError := signup.ErrInternal()
+		return nil, &outError
+	}
+	log.Printf("%s: issued tokens ok", op)
+	log.Printf("%s: storing refresh token", op)
+	if err := h.storage.StoreRefreshToken(string(refreshToken), uid); err != nil {
 		log.Printf("store tokens failed %v", err)
 		outError := signup.ErrInternal()
 		return nil, &outError
@@ -171,34 +186,39 @@ func (h *signupRequestHandler) Handle(request signup.Request) (*storage.Authenti
 	log.Printf("%s: ok", op)
 	return &storage.AuthenticatedSession{
 		Id:           uid,
-		AccessToken:  tokens.Access,
-		RefreshToken: tokens.Refresh,
+		AccessToken:  string(accessToken),
+		RefreshToken: string(refreshToken),
 	}, nil
 }
 
 type refreshRequestHandler struct {
-	storage storage.Storage
+	storage    storage.Storage
+	jwtService jwt.Service
 }
 
 func (h *refreshRequestHandler) Handle(request refresh.Request) (*storage.AuthenticatedSession, *refresh.Error) {
 	const op = "router.refreshRequestHandler.Handle"
 	log.Printf("%s: start with request %v", op, request)
-	refreshedTokens, err := jwt.IssueTokensBasedOnRefreshToken(request.RefreshToken)
-	if err != nil {
-		if errors.Is(err, jwt.ErrTokenExpired) {
+	if err := h.jwtService.ValidateRefreshToken(jwt.RefreshToken(request.RefreshToken)); err != nil {
+		switch err.Code {
+		case jwt.CodeTokenExpired:
 			outError := refresh.ErrTokenExpired()
 			return nil, &outError
-		} else if errors.Is(err, jwt.ErrBadToken) {
+		case jwt.CodeTokenInvalid:
 			outError := refresh.ErrWrongAccessToken()
 			return nil, &outError
-		} else {
+		default:
 			outError := refresh.ErrInternal()
 			return nil, &outError
 		}
 	}
-	uid := storage.UserId(refreshedTokens.Subject)
-	tokenFromDb, err := h.storage.GetRefreshToken(uid)
+	subject, err := h.jwtService.GetRefreshTokenSubject(jwt.RefreshToken(request.RefreshToken))
 	if err != nil {
+		outError := refresh.ErrInternal()
+		return nil, &outError
+	}
+	tokenFromDb, errGetFromDb := h.storage.GetRefreshToken(storage.UserId(subject))
+	if errGetFromDb != nil {
 		outError := refresh.ErrInternal()
 		return nil, &outError
 	}
@@ -206,19 +226,38 @@ func (h *refreshRequestHandler) Handle(request refresh.Request) (*storage.Authen
 		outError := refresh.ErrWrongAccessToken()
 		return nil, &outError
 	}
-	if err := h.storage.StoreRefreshToken(refreshedTokens.Refresh, uid); err != nil {
+	log.Printf("%s: issuing tokens", op)
+	accessToken, err := h.jwtService.IssueAccessToken(subject)
+	if err != nil {
+		log.Printf("%s: issuing access token failed %v", op, err)
 		outError := refresh.ErrInternal()
 		return nil, &outError
 	}
+	refreshToken, err := h.jwtService.IssueRefreshToken(subject)
+	if err != nil {
+		log.Printf("%s: issuing refresh token failed %v", op, err)
+		outError := refresh.ErrInternal()
+		return nil, &outError
+	}
+	log.Printf("%s: issued tokens ok", op)
+	log.Printf("%s: storing refresh token", op)
+	if err := h.storage.StoreRefreshToken(string(refreshToken), storage.UserId(subject)); err != nil {
+		log.Printf("store tokens failed %v", err)
+		outError := refresh.ErrInternal()
+		return nil, &outError
+	}
+	log.Printf("%s: tokens stored", op)
+	log.Printf("%s: ok", op)
 	return &storage.AuthenticatedSession{
-		Id:           uid,
-		AccessToken:  refreshedTokens.Access,
-		RefreshToken: refreshedTokens.Refresh,
+		Id:           storage.UserId(subject),
+		AccessToken:  string(accessToken),
+		RefreshToken: string(refreshToken),
 	}, nil
 }
 
 type updateEmailRequestHandler struct {
-	storage storage.Storage
+	storage    storage.Storage
+	jwtService jwt.Service
 }
 
 func (h *updateEmailRequestHandler) Validate(c *gin.Context, request updateEmail.Request) *updateEmail.Error {
@@ -243,30 +282,29 @@ func (h *updateEmailRequestHandler) Validate(c *gin.Context, request updateEmail
 
 func (h *updateEmailRequestHandler) Handle(c *gin.Context, request updateEmail.Request) (storage.AuthenticatedSession, *updateEmail.Error) {
 	const op = "router.auth.updateEmailRequestHandler.Handle"
-	token := helpers.ExtractBearerToken(c)
+	uid := storage.UserId(c.Request.Header.Get(middleware.LoggedInSubjectKey))
 
-	subject, err := jwt.GetAccessTokenSubject(token)
-	if err != nil || subject == nil {
-		log.Printf("%s: cannot get access token %v", op, err)
-		outError := updateEmail.ErrInternal()
-		return storage.AuthenticatedSession{}, &outError
-	}
-	uid := storage.UserId(*subject)
 	if err := h.storage.UpdateEmail(uid, request.Email); err != nil {
 		log.Printf("%s: cannot update email %v", op, err)
 		outError := updateEmail.ErrInternal()
 		return storage.AuthenticatedSession{}, &outError
 	}
 	log.Printf("%s: issuing tokens", op)
-	tokens, err := jwt.IssueTokens(*subject)
+	accessToken, err := h.jwtService.IssueAccessToken(jwt.Subject(uid))
 	if err != nil {
-		log.Printf("%s: issuing tokens failed %v", op, err)
+		log.Printf("%s: issuing access token failed %v", op, err)
+		outError := updateEmail.ErrInternal()
+		return storage.AuthenticatedSession{}, &outError
+	}
+	refreshToken, err := h.jwtService.IssueRefreshToken(jwt.Subject(uid))
+	if err != nil {
+		log.Printf("%s: issuing refresh token failed %v", op, err)
 		outError := updateEmail.ErrInternal()
 		return storage.AuthenticatedSession{}, &outError
 	}
 	log.Printf("%s: issued tokens ok", op)
 	log.Printf("%s: storing refresh token", op)
-	if err := h.storage.StoreRefreshToken(tokens.Refresh, uid); err != nil {
+	if err := h.storage.StoreRefreshToken(string(refreshToken), uid); err != nil {
 		log.Printf("%s: storing refresh token failed %v", op, err)
 		outError := updateEmail.ErrInternal()
 		return storage.AuthenticatedSession{}, &outError
@@ -274,26 +312,19 @@ func (h *updateEmailRequestHandler) Handle(c *gin.Context, request updateEmail.R
 	log.Printf("%s: storing refresh token ok", op)
 	return storage.AuthenticatedSession{
 		Id:           uid,
-		AccessToken:  tokens.Access,
-		RefreshToken: tokens.Refresh,
+		AccessToken:  string(accessToken),
+		RefreshToken: string(refreshToken),
 	}, nil
 }
 
 type updatePasswordRequestHandler struct {
-	storage storage.Storage
+	storage    storage.Storage
+	jwtService jwt.Service
 }
 
 func (h *updatePasswordRequestHandler) Validate(c *gin.Context, request updatePassword.Request) *updatePassword.Error {
 	const op = "router.auth.updatePasswordRequestHandler.Validate"
-	token := helpers.ExtractBearerToken(c)
-
-	subject, err := jwt.GetAccessTokenSubject(token)
-	if err != nil || subject == nil {
-		log.Printf("%s: cannot get access token %v", op, err)
-		outError := updatePassword.ErrInternal()
-		return &outError
-	}
-	uid := storage.UserId(*subject)
+	uid := storage.UserId(c.Request.Header.Get(middleware.LoggedInSubjectKey))
 	passed, err := h.storage.CheckPasswordForId(uid, request.OldPassword)
 	if err != nil {
 		log.Printf("%s: cannot check password for id %v", op, err)
@@ -310,30 +341,28 @@ func (h *updatePasswordRequestHandler) Validate(c *gin.Context, request updatePa
 
 func (h *updatePasswordRequestHandler) Handle(c *gin.Context, request updatePassword.Request) (storage.AuthenticatedSession, *updatePassword.Error) {
 	const op = "router.auth.updatePasswordRequestHandler.Handle"
-	token := helpers.ExtractBearerToken(c)
-
-	subject, err := jwt.GetAccessTokenSubject(token)
-	if err != nil || subject == nil {
-		log.Printf("%s: cannot get access token %v", op, err)
-		outError := updatePassword.ErrInternal()
-		return storage.AuthenticatedSession{}, &outError
-	}
-	uid := storage.UserId(*subject)
+	uid := storage.UserId(c.Request.Header.Get(middleware.LoggedInSubjectKey))
 	if err := h.storage.UpdatePasswordForId(uid, request.NewPassword); err != nil {
 		log.Printf("%s: cannot update password: %v", op, err)
 		outError := updatePassword.ErrInternal()
 		return storage.AuthenticatedSession{}, &outError
 	}
 	log.Printf("%s: issuing tokens", op)
-	tokens, err := jwt.IssueTokens(*subject)
+	accessToken, err := h.jwtService.IssueAccessToken(jwt.Subject(uid))
 	if err != nil {
-		log.Printf("%s: issuing tokens failed %v", op, err)
+		log.Printf("%s: issuing access token failed %v", op, err)
+		outError := updatePassword.ErrInternal()
+		return storage.AuthenticatedSession{}, &outError
+	}
+	refreshToken, err := h.jwtService.IssueRefreshToken(jwt.Subject(uid))
+	if err != nil {
+		log.Printf("%s: issuing refresh token failed %v", op, err)
 		outError := updatePassword.ErrInternal()
 		return storage.AuthenticatedSession{}, &outError
 	}
 	log.Printf("%s: issued tokens ok", op)
 	log.Printf("%s: storing refresh token", op)
-	if err := h.storage.StoreRefreshToken(tokens.Refresh, uid); err != nil {
+	if err := h.storage.StoreRefreshToken(string(refreshToken), uid); err != nil {
 		log.Printf("%s: storing refresh token failed %v", op, err)
 		outError := updatePassword.ErrInternal()
 		return storage.AuthenticatedSession{}, &outError
@@ -341,8 +370,8 @@ func (h *updatePasswordRequestHandler) Handle(c *gin.Context, request updatePass
 	log.Printf("%s: storing refresh token ok", op)
 	return storage.AuthenticatedSession{
 		Id:           uid,
-		AccessToken:  tokens.Access,
-		RefreshToken: tokens.Refresh,
+		AccessToken:  string(accessToken),
+		RefreshToken: string(refreshToken),
 	}, nil
 }
 
@@ -354,15 +383,8 @@ type confirmEmailRequestHandler struct {
 func (h *confirmEmailRequestHandler) Handle(c *gin.Context, request confirmEmail.Request) *confirmEmail.Error {
 	const op = "router.auth.confirmEmailRequestHandler.Handle"
 	log.Printf("%s: start", op)
-
-	token := helpers.ExtractBearerToken(c)
-	subject, err := jwt.GetAccessTokenSubject(token)
-	if err != nil || subject == nil {
-		log.Printf("%s: cannot get access token %v", op, err)
-		outError := confirmEmail.ErrInternal()
-		return &outError
-	}
-	account, err := h.storage.GetAccountInfo(storage.UserId(*subject))
+	uid := storage.UserId(c.Request.Header.Get(middleware.LoggedInSubjectKey))
+	account, err := h.storage.GetAccountInfo(uid)
 	if err != nil || account == nil {
 		log.Printf("%s: cannot get account info %v", op, err)
 		outError := confirmEmail.ErrInternal()
@@ -393,15 +415,8 @@ type sendEmailConfirmationCodeRequestHandler struct {
 func (h *sendEmailConfirmationCodeRequestHandler) Handle(c *gin.Context, request sendEmailConfirmationCode.Request) *sendEmailConfirmationCode.Error {
 	const op = "router.auth.confirmEmailRequestHandler.Handle"
 	log.Printf("%s: start", op)
-
-	token := helpers.ExtractBearerToken(c)
-	subject, err := jwt.GetAccessTokenSubject(token)
-	if err != nil || subject == nil {
-		log.Printf("%s: cannot get access token %v", op, err)
-		outError := sendEmailConfirmationCode.ErrInternal()
-		return &outError
-	}
-	account, err := h.storage.GetAccountInfo(storage.UserId(*subject))
+	uid := storage.UserId(c.Request.Header.Get(middleware.LoggedInSubjectKey))
+	account, err := h.storage.GetAccountInfo(uid)
 	if err != nil || account == nil {
 		log.Printf("%s: cannot get account info %v", op, err)
 		outError := sendEmailConfirmationCode.ErrInternal()
@@ -431,14 +446,8 @@ type registerForPushNotificationsRequestHandler struct {
 func (h *registerForPushNotificationsRequestHandler) Handle(c *gin.Context, request registerForPushNotifications.Request) *registerForPushNotifications.Error {
 	const op = "router.auth.registerForPushNotificationsRequestHandler.Handle"
 	log.Printf("%s: start", op)
-	token := helpers.ExtractBearerToken(c)
-	subject, err := jwt.GetAccessTokenSubject(token)
-	if err != nil || subject == nil {
-		log.Printf("%s: cannot get access token %v", op, err)
-		outError := registerForPushNotifications.ErrInternal()
-		return &outError
-	}
-	if err := h.storage.StorePushToken(storage.UserId(*subject), request.Token); err != nil {
+	uid := storage.UserId(c.Request.Header.Get(middleware.LoggedInSubjectKey))
+	if err := h.storage.StorePushToken(uid, request.Token); err != nil {
 		log.Printf("%s: cannot store push token %v", op, err)
 		outError := registerForPushNotifications.ErrInternal()
 		return &outError
@@ -453,14 +462,8 @@ type logoutRequestHandler struct {
 func (h *logoutRequestHandler) Handle(c *gin.Context) *logout.Error {
 	const op = "router.auth.logoutRequestHandler.Handle"
 	log.Printf("%s: start", op)
-	token := helpers.ExtractBearerToken(c)
-	subject, err := jwt.GetAccessTokenSubject(token)
-	if err != nil || subject == nil {
-		log.Printf("%s: cannot get access token %v", op, err)
-		outError := logout.ErrInternal()
-		return &outError
-	}
-	if err := h.storage.RemoveRefreshToken(storage.UserId(*subject)); err != nil {
+	uid := storage.UserId(c.Request.Header.Get(middleware.LoggedInSubjectKey))
+	if err := h.storage.RemoveRefreshToken(uid); err != nil {
 		log.Printf("%s: cannot remove refresh token %v", op, err)
 		outError := logout.ErrInternal()
 		return &outError
@@ -468,14 +471,92 @@ func (h *logoutRequestHandler) Handle(c *gin.Context) *logout.Error {
 	return nil
 }
 
-func RegisterRoutes(e *gin.Engine, storage storage.Storage) {
-	e.PUT("/auth/signup", signup.New(&signupRequestHandler{storage: storage}))
-	e.PUT("/auth/login", login.New(&loginRequestHandler{storage: storage}))
-	e.PUT("/auth/refresh", refresh.New(&refreshRequestHandler{storage: storage}))
-	e.PUT("/auth/updateEmail", middleware.EnsureLoggedIn(storage), updateEmail.New(&updateEmailRequestHandler{storage: storage}))
-	e.PUT("/auth/updatePassword", middleware.EnsureLoggedIn(storage), updatePassword.New(&updatePasswordRequestHandler{storage: storage}))
-	e.DELETE("/auth/logout", middleware.EnsureLoggedIn(storage), logout.New(&logoutRequestHandler{storage: storage}))
-	e.PUT("/auth/confirmEmail", middleware.EnsureLoggedIn(storage), confirmEmail.New(&confirmEmailRequestHandler{storage: storage, confirmation: confirmation.EmailConfirmation{Storage: storage}}))
-	e.PUT("/auth/sendEmailConfirmationCode", middleware.EnsureLoggedIn(storage), sendEmailConfirmationCode.New(&sendEmailConfirmationCodeRequestHandler{storage: storage, confirmation: confirmation.EmailConfirmation{Storage: storage}}))
-	e.PUT("/auth/registerForPushNotifications", middleware.EnsureLoggedIn(storage), registerForPushNotifications.New(&registerForPushNotificationsRequestHandler{storage: storage}))
+func RegisterRoutes(e *gin.Engine, storage storage.Storage, jwtService jwt.Service) {
+	ensureLogIn := middleware.EnsureLoggedIn(storage, jwtService)
+	e.PUT(
+		"/auth/signup",
+		signup.New(
+			&signupRequestHandler{
+				storage: storage,
+			},
+		),
+	)
+	e.PUT(
+		"/auth/login",
+		login.New(
+			&loginRequestHandler{
+				storage: storage,
+			},
+		),
+	)
+	e.PUT(
+		"/auth/refresh",
+		refresh.New(
+			&refreshRequestHandler{
+				storage: storage,
+			},
+		),
+	)
+	e.PUT(
+		"/auth/updateEmail",
+		ensureLogIn,
+		updateEmail.New(
+			&updateEmailRequestHandler{
+				storage:    storage,
+				jwtService: jwtService,
+			},
+		),
+	)
+	e.PUT(
+		"/auth/updatePassword",
+		ensureLogIn,
+		updatePassword.New(
+			&updatePasswordRequestHandler{
+				storage:    storage,
+				jwtService: jwtService,
+			},
+		),
+	)
+	e.DELETE(
+		"/auth/logout",
+		ensureLogIn,
+		logout.New(
+			&logoutRequestHandler{
+				storage: storage,
+			},
+		),
+	)
+	e.PUT(
+		"/auth/confirmEmail",
+		ensureLogIn,
+		confirmEmail.New(
+			&confirmEmailRequestHandler{
+				storage: storage,
+				confirmation: confirmation.EmailConfirmation{
+					Storage: storage,
+				},
+			},
+		),
+	)
+	e.PUT(
+		"/auth/sendEmailConfirmationCode",
+		ensureLogIn,
+		sendEmailConfirmationCode.New(
+			&sendEmailConfirmationCodeRequestHandler{
+				storage: storage,
+				confirmation: confirmation.EmailConfirmation{
+					Storage: storage,
+				},
+			},
+		),
+	)
+	e.PUT(
+		"/auth/registerForPushNotifications",
+		ensureLogIn,
+		registerForPushNotifications.New(
+			&registerForPushNotificationsRequestHandler{
+				storage: storage,
+			},
+		),
+	)
 }
