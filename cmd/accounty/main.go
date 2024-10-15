@@ -10,13 +10,11 @@ import (
 	"accounty/internal/apns"
 	"accounty/internal/auth/jwt"
 	"accounty/internal/config"
-	"accounty/internal/http-server/router/aasa"
-	"accounty/internal/http-server/router/auth"
-	"accounty/internal/http-server/router/avatars"
-	"accounty/internal/http-server/router/friends"
-	"accounty/internal/http-server/router/profile"
-	"accounty/internal/http-server/router/spendings"
-	"accounty/internal/http-server/router/users"
+	"accounty/internal/http-server/handlers/auth"
+	"accounty/internal/http-server/handlers/avatars"
+	"accounty/internal/http-server/handlers/profile"
+	"accounty/internal/http-server/handlers/spendings"
+	"accounty/internal/http-server/handlers/users"
 	"accounty/internal/storage"
 	"accounty/internal/storage/ydbStorage"
 
@@ -24,19 +22,17 @@ import (
 )
 
 func main() {
-	pushSender, err := apns.New("./internal/apns/apns_prod.p12", "./internal/apns/key.json")
-	if err != nil {
-		return
-	}
 	cfg := config.Load()
 
-	storage, err := ydbStorage.New(os.Getenv("YDB_ENDPOINT"), "./internal/storage/ydbStorage/key.json")
+	db, err := ydbStorage.New(os.Getenv("YDB_ENDPOINT"), "./internal/storage/ydbStorage/key.json")
 	if err != nil {
 		log.Fatalf("failed to init storage: %s", err)
 	}
-	defer storage.Close()
+	defer db.Close()
 	// migrate(sqlStorage)
 	// return
+
+	pushService, err := apns.DefaultService(db, "./internal/apns/apns_prod.p12", "./internal/apns/key.json")
 
 	jwtService := jwt.DefaultService(
 		time.Hour*24*30,
@@ -48,13 +44,12 @@ func main() {
 
 	gin.SetMode(cfg.Server.RunMode)
 	router := gin.New()
-	auth.RegisterRoutes(router, storage, jwtService)
-	users.RegisterRoutes(router, storage, jwtService)
-	friends.RegisterRoutes(router, storage, pushSender, jwtService)
-	spendings.RegisterRoutes(router, storage, pushSender, jwtService)
-	profile.RegisterRoutes(router, storage, jwtService)
-	aasa.RegisterRoutes(router, storage)
-	avatars.RegisterRoutes(router, storage)
+
+	auth.RegisterRoutes(router, db, jwtService)
+	profile.RegisterRoutes(router, db, jwtService)
+	avatars.RegisterRoutes(router, db)
+	users.RegisterRoutes(router, db, jwtService)
+	spendings.RegisterRoutes(router, db, jwtService)
 
 	address := ":" + os.Getenv("PORT")
 	server := &http.Server{
