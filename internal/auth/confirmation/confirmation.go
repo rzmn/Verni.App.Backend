@@ -1,13 +1,13 @@
 package confirmation
 
 import (
-	"accounty/internal/storage"
 	"errors"
 	"fmt"
 	"log"
 	"math/rand"
 	"net/smtp"
 	"os"
+	"verni/internal/storage"
 )
 
 type EmailConfirmation struct {

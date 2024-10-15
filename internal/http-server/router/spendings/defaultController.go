@@ -1,10 +1,10 @@
 package spendings
 
 import (
-	"accounty/internal/apns"
-	"accounty/internal/common"
-	"accounty/internal/storage"
 	"log"
+	"verni/internal/apns"
+	"verni/internal/common"
+	"verni/internal/storage"
 )
 
 type defaultController struct {

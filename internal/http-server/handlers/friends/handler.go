@@ -1,13 +1,13 @@
 package friends
 
 import (
-	"accounty/internal/auth/jwt"
-	httpserver "accounty/internal/http-server"
-	"accounty/internal/http-server/middleware"
-	"accounty/internal/http-server/responses"
-	friendsController "accounty/internal/http-server/router/friends"
-	"accounty/internal/storage"
 	"net/http"
+	"verni/internal/auth/jwt"
+	httpserver "verni/internal/http-server"
+	"verni/internal/http-server/middleware"
+	"verni/internal/http-server/responses"
+	friendsController "verni/internal/http-server/router/friends"
+	"verni/internal/storage"
 
 	"github.com/gin-gonic/gin"
 )

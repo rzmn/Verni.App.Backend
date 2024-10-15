@@ -1,14 +1,14 @@
 package auth
 
 import (
-	"accounty/internal/auth/confirmation"
-	"accounty/internal/auth/jwt"
-	httpserver "accounty/internal/http-server"
-	"accounty/internal/http-server/middleware"
-	"accounty/internal/http-server/responses"
-	authController "accounty/internal/http-server/router/auth"
-	"accounty/internal/storage"
 	"net/http"
+	"verni/internal/auth/confirmation"
+	"verni/internal/auth/jwt"
+	httpserver "verni/internal/http-server"
+	"verni/internal/http-server/middleware"
+	"verni/internal/http-server/responses"
+	authController "verni/internal/http-server/router/auth"
+	"verni/internal/storage"
 
 	"github.com/gin-gonic/gin"
 )

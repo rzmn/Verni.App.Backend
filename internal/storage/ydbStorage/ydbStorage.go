@@ -8,7 +8,7 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"accounty/internal/storage"
+	"verni/internal/storage"
 
 	"github.com/google/uuid"
 	"github.com/ydb-platform/ydb-go-sdk/v3"

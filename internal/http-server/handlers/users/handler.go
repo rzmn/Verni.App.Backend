@@ -1,14 +1,14 @@
 package users
 
 import (
-	"accounty/internal/auth/jwt"
-	"accounty/internal/common"
-	httpserver "accounty/internal/http-server"
-	"accounty/internal/http-server/middleware"
-	"accounty/internal/http-server/responses"
-	usersController "accounty/internal/http-server/router/users"
-	"accounty/internal/storage"
 	"net/http"
+	"verni/internal/auth/jwt"
+	"verni/internal/common"
+	httpserver "verni/internal/http-server"
+	"verni/internal/http-server/middleware"
+	"verni/internal/http-server/responses"
+	usersController "verni/internal/http-server/router/users"
+	"verni/internal/storage"
 
 	"github.com/gin-gonic/gin"
 )

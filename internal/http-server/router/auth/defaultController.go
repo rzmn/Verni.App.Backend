@@ -1,12 +1,12 @@
 package auth
 
 import (
-	"accounty/internal/auth/confirmation"
-	"accounty/internal/auth/jwt"
-	"accounty/internal/common"
-	"accounty/internal/storage"
 	"errors"
 	"log"
+	"verni/internal/auth/confirmation"
+	"verni/internal/auth/jwt"
+	"verni/internal/common"
+	"verni/internal/storage"
 
 	"github.com/google/uuid"
 )

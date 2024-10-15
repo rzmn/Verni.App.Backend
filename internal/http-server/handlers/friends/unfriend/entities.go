@@ -1,8 +1,8 @@
 package unfriend
 
 import (
-	"accounty/internal/http-server/responses"
-	"accounty/internal/storage"
+	"verni/internal/http-server/responses"
+	"verni/internal/storage"
 )
 
 type Request struct {

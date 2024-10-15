@@ -7,10 +7,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"accounty/internal/auth/jwt"
-	"accounty/internal/storage"
+	"verni/internal/auth/jwt"
+	"verni/internal/storage"
 
-	"accounty/internal/http-server/responses"
+	"verni/internal/http-server/responses"
 )
 
 const (

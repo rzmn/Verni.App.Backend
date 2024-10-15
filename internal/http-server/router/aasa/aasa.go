@@ -1,8 +1,8 @@
 package aasa
 
 import (
-	"accounty/internal/storage"
 	"net/http"
+	"verni/internal/storage"
 
 	"github.com/gin-gonic/gin"
 )

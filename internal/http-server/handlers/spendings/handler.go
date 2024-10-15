@@ -1,13 +1,13 @@
 package spendings
 
 import (
-	"accounty/internal/auth/jwt"
-	httpserver "accounty/internal/http-server"
-	"accounty/internal/http-server/middleware"
-	"accounty/internal/http-server/responses"
-	spendingsController "accounty/internal/http-server/router/spendings"
-	"accounty/internal/storage"
 	"net/http"
+	"verni/internal/auth/jwt"
+	httpserver "verni/internal/http-server"
+	"verni/internal/http-server/middleware"
+	"verni/internal/http-server/responses"
+	spendingsController "verni/internal/http-server/router/spendings"
+	"verni/internal/storage"
 
 	"github.com/gin-gonic/gin"
 )

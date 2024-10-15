@@ -1,10 +1,10 @@
 package auth
 
 import (
-	"accounty/internal/auth/confirmation"
-	"accounty/internal/auth/jwt"
-	"accounty/internal/common"
-	"accounty/internal/storage"
+	"verni/internal/auth/confirmation"
+	"verni/internal/auth/jwt"
+	"verni/internal/common"
+	"verni/internal/storage"
 )
 
 type UserId storage.UserId

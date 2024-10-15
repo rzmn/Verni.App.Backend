@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"accounty/internal/http-server/responses"
+	"verni/internal/http-server/responses"
 )
 
 type RequestHandler interface {

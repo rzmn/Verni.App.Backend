@@ -1,13 +1,13 @@
 package profile
 
 import (
-	"accounty/internal/auth/jwt"
-	httpserver "accounty/internal/http-server"
-	"accounty/internal/http-server/middleware"
-	"accounty/internal/http-server/responses"
-	profileController "accounty/internal/http-server/router/profile"
-	"accounty/internal/storage"
 	"net/http"
+	"verni/internal/auth/jwt"
+	httpserver "verni/internal/http-server"
+	"verni/internal/http-server/middleware"
+	"verni/internal/http-server/responses"
+	profileController "verni/internal/http-server/router/profile"
+	"verni/internal/storage"
 
 	"github.com/gin-gonic/gin"
 )

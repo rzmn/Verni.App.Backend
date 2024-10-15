@@ -1,12 +1,12 @@
 package avatars
 
 import (
-	"accounty/internal/common"
-	httpserver "accounty/internal/http-server"
-	"accounty/internal/http-server/responses"
-	avatarsController "accounty/internal/http-server/router/avatars"
-	"accounty/internal/storage"
 	"net/http"
+	"verni/internal/common"
+	httpserver "verni/internal/http-server"
+	"verni/internal/http-server/responses"
+	avatarsController "verni/internal/http-server/router/avatars"
+	"verni/internal/storage"
 
 	"github.com/gin-gonic/gin"
 )

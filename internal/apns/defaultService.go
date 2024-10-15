@@ -1,10 +1,10 @@
 package apns
 
 import (
-	"accounty/internal/storage"
 	"encoding/json"
 	"fmt"
 	"log"
+	"verni/internal/storage"
 
 	"github.com/sideshow/apns2"
 )

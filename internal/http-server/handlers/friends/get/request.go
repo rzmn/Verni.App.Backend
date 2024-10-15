@@ -8,7 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"accounty/internal/storage"
+	"verni/internal/storage"
 )
 
 type RequestHandler interface {

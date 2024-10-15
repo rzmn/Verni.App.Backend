@@ -1,10 +1,10 @@
 package friends
 
 import (
-	"accounty/internal/common"
-	"accounty/internal/storage"
 	"log"
 	"slices"
+	"verni/internal/common"
+	"verni/internal/storage"
 )
 
 type defaultController struct {

@@ -1,8 +1,8 @@
 package avatars
 
 import (
-	"accounty/internal/common"
-	"accounty/internal/storage"
+	"verni/internal/common"
+	"verni/internal/storage"
 )
 
 type AvatarId storage.AvatarId

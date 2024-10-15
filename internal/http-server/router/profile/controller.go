@@ -1,8 +1,8 @@
 package profile
 
 import (
-	"accounty/internal/common"
-	"accounty/internal/storage"
+	"verni/internal/common"
+	"verni/internal/storage"
 )
 
 type UserId storage.UserId

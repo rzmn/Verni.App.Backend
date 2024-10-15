@@ -1,12 +1,12 @@
 package storage_test
 
 import (
-	"accounty/internal/storage"
-	"accounty/internal/storage/ydbStorage"
 	"log"
 	"math/rand"
 	"os"
 	"testing"
+	"verni/internal/storage"
+	"verni/internal/storage/ydbStorage"
 
 	"github.com/google/uuid"
 )

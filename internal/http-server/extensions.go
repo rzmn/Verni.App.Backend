@@ -1,8 +1,8 @@
 package httpserver
 
 import (
-	"accounty/internal/http-server/responses"
 	"net/http"
+	"verni/internal/http-server/responses"
 
 	"github.com/gin-gonic/gin"
 )
