@@ -12,6 +12,7 @@ import (
 	"accounty/internal/config"
 	"accounty/internal/http-server/handlers/auth"
 	"accounty/internal/http-server/handlers/avatars"
+	"accounty/internal/http-server/handlers/friends"
 	"accounty/internal/http-server/handlers/profile"
 	"accounty/internal/http-server/handlers/spendings"
 	"accounty/internal/http-server/handlers/users"
@@ -50,6 +51,7 @@ func main() {
 	avatars.RegisterRoutes(router, db)
 	users.RegisterRoutes(router, db, jwtService)
 	spendings.RegisterRoutes(router, db, jwtService)
+	friends.RegisterRoutes(router, db, jwtService)
 
 	address := ":" + os.Getenv("PORT")
 	server := &http.Server{
