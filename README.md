@@ -1,2 +1,2 @@
-# Accounty-Backend
-Server side for Accounty App
+# Verni.App.Backend
+Server side for Verni App
