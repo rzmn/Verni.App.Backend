@@ -54,6 +54,8 @@ func RegisterRoutes(router *gin.Engine, db storage.Storage, jwtService jwt.Servi
 		session, err := controller.Login(request.Credentials.Email, request.Credentials.Password)
 		if err != nil {
 			switch err.Code {
+			case authController.LoginErrorWrongCredentials:
+				httpserver.Answer(c, err, http.StatusConflict, responses.CodeIncorrectCredentials)
 			default:
 				httpserver.AnswerWithUnknownError(c, err)
 			}
@@ -72,6 +74,10 @@ func RegisterRoutes(router *gin.Engine, db storage.Storage, jwtService jwt.Servi
 		session, err := controller.Refresh(request.RefreshToken)
 		if err != nil {
 			switch err.Code {
+			case authController.RefreshErrorTokenExpired:
+				httpserver.Answer(c, err, http.StatusUnauthorized, responses.CodeTokenExpired)
+			case authController.RefreshErrorTokenIsWrong:
+				httpserver.Answer(c, err, http.StatusConflict, responses.CodeIncorrectCredentials)
 			default:
 				httpserver.AnswerWithUnknownError(c, err)
 			}
@@ -90,6 +96,10 @@ func RegisterRoutes(router *gin.Engine, db storage.Storage, jwtService jwt.Servi
 		session, err := controller.UpdateEmail(request.Email, authController.UserId(hostFromToken(c)))
 		if err != nil {
 			switch err.Code {
+			case authController.UpdateEmailErrorAlreadyTaken:
+				httpserver.Answer(c, err, http.StatusConflict, responses.CodeAlreadyTaken)
+			case authController.UpdateEmailErrorWrongFormat:
+				httpserver.Answer(c, err, http.StatusUnprocessableEntity, responses.CodeWrongFormat)
 			default:
 				httpserver.AnswerWithUnknownError(c, err)
 			}
@@ -109,6 +119,8 @@ func RegisterRoutes(router *gin.Engine, db storage.Storage, jwtService jwt.Servi
 		session, err := controller.UpdatePassword(request.OldPassword, request.NewPassword, authController.UserId(hostFromToken(c)))
 		if err != nil {
 			switch err.Code {
+			case authController.UpdatePasswordErrorOldPasswordIsWrong:
+				httpserver.Answer(c, err, http.StatusConflict, responses.CodeIncorrectCredentials)
 			default:
 				httpserver.AnswerWithUnknownError(c, err)
 			}
@@ -135,6 +147,8 @@ func RegisterRoutes(router *gin.Engine, db storage.Storage, jwtService jwt.Servi
 		}
 		if err := controller.ConfirmEmail(request.Code, authController.UserId(hostFromToken(c))); err != nil {
 			switch err.Code {
+			case authController.ConfirmEmailErrorWrongConfirmationCode:
+				httpserver.Answer(c, err, http.StatusConflict, responses.CodeIncorrectCredentials)
 			default:
 				httpserver.AnswerWithUnknownError(c, err)
 			}
