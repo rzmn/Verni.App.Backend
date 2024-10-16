@@ -146,7 +146,7 @@ func main() {
 				RunMode        string `json:"runMode"`
 				Port           string `json:"port"`
 			}
-			data, err := json.Marshal(config.Apns.Config)
+			data, err := json.Marshal(config.Server.Config)
 			if err != nil {
 				log.Fatalf("failed to serialize default server config err: %v", err)
 			}
@@ -174,7 +174,7 @@ func main() {
 				WriteTimeout: time.Duration(ginConfig.IdleTimeoutSec),
 			}
 		default:
-			log.Fatalf("unknown server type %s", config.Apns.Type)
+			log.Fatalf("unknown server type %s", config.Server.Type)
 			return http.Server{}
 		}
 	}()
