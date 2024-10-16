@@ -62,6 +62,10 @@ func RegisterRoutes(router *gin.Engine, db storage.Storage, jwtService jwt.Servi
 		}
 		if err := controller.UpdateDisplayName(request.DisplayName, hostFromToken(c)); err != nil {
 			switch err.Code {
+			case profileController.UpdateDisplayNameErrorNotFound:
+				httpserver.Answer(c, err, http.StatusConflict, responses.CodeNoSuchUser)
+			case profileController.UpdateDisplayNameErrorWrongFormat:
+				httpserver.Answer(c, err, http.StatusUnprocessableEntity, responses.CodeWrongFormat)
 			default:
 				httpserver.AnswerWithUnknownError(c, err)
 			}

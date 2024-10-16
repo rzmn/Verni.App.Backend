@@ -32,6 +32,8 @@ func RegisterRoutes(router *gin.Engine, db storage.Storage, jwtService jwt.Servi
 		}
 		if err := controller.AcceptFriendRequest(friendsController.UserId(request.Sender), hostFromToken(c)); err != nil {
 			switch err.Code {
+			case friendsController.AcceptFriendRequestErrorNoSuchRequest:
+				httpserver.Answer(c, err, http.StatusConflict, responses.CodeNoSuchRequest)
 			default:
 				httpserver.AnswerWithUnknownError(c, err)
 			}
@@ -69,6 +71,8 @@ func RegisterRoutes(router *gin.Engine, db storage.Storage, jwtService jwt.Servi
 		}
 		if err := controller.RejectFriendRequest(friendsController.UserId(request.Sender), hostFromToken(c)); err != nil {
 			switch err.Code {
+			case friendsController.RejectFriendRequestErrorNoSuchRequest:
+				httpserver.Answer(c, err, http.StatusConflict, responses.CodeNoSuchRequest)
 			default:
 				httpserver.AnswerWithUnknownError(c, err)
 			}
@@ -87,6 +91,8 @@ func RegisterRoutes(router *gin.Engine, db storage.Storage, jwtService jwt.Servi
 		}
 		if err := controller.RollbackFriendRequest(hostFromToken(c), friendsController.UserId(request.Target)); err != nil {
 			switch err.Code {
+			case friendsController.RollbackFriendRequestErrorNoSuchRequest:
+				httpserver.Answer(c, err, http.StatusConflict, responses.CodeNoSuchRequest)
 			default:
 				httpserver.AnswerWithUnknownError(c, err)
 			}
@@ -105,6 +111,14 @@ func RegisterRoutes(router *gin.Engine, db storage.Storage, jwtService jwt.Servi
 		}
 		if err := controller.SendFriendRequest(hostFromToken(c), friendsController.UserId(request.Target)); err != nil {
 			switch err.Code {
+			case friendsController.SendFriendRequestErrorAlreadySent:
+				httpserver.Answer(c, err, http.StatusConflict, responses.CodeAlreadySend)
+			case friendsController.SendFriendRequestErrorHaveIncomingRequest:
+				httpserver.Answer(c, err, http.StatusConflict, responses.CodeHaveIncomingRequest)
+			case friendsController.SendFriendRequestErrorAlreadyFriends:
+				httpserver.Answer(c, err, http.StatusConflict, responses.CodeAlreadyFriends)
+			case friendsController.SendFriendRequestErrorNoSuchUser:
+				httpserver.Answer(c, err, http.StatusConflict, responses.CodeNoSuchUser)
 			default:
 				httpserver.AnswerWithUnknownError(c, err)
 			}
@@ -123,6 +137,10 @@ func RegisterRoutes(router *gin.Engine, db storage.Storage, jwtService jwt.Servi
 		}
 		if err := controller.Unfriend(hostFromToken(c), friendsController.UserId(request.Target)); err != nil {
 			switch err.Code {
+			case friendsController.UnfriendErrorNoSuchUser:
+				httpserver.Answer(c, err, http.StatusConflict, responses.CodeNoSuchUser)
+			case friendsController.UnfriendErrorNotAFriend:
+				httpserver.Answer(c, err, http.StatusConflict, responses.CodeNotAFriend)
 			default:
 				httpserver.AnswerWithUnknownError(c, err)
 			}

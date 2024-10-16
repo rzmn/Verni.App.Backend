@@ -32,6 +32,10 @@ func RegisterRoutes(router *gin.Engine, db storage.Storage, jwtService jwt.Servi
 		}
 		if err := controller.CreateDeal(spendingsController.Deal(request.Deal), hostFromToken(c)); err != nil {
 			switch err.Code {
+			case spendingsController.CreateDealErrorNoSuchUser:
+				httpserver.Answer(c, err, http.StatusConflict, responses.CodeNoSuchUser)
+			case spendingsController.CreateDealErrorNotAFriend:
+				httpserver.Answer(c, err, http.StatusConflict, responses.CodeNotAFriend)
 			default:
 				httpserver.AnswerWithUnknownError(c, err)
 			}
@@ -51,6 +55,12 @@ func RegisterRoutes(router *gin.Engine, db storage.Storage, jwtService jwt.Servi
 		_, err := controller.DeleteDeal(spendingsController.DealId(request.DealId), hostFromToken(c))
 		if err != nil {
 			switch err.Code {
+			case spendingsController.DeleteDealErrorDealNotFound:
+				httpserver.Answer(c, err, http.StatusConflict, responses.CodeDealNotFound)
+			case spendingsController.DeleteDealErrorNotAFriend:
+				httpserver.Answer(c, err, http.StatusConflict, responses.CodeNotAFriend)
+			case spendingsController.DeleteDealErrorNotYourDeal:
+				httpserver.Answer(c, err, http.StatusConflict, responses.CodeIsNotYourDeal)
 			default:
 				httpserver.AnswerWithUnknownError(c, err)
 			}
@@ -81,6 +91,8 @@ func RegisterRoutes(router *gin.Engine, db storage.Storage, jwtService jwt.Servi
 		deals, err := controller.GetDeals(spendingsController.UserId(request.Counterparty), hostFromToken(c))
 		if err != nil {
 			switch err.Code {
+			case spendingsController.GetDealsErrorNoSuchUser:
+				httpserver.Answer(c, err, http.StatusConflict, responses.CodeNoSuchUser)
 			default:
 				httpserver.AnswerWithUnknownError(c, err)
 			}
@@ -100,6 +112,10 @@ func RegisterRoutes(router *gin.Engine, db storage.Storage, jwtService jwt.Servi
 		deal, err := controller.GetDeal(spendingsController.DealId(request.Id), hostFromToken(c))
 		if err != nil {
 			switch err.Code {
+			case spendingsController.GetDealErrorDealNotFound:
+				httpserver.Answer(c, err, http.StatusConflict, responses.CodeDealNotFound)
+			case spendingsController.GetDealErrorNotYourDeal:
+				httpserver.Answer(c, err, http.StatusConflict, responses.CodeIsNotYourDeal)
 			default:
 				httpserver.AnswerWithUnknownError(c, err)
 			}

@@ -4,16 +4,16 @@ type LoginErrorCode int
 
 const (
 	_ LoginErrorCode = iota
-	LoginErrorInternal
 	LoginErrorWrongCredentials
+	LoginErrorInternal
 )
 
 func (c LoginErrorCode) Message() string {
 	switch c {
-	case LoginErrorInternal:
-		return "internal error"
 	case LoginErrorWrongCredentials:
 		return "wrong credentials"
+	case LoginErrorInternal:
+		return "internal error"
 	default:
 		return "unknown error"
 	}
