@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"verni/internal/auth/jwt"
+	httpserver "verni/internal/http-server"
 	"verni/internal/storage"
 
 	"verni/internal/http-server/responses"
@@ -20,52 +21,36 @@ const (
 func EnsureLoggedIn(s storage.Storage, jwtService jwt.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		const op = "handlers.friends.ensureLoggedInMiddleware"
-
 		log.Printf("%s: validating access token", op)
 		token := jwt.AccessToken(extractBearerToken(c))
-
 		if err := jwtService.ValidateAccessToken(token); err != nil {
 			log.Printf("%s: failed to validate token %v", op, err)
 			switch err.Code {
 			case jwt.CodeTokenExpired:
-				c.AbortWithStatusJSON(http.StatusUnauthorized, responses.Failure(responses.Error{
-					Code: responses.CodeTokenExpired,
-				}))
+				httpserver.Answer(c, err, http.StatusUnauthorized, responses.CodeTokenExpired)
 			case jwt.CodeTokenInvalid:
-				c.AbortWithStatusJSON(http.StatusUnprocessableEntity, responses.Failure(responses.Error{
-					Code: responses.CodeWrongAccessToken,
-				}))
+				httpserver.Answer(c, err, http.StatusUnprocessableEntity, responses.CodeWrongAccessToken)
 			default:
-				c.AbortWithStatusJSON(http.StatusInternalServerError, responses.Failure(responses.Error{
-					Code: responses.CodeInternal,
-				}))
+				httpserver.AnswerWithUnknownError(c, err)
 			}
 			return
 		}
 		subject, getSubjectError := jwtService.GetAccessTokenSubject(token)
 		if getSubjectError != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, responses.Failure(responses.Error{
-				Code: responses.CodeInternal,
-			}))
+			httpserver.AnswerWithUnknownError(c, getSubjectError)
 			return
 		}
 		exists, err := s.IsUserExists(storage.UserId(subject))
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, responses.Failure(responses.Error{
-				Code: responses.CodeInternal,
-			}))
+			httpserver.AnswerWithUnknownError(c, err)
 			return
 		}
 		if !exists {
-			c.AbortWithStatusJSON(http.StatusUnprocessableEntity, responses.Failure(responses.Error{
-				Code: responses.CodeWrongAccessToken,
-			}))
+			httpserver.Answer(c, err, http.StatusUnprocessableEntity, responses.CodeWrongAccessToken)
 			return
 		}
 		log.Printf("%s: access token ok", op)
-
 		c.Request.Header.Set(LoggedInSubjectKey, string(subject))
-
 		c.Next()
 	}
 }

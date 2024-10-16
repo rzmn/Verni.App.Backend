@@ -19,8 +19,8 @@ type Service interface {
 	NewExpenseReceived(receiver UserId, deal Deal, author UserId)
 }
 
-func DefaultService(storage storage.Storage, certPath string, configPath string) (Service, error) {
-	const op = "apns.PushNotificationSender.New"
+func AppleService(storage storage.Storage, certPath string, configPath string) (Service, error) {
+	const op = "apns.AppleService"
 	byteValue, err := os.ReadFile(configPath)
 	if err != nil {
 		log.Printf("%s: failed to open config: %v", op, err)

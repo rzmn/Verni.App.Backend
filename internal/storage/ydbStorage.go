@@ -1,4 +1,4 @@
-package ydbStorage
+package storage
 
 import (
 	"context"
@@ -8,48 +8,23 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"verni/internal/storage"
-
 	"github.com/google/uuid"
 	"github.com/ydb-platform/ydb-go-sdk/v3"
 	"github.com/ydb-platform/ydb-go-sdk/v3/table"
 	"github.com/ydb-platform/ydb-go-sdk/v3/table/options"
 	"github.com/ydb-platform/ydb-go-sdk/v3/table/result"
 	"github.com/ydb-platform/ydb-go-sdk/v3/table/types"
-	yc "github.com/ydb-platform/ydb-go-yc"
 )
 
-type Storage struct {
-	db  *ydb.Driver
-	ctx context.Context
+type YdbStorage struct {
+	Db  *ydb.Driver
+	Ctx context.Context
 }
 
-func NewUnauthorized(storagePath string) (storage.Storage, error) {
-	const op = "storage.ydb.NewUnauthorized"
-	ctx := context.Background()
-	db, err := ydb.Open(ctx, storagePath)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
-	}
-	log.Printf("%s: connection created", op)
-	return new(ctx, db)
-}
-
-func New(storagePath string, keyPath string) (storage.Storage, error) {
-	const op = "storage.ydb.New"
-	ctx := context.Background()
-	db, err := ydb.Open(ctx, storagePath, yc.WithServiceAccountKeyFileCredentials(keyPath))
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
-	}
-	log.Printf("%s: connection created", op)
-	return new(ctx, db)
-}
-
-func (s *Storage) CreateTables() error {
+func (s *YdbStorage) CreateTables() error {
 	const op = "storage.ydb.CreateTables"
-	dbName := s.db.Name()
-	err := s.db.Table().Do(s.ctx,
+	dbName := s.Db.Name()
+	err := s.Db.Table().Do(s.Ctx,
 		func(ctx context.Context, s table.Session) (err error) {
 			if err := s.CreateTable(ctx, path.Join(dbName, "credentials"),
 				options.WithColumn("id", types.TypeText),
@@ -149,11 +124,6 @@ func (s *Storage) CreateTables() error {
 	return nil
 }
 
-func new(ctx context.Context, db *ydb.Driver) (storage.Storage, error) {
-	const op = "storage.ydb.new"
-	return &Storage{db: db, ctx: ctx}, nil
-}
-
 func hashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 10)
 	return string(bytes), err
@@ -163,15 +133,15 @@ func checkPasswordHash(password, hash string) bool {
 	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)) == nil
 }
 
-func (s *Storage) GetAccountInfo(uid storage.UserId) (*storage.ProfileInfo, error) {
+func (s *YdbStorage) GetAccountInfo(uid UserId) (*ProfileInfo, error) {
 	const op = "storage.ydb.GetAccountInfo"
 	log.Printf("%s: start", op)
 	var (
 		readTx = table.TxControl(table.BeginTx(table.WithOnlineReadOnly()), table.CommitTx())
 		res    result.Result
-		result *storage.ProfileInfo
+		result *ProfileInfo
 	)
-	err := s.db.Table().Do(s.ctx, func(ctx context.Context, s table.Session) (err error) {
+	err := s.Db.Table().Do(s.Ctx, func(ctx context.Context, s table.Session) (err error) {
 		_, res, err = s.Execute(ctx, readTx, `
 DECLARE $id AS Text;
 SELECT 
@@ -203,14 +173,14 @@ WHERE
 				if err != nil {
 					return err
 				}
-				info := storage.ProfileInfo{
-					User: storage.User{
+				info := ProfileInfo{
+					User: User{
 						Id:          uid,
 						DisplayName: displayName,
-						Avatar: storage.Avatar{
-							Id: (*storage.AvatarId)(avatarId),
+						Avatar: Avatar{
+							Id: (*AvatarId)(avatarId),
 						},
-						FriendStatus: storage.FriendStatusMe,
+						FriendStatus: FriendStatusMe,
 					},
 					Email:         email,
 					EmailVerified: confirmed,
@@ -227,15 +197,15 @@ WHERE
 	return result, nil
 }
 
-func (s *Storage) GetUserId(email string) (*storage.UserId, error) {
+func (s *YdbStorage) GetUserId(email string) (*UserId, error) {
 	const op = "storage.ydb.GetUserId"
 	log.Printf("%s: start", op)
 	var (
 		readTx = table.TxControl(table.BeginTx(table.WithOnlineReadOnly()), table.CommitTx())
 		res    result.Result
-		uid    *storage.UserId
+		uid    *UserId
 	)
-	err := s.db.Table().Do(s.ctx, func(ctx context.Context, s table.Session) (err error) {
+	err := s.Db.Table().Do(s.Ctx, func(ctx context.Context, s table.Session) (err error) {
 		_, res, err = s.Execute(ctx, readTx, `
 DECLARE $email AS Text;
 SELECT 
@@ -259,7 +229,7 @@ WHERE
 				if err != nil {
 					return err
 				}
-				var uidValue = storage.UserId(value)
+				var uidValue = UserId(value)
 				uid = &uidValue
 			}
 		}
@@ -272,7 +242,7 @@ WHERE
 	return uid, nil
 }
 
-func (s *Storage) StoreEmailValidationToken(email string, token string) error {
+func (s *YdbStorage) StoreEmailValidationToken(email string, token string) error {
 	const op = "storage.ydb.StoreEmailValidationToken"
 	log.Printf("%s: start", op)
 	var (
@@ -283,7 +253,7 @@ func (s *Storage) StoreEmailValidationToken(email string, token string) error {
 			table.CommitTx(),
 		)
 	)
-	err := s.db.Table().Do(s.ctx, func(ctx context.Context, s table.Session) (err error) {
+	err := s.Db.Table().Do(s.Ctx, func(ctx context.Context, s table.Session) (err error) {
 		_, res, err := s.Execute(ctx, writeTx, `
 DECLARE $email AS Text;
 DECLARE $validationToken AS Text;
@@ -308,7 +278,7 @@ VALUES($email, False, $validationToken);`,
 	return nil
 }
 
-func (s *Storage) ExtractEmailValidationToken(email string) (*string, error) {
+func (s *YdbStorage) ExtractEmailValidationToken(email string) (*string, error) {
 	const op = "storage.ydb.ExtractEmailValidationToken"
 	log.Printf("%s: start", op)
 	var (
@@ -320,7 +290,7 @@ func (s *Storage) ExtractEmailValidationToken(email string) (*string, error) {
 		)
 		token *string
 	)
-	err := s.db.Table().Do(s.ctx, func(ctx context.Context, s table.Session) (err error) {
+	err := s.Db.Table().Do(s.Ctx, func(ctx context.Context, s table.Session) (err error) {
 		_, res, err := s.Execute(ctx, writeTx, `
 DECLARE $email AS Text;
 SELECT 
@@ -375,7 +345,7 @@ VALUES($email, False, NULL);`,
 	return token, nil
 }
 
-func (s *Storage) ValidateEmail(email string) error {
+func (s *YdbStorage) ValidateEmail(email string) error {
 	const op = "storage.ydb.ValidateEmail"
 	log.Printf("%s: start", op)
 	var (
@@ -386,7 +356,7 @@ func (s *Storage) ValidateEmail(email string) error {
 			table.CommitTx(),
 		)
 	)
-	err := s.db.Table().Do(s.ctx, func(ctx context.Context, s table.Session) (err error) {
+	err := s.Db.Table().Do(s.Ctx, func(ctx context.Context, s table.Session) (err error) {
 		_, res, err := s.Execute(ctx, writeTx, `
 DECLARE $email AS Text;
 UPSERT INTO 
@@ -409,7 +379,7 @@ VALUES($email, True, NULL);`,
 	return nil
 }
 
-func (s *Storage) UpdateEmail(uid storage.UserId, email string) error {
+func (s *YdbStorage) UpdateEmail(uid UserId, email string) error {
 	const op = "storage.ydb.UpdateEmail"
 	log.Printf("%s: start", op)
 	var (
@@ -420,7 +390,7 @@ func (s *Storage) UpdateEmail(uid storage.UserId, email string) error {
 			table.CommitTx(),
 		)
 	)
-	err := s.db.Table().Do(s.ctx, func(ctx context.Context, s table.Session) (err error) {
+	err := s.Db.Table().Do(s.Ctx, func(ctx context.Context, s table.Session) (err error) {
 		_, res, err := s.Execute(ctx, writeTx, `
 DECLARE $id AS Text;
 DECLARE $email AS Text;
@@ -458,14 +428,14 @@ VALUES($email, False, NULL);
 	return nil
 }
 
-func (s *Storage) IsEmailExists(email string) (bool, error) {
+func (s *YdbStorage) IsEmailExists(email string) (bool, error) {
 	const op = "storage.ydb.IsEmailExists"
 	log.Printf("%s: start", op)
 	var (
 		readTx = table.TxControl(table.BeginTx(table.WithOnlineReadOnly()), table.CommitTx())
 		exists bool
 	)
-	err := s.db.Table().Do(s.ctx, func(ctx context.Context, s table.Session) (err error) {
+	err := s.Db.Table().Do(s.Ctx, func(ctx context.Context, s table.Session) (err error) {
 		_, res, err := s.Execute(ctx, readTx, `
 DECLARE $email AS Text;
 SELECT 
@@ -496,14 +466,14 @@ WHERE
 	return exists, nil
 }
 
-func (s *Storage) IsUserExists(uid storage.UserId) (bool, error) {
+func (s *YdbStorage) IsUserExists(uid UserId) (bool, error) {
 	const op = "storage.ydb.IsUserExists"
 	log.Printf("%s: start", op)
 	var (
 		readTx = table.TxControl(table.BeginTx(table.WithOnlineReadOnly()), table.CommitTx())
 		exists bool
 	)
-	err := s.db.Table().Do(s.ctx, func(ctx context.Context, s table.Session) (err error) {
+	err := s.Db.Table().Do(s.Ctx, func(ctx context.Context, s table.Session) (err error) {
 		_, res, err := s.Execute(ctx, readTx, `
 DECLARE $id AS Text;
 SELECT 
@@ -534,7 +504,7 @@ WHERE
 	return exists, nil
 }
 
-func (s *Storage) CheckCredentials(credentials storage.UserCredentials) (bool, error) {
+func (s *YdbStorage) CheckCredentials(credentials UserCredentials) (bool, error) {
 	const op = "storage.ydb.CheckCredentials"
 	log.Printf("%s: start", op)
 	var (
@@ -542,7 +512,7 @@ func (s *Storage) CheckCredentials(credentials storage.UserCredentials) (bool, e
 		res    result.Result
 		passed bool
 	)
-	err := s.db.Table().Do(s.ctx, func(ctx context.Context, s table.Session) (err error) {
+	err := s.Db.Table().Do(s.Ctx, func(ctx context.Context, s table.Session) (err error) {
 		_, res, err = s.Execute(ctx, readTx, `
 DECLARE $email AS Text;
 SELECT 
@@ -578,7 +548,7 @@ WHERE
 	return passed, nil
 }
 
-func (s *Storage) CheckPasswordForId(uid storage.UserId, password string) (bool, error) {
+func (s *YdbStorage) CheckPasswordForId(uid UserId, password string) (bool, error) {
 	const op = "storage.ydb.CheckPasswordForId"
 	log.Printf("%s: start", op)
 	var (
@@ -586,7 +556,7 @@ func (s *Storage) CheckPasswordForId(uid storage.UserId, password string) (bool,
 		res    result.Result
 		passed bool
 	)
-	err := s.db.Table().Do(s.ctx, func(ctx context.Context, s table.Session) (err error) {
+	err := s.Db.Table().Do(s.Ctx, func(ctx context.Context, s table.Session) (err error) {
 		_, res, err = s.Execute(ctx, readTx, `
 DECLARE $id AS Text;
 SELECT 
@@ -622,7 +592,7 @@ WHERE
 	return passed, nil
 }
 
-func (s *Storage) UpdatePasswordForId(uid storage.UserId, password string) error {
+func (s *YdbStorage) UpdatePasswordForId(uid UserId, password string) error {
 	const op = "storage.ydb.UpdatePasswordForId"
 	log.Printf("%s: start", op)
 	passwordHash, err := hashPassword(password)
@@ -638,7 +608,7 @@ func (s *Storage) UpdatePasswordForId(uid storage.UserId, password string) error
 			table.CommitTx(),
 		)
 	)
-	err = s.db.Table().Do(s.ctx, func(ctx context.Context, s table.Session) (err error) {
+	err = s.Db.Table().Do(s.Ctx, func(ctx context.Context, s table.Session) (err error) {
 		_, res, err := s.Execute(ctx, writeTx, `
 DECLARE $id AS Text;
 DECLARE $password AS Text;
@@ -667,7 +637,7 @@ WHERE
 	return nil
 }
 
-func (s *Storage) StoreCredentials(uid storage.UserId, credentials storage.UserCredentials) error {
+func (s *YdbStorage) StoreCredentials(uid UserId, credentials UserCredentials) error {
 	const op = "storage.ydb.StoreCredentials"
 	log.Printf("%s: start", op)
 	passwordHash, err := hashPassword(credentials.Password)
@@ -683,7 +653,7 @@ func (s *Storage) StoreCredentials(uid storage.UserId, credentials storage.UserC
 			table.CommitTx(),
 		)
 	)
-	err = s.db.Table().Do(s.ctx, func(ctx context.Context, s table.Session) (err error) {
+	err = s.Db.Table().Do(s.Ctx, func(ctx context.Context, s table.Session) (err error) {
 		_, res, err := s.Execute(ctx, writeTx, `
 DECLARE $id AS Text;
 DECLARE $email AS Text;
@@ -719,7 +689,7 @@ VALUES($email, False, NULL);
 	return nil
 }
 
-func (s *Storage) StorePushToken(uid storage.UserId, token string) error {
+func (s *YdbStorage) StorePushToken(uid UserId, token string) error {
 	const op = "storage.ydb.StorePushToken"
 	log.Printf("%s: start", op)
 	var (
@@ -730,7 +700,7 @@ func (s *Storage) StorePushToken(uid storage.UserId, token string) error {
 			table.CommitTx(),
 		)
 	)
-	err := s.db.Table().Do(s.ctx, func(ctx context.Context, s table.Session) (err error) {
+	err := s.Db.Table().Do(s.Ctx, func(ctx context.Context, s table.Session) (err error) {
 		_, res, err := s.Execute(ctx, writeTx, `
 DECLARE $id AS Text;
 DECLARE $token AS Text;
@@ -755,7 +725,7 @@ VALUES($id, $token);`,
 	return nil
 }
 
-func (s *Storage) GetPushToken(uid storage.UserId) (*string, error) {
+func (s *YdbStorage) GetPushToken(uid UserId) (*string, error) {
 	const op = "storage.ydb.GetPushToken"
 	log.Printf("%s: start", op)
 	var (
@@ -763,7 +733,7 @@ func (s *Storage) GetPushToken(uid storage.UserId) (*string, error) {
 		res    result.Result
 		token  *string
 	)
-	err := s.db.Table().Do(s.ctx, func(ctx context.Context, s table.Session) (err error) {
+	err := s.Db.Table().Do(s.Ctx, func(ctx context.Context, s table.Session) (err error) {
 		_, res, err = s.Execute(ctx, readTx, `
 DECLARE $id AS Text;
 SELECT 
@@ -799,7 +769,7 @@ WHERE
 	return token, nil
 }
 
-func (s *Storage) StoreDisplayName(uid storage.UserId, displayName string) error {
+func (s *YdbStorage) StoreDisplayName(uid UserId, displayName string) error {
 	const op = "storage.ydb.StoreDisplayName"
 	log.Printf("%s: start", op)
 	var (
@@ -810,7 +780,7 @@ func (s *Storage) StoreDisplayName(uid storage.UserId, displayName string) error
 			table.CommitTx(),
 		)
 	)
-	err := s.db.Table().Do(s.ctx, func(ctx context.Context, s table.Session) (err error) {
+	err := s.Db.Table().Do(s.Ctx, func(ctx context.Context, s table.Session) (err error) {
 		_, res, err := s.Execute(ctx, writeTx, `
 DECLARE $id AS Text;
 DECLARE $displayName AS Text;
@@ -838,20 +808,20 @@ WHERE
 	return nil
 }
 
-func (s *Storage) GetAvatarsBase64(aids []storage.AvatarId) (map[storage.AvatarId]storage.AvatarData, error) {
+func (s *YdbStorage) GetAvatarsBase64(aids []AvatarId) (map[AvatarId]AvatarData, error) {
 	const op = "storage.ydb.GetAvatarsBase64"
 	log.Printf("%s: start", op)
 
 	var (
 		readTx     = table.TxControl(table.BeginTx(table.WithOnlineReadOnly()), table.CommitTx())
 		unfiltered []types.Value
-		result     map[storage.AvatarId]storage.AvatarData
+		result     map[AvatarId]AvatarData
 	)
 	for i := 0; i < len(aids); i++ {
 		unfiltered = append(unfiltered, types.TextValue(string(aids[i])))
 	}
 
-	err := s.db.Table().Do(s.ctx,
+	err := s.Db.Table().Do(s.Ctx,
 		func(ctx context.Context, s table.Session) (err error) {
 			_, res, err := s.Execute(ctx, readTx, `
 DECLARE $aids AS List<Text>;
@@ -870,7 +840,7 @@ WHERE
 			}
 			defer res.Close()
 
-			result = map[storage.AvatarId]storage.AvatarData{}
+			result = map[AvatarId]AvatarData{}
 
 			for res.NextResultSet(ctx) {
 				for res.NextRow() {
@@ -880,7 +850,7 @@ WHERE
 					if err := res.Scan(&id, &data); err != nil {
 						return err
 					}
-					result[storage.AvatarId(id)] = storage.AvatarData{
+					result[AvatarId(id)] = AvatarData{
 						Base64Data: &data,
 					}
 				}
@@ -895,7 +865,7 @@ WHERE
 	return result, nil
 }
 
-func (s *Storage) StoreAvatarBase64(uid storage.UserId, data string) (storage.AvatarId, error) {
+func (s *YdbStorage) StoreAvatarBase64(uid UserId, data string) (AvatarId, error) {
 	const op = "storage.ydb.StoreAvatar"
 	log.Printf("%s: start", op)
 	var (
@@ -907,7 +877,7 @@ func (s *Storage) StoreAvatarBase64(uid storage.UserId, data string) (storage.Av
 		)
 		avatarId = uuid.New().String()
 	)
-	err := s.db.Table().Do(s.ctx, func(ctx context.Context, s table.Session) (err error) {
+	err := s.Db.Table().Do(s.Ctx, func(ctx context.Context, s table.Session) (err error) {
 		_, res, err := s.Execute(ctx, writeTx, `
 DECLARE $avatarId AS Text;
 DECLARE $data AS Text;
@@ -948,10 +918,10 @@ WHERE
 		log.Printf("%s: unexpected err %v", op, err)
 		return "", err
 	}
-	return storage.AvatarId(avatarId), nil
+	return AvatarId(avatarId), nil
 }
 
-func (s *Storage) GetRefreshToken(uid storage.UserId) (*string, error) {
+func (s *YdbStorage) GetRefreshToken(uid UserId) (*string, error) {
 	const op = "storage.ydb.GetRefreshToken"
 	log.Printf("%s: start", op)
 	var (
@@ -959,7 +929,7 @@ func (s *Storage) GetRefreshToken(uid storage.UserId) (*string, error) {
 		res    result.Result
 		token  *string
 	)
-	err := s.db.Table().Do(s.ctx, func(ctx context.Context, s table.Session) (err error) {
+	err := s.Db.Table().Do(s.Ctx, func(ctx context.Context, s table.Session) (err error) {
 		_, res, err = s.Execute(ctx, readTx, `
 DECLARE $id AS Text;
 SELECT 
@@ -995,7 +965,7 @@ WHERE
 	return token, nil
 }
 
-func (s *Storage) StoreRefreshToken(token string, uid storage.UserId) error {
+func (s *YdbStorage) StoreRefreshToken(token string, uid UserId) error {
 	const op = "storage.ydb.StoreRefreshToken"
 	log.Printf("%s: start", op)
 	var (
@@ -1006,7 +976,7 @@ func (s *Storage) StoreRefreshToken(token string, uid storage.UserId) error {
 			table.CommitTx(),
 		)
 	)
-	err := s.db.Table().Do(s.ctx, func(ctx context.Context, s table.Session) (err error) {
+	err := s.Db.Table().Do(s.Ctx, func(ctx context.Context, s table.Session) (err error) {
 		_, res, err := s.Execute(ctx, writeTx, `
 DECLARE $id AS Text;
 DECLARE $token AS Text;
@@ -1031,7 +1001,7 @@ VALUES($id, $token);`,
 	return nil
 }
 
-func (s *Storage) RemoveRefreshToken(uid storage.UserId) error {
+func (s *YdbStorage) RemoveRefreshToken(uid UserId) error {
 	const op = "storage.ydb.RemoveRefreshToken"
 	log.Printf("%s: start", op)
 	var (
@@ -1042,7 +1012,7 @@ func (s *Storage) RemoveRefreshToken(uid storage.UserId) error {
 			table.CommitTx(),
 		)
 	)
-	err := s.db.Table().Do(s.ctx, func(ctx context.Context, s table.Session) (err error) {
+	err := s.Db.Table().Do(s.Ctx, func(ctx context.Context, s table.Session) (err error) {
 		_, res, err := s.Execute(ctx, writeTx, `
 DECLARE $id AS Text;
 DELETE FROM 
@@ -1066,7 +1036,7 @@ WHERE
 	return nil
 }
 
-func (s *Storage) StoreFriendRequest(sender storage.UserId, target storage.UserId) error {
+func (s *YdbStorage) StoreFriendRequest(sender UserId, target UserId) error {
 	const op = "storage.ydb.StoreFriendRequest"
 	log.Printf("%s: start", op)
 	var (
@@ -1077,7 +1047,7 @@ func (s *Storage) StoreFriendRequest(sender storage.UserId, target storage.UserI
 			table.CommitTx(),
 		)
 	)
-	err := s.db.Table().Do(s.ctx, func(ctx context.Context, s table.Session) (err error) {
+	err := s.Db.Table().Do(s.Ctx, func(ctx context.Context, s table.Session) (err error) {
 		_, res, err := s.Execute(ctx, writeTx, `
 DECLARE $sender AS Text;
 DECLARE $target AS Text;
@@ -1102,7 +1072,7 @@ VALUES($sender, $target);`,
 	return nil
 }
 
-func (s *Storage) HasFriendRequest(sender storage.UserId, target storage.UserId) (bool, error) {
+func (s *YdbStorage) HasFriendRequest(sender UserId, target UserId) (bool, error) {
 	const op = "storage.ydb.HasFriendRequest"
 	log.Printf("%s: start", op)
 	var (
@@ -1110,7 +1080,7 @@ func (s *Storage) HasFriendRequest(sender storage.UserId, target storage.UserId)
 		res        result.Result
 		hasRequest bool
 	)
-	err := s.db.Table().Do(s.ctx, func(ctx context.Context, s table.Session) (err error) {
+	err := s.Db.Table().Do(s.Ctx, func(ctx context.Context, s table.Session) (err error) {
 		_, res, err = s.Execute(ctx, readTx, `
 DECLARE $sender AS Text;
 DECLARE $target AS Text;
@@ -1145,7 +1115,7 @@ WHERE
 	return hasRequest, nil
 }
 
-func (s *Storage) RemoveFriendRequest(sender storage.UserId, target storage.UserId) error {
+func (s *YdbStorage) RemoveFriendRequest(sender UserId, target UserId) error {
 	const op = "storage.ydb.RemoveFriendRequest"
 	log.Printf("%s: start", op)
 	var (
@@ -1156,7 +1126,7 @@ func (s *Storage) RemoveFriendRequest(sender storage.UserId, target storage.User
 			table.CommitTx(),
 		)
 	)
-	err := s.db.Table().Do(s.ctx, func(ctx context.Context, s table.Session) (err error) {
+	err := s.Db.Table().Do(s.Ctx, func(ctx context.Context, s table.Session) (err error) {
 		_, res, err := s.Execute(ctx, writeTx, `
 DECLARE $sender AS Text;
 DECLARE $target AS Text;
@@ -1182,7 +1152,7 @@ WHERE
 	return nil
 }
 
-func (s *Storage) StoreFriendship(friendA storage.UserId, friendB storage.UserId) error {
+func (s *YdbStorage) StoreFriendship(friendA UserId, friendB UserId) error {
 	const op = "storage.ydb.StoreFriendship"
 	log.Printf("%s: start", op)
 	if friendA > friendB {
@@ -1196,7 +1166,7 @@ func (s *Storage) StoreFriendship(friendA storage.UserId, friendB storage.UserId
 			table.CommitTx(),
 		)
 	)
-	err := s.db.Table().Do(s.ctx, func(ctx context.Context, s table.Session) (err error) {
+	err := s.Db.Table().Do(s.Ctx, func(ctx context.Context, s table.Session) (err error) {
 		_, res, err := s.Execute(ctx, writeTx, `
 DECLARE $friendA AS Text;
 DECLARE $friendB AS Text;
@@ -1221,7 +1191,7 @@ VALUES($friendA, $friendB);`,
 	return nil
 }
 
-func (s *Storage) HasFriendship(friendA storage.UserId, friendB storage.UserId) (bool, error) {
+func (s *YdbStorage) HasFriendship(friendA UserId, friendB UserId) (bool, error) {
 	const op = "storage.ydb.HasFriendship"
 	log.Printf("%s: start", op)
 	if friendA > friendB {
@@ -1232,7 +1202,7 @@ func (s *Storage) HasFriendship(friendA storage.UserId, friendB storage.UserId) 
 		res           result.Result
 		hasFriendship bool
 	)
-	err := s.db.Table().Do(s.ctx, func(ctx context.Context, s table.Session) (err error) {
+	err := s.Db.Table().Do(s.Ctx, func(ctx context.Context, s table.Session) (err error) {
 		_, res, err = s.Execute(ctx, readTx, `
 DECLARE $friendA AS Text;
 DECLARE $friendB AS Text;
@@ -1267,7 +1237,7 @@ WHERE
 	return hasFriendship, nil
 }
 
-func (s *Storage) RemoveFriendship(friendA storage.UserId, friendB storage.UserId) error {
+func (s *YdbStorage) RemoveFriendship(friendA UserId, friendB UserId) error {
 	const op = "storage.ydb.RemoveFriendship"
 	log.Printf("%s: start", op)
 	if friendA > friendB {
@@ -1281,7 +1251,7 @@ func (s *Storage) RemoveFriendship(friendA storage.UserId, friendB storage.UserI
 			table.CommitTx(),
 		)
 	)
-	err := s.db.Table().Do(s.ctx, func(ctx context.Context, s table.Session) (err error) {
+	err := s.Db.Table().Do(s.Ctx, func(ctx context.Context, s table.Session) (err error) {
 		_, res, err := s.Execute(ctx, writeTx, `
 DECLARE $friendA AS Text;
 DECLARE $friendB AS Text;
@@ -1307,14 +1277,14 @@ WHERE
 	return nil
 }
 
-func (s *Storage) GetFriends(uid storage.UserId) ([]storage.UserId, error) {
+func (s *YdbStorage) GetFriends(uid UserId) ([]UserId, error) {
 	const op = "storage.ydb.GetFriends"
 	log.Printf("%s: start", op)
 	var (
 		readTx  = table.TxControl(table.BeginTx(table.WithOnlineReadOnly()), table.CommitTx())
-		friends []storage.UserId
+		friends []UserId
 	)
-	err := s.db.Table().Do(s.ctx,
+	err := s.Db.Table().Do(s.Ctx,
 		func(ctx context.Context, s table.Session) (err error) {
 			_, res, err := s.Execute(ctx, readTx, `
 DECLARE $user AS Text;
@@ -1339,9 +1309,9 @@ WHERE
 						return err
 					}
 					if friendA == string(uid) {
-						friends = append(friends, storage.UserId(friendB))
+						friends = append(friends, UserId(friendB))
 					} else {
-						friends = append(friends, storage.UserId(friendA))
+						friends = append(friends, UserId(friendA))
 					}
 				}
 			}
@@ -1355,14 +1325,14 @@ WHERE
 	return friends, nil
 }
 
-func (s *Storage) GetIncomingRequests(uid storage.UserId) ([]storage.UserId, error) {
+func (s *YdbStorage) GetIncomingRequests(uid UserId) ([]UserId, error) {
 	const op = "storage.ydb.GetIncomingRequests"
 	log.Printf("%s: start", op)
 	var (
 		readTx  = table.TxControl(table.BeginTx(table.WithOnlineReadOnly()), table.CommitTx())
-		senders []storage.UserId
+		senders []UserId
 	)
-	err := s.db.Table().Do(s.ctx,
+	err := s.Db.Table().Do(s.Ctx,
 		func(ctx context.Context, s table.Session) (err error) {
 			_, res, err := s.Execute(ctx, readTx, `
 DECLARE $target AS Text;
@@ -1386,7 +1356,7 @@ WHERE
 					if err := res.Scan(&sender); err != nil {
 						return err
 					}
-					senders = append(senders, storage.UserId(sender))
+					senders = append(senders, UserId(sender))
 				}
 			}
 			return res.Err()
@@ -1399,14 +1369,14 @@ WHERE
 	return senders, nil
 }
 
-func (s *Storage) GetPendingRequests(uid storage.UserId) ([]storage.UserId, error) {
+func (s *YdbStorage) GetPendingRequests(uid UserId) ([]UserId, error) {
 	const op = "storage.ydb.GetIncomingRequests"
 	log.Printf("%s: start", op)
 	var (
 		readTx  = table.TxControl(table.BeginTx(table.WithOnlineReadOnly()), table.CommitTx())
-		targets []storage.UserId
+		targets []UserId
 	)
-	err := s.db.Table().Do(s.ctx,
+	err := s.Db.Table().Do(s.Ctx,
 		func(ctx context.Context, s table.Session) (err error) {
 			_, res, err := s.Execute(ctx, readTx, `
 DECLARE $sender AS Text;
@@ -1430,7 +1400,7 @@ WHERE
 					if err := res.Scan(&target); err != nil {
 						return err
 					}
-					targets = append(targets, storage.UserId(target))
+					targets = append(targets, UserId(target))
 				}
 			}
 			return res.Err()
@@ -1443,19 +1413,19 @@ WHERE
 	return targets, nil
 }
 
-func (s *Storage) getUsersWithoutFriendRelationInfo(ids []storage.UserId) ([]storage.User, error) {
+func (s *YdbStorage) getUsersWithoutFriendRelationInfo(ids []UserId) ([]User, error) {
 	const op = "storage.ydb.getUsersWithoutFriendRelationInfo"
 	log.Printf("%s: start args: %v", op, ids)
 	var (
 		readTx     = table.TxControl(table.BeginTx(table.WithOnlineReadOnly()), table.CommitTx())
 		unfiltered []types.Value
-		uids       []storage.User
+		uids       []User
 	)
 	for i := 0; i < len(ids); i++ {
 		unfiltered = append(unfiltered, types.TextValue(string(ids[i])))
 	}
 
-	err := s.db.Table().Do(s.ctx,
+	err := s.Db.Table().Do(s.Ctx,
 		func(ctx context.Context, s table.Session) (err error) {
 			_, res, err := s.Execute(ctx, readTx, `
 DECLARE $uids AS List<Text>;
@@ -1482,13 +1452,13 @@ WHERE
 					if err := res.Scan(&id, &displayName, &avatarId); err != nil {
 						return err
 					}
-					uids = append(uids, storage.User{
-						Id:          storage.UserId(id),
+					uids = append(uids, User{
+						Id:          UserId(id),
 						DisplayName: displayName,
-						Avatar: storage.Avatar{
-							Id: (*storage.AvatarId)(avatarId),
+						Avatar: Avatar{
+							Id: (*AvatarId)(avatarId),
 						},
-						FriendStatus: storage.FriendStatusNo,
+						FriendStatus: FriendStatusNo,
 					})
 				}
 			}
@@ -1502,16 +1472,16 @@ WHERE
 	return uids, nil
 }
 
-func (s *Storage) GetUsers(sender storage.UserId, ids []storage.UserId) ([]storage.User, error) {
+func (s *YdbStorage) GetUsers(sender UserId, ids []UserId) ([]User, error) {
 	const op = "storage.ydb.GetUsers"
 	log.Printf("%s: start args: %v", op, ids)
 	if len(ids) == 0 {
-		return []storage.User{}, nil
+		return []User{}, nil
 	}
 	users, err := s.getUsersWithoutFriendRelationInfo(ids)
 	if err != nil {
 		log.Printf("%s: filter invalid ids failed err %v", op, err)
-		return []storage.User{}, err
+		return []User{}, err
 	}
 	log.Printf("%s: found %d users", op, len(users))
 
@@ -1519,7 +1489,7 @@ func (s *Storage) GetUsers(sender storage.UserId, ids []storage.UserId) ([]stora
 	if err != nil {
 		log.Printf("%s: get pending friends failed %v", op, err)
 	}
-	pendingFriendsMap := map[storage.UserId]bool{}
+	pendingFriendsMap := map[UserId]bool{}
 	for i := 0; i < len(pendingFriends); i++ {
 		pendingFriendsMap[pendingFriends[i]] = true
 	}
@@ -1527,7 +1497,7 @@ func (s *Storage) GetUsers(sender storage.UserId, ids []storage.UserId) ([]stora
 	if err != nil {
 		log.Printf("%s: get incoming friends failed %v", op, err)
 	}
-	incomingFriendsMap := map[storage.UserId]bool{}
+	incomingFriendsMap := map[UserId]bool{}
 	for i := 0; i < len(incomingFriends); i++ {
 		incomingFriendsMap[incomingFriends[i]] = true
 	}
@@ -1535,40 +1505,40 @@ func (s *Storage) GetUsers(sender storage.UserId, ids []storage.UserId) ([]stora
 	if err != nil {
 		log.Printf("%s: get friends failed %v", op, err)
 	}
-	friendsMap := map[storage.UserId]bool{}
+	friendsMap := map[UserId]bool{}
 	for i := 0; i < len(friends); i++ {
 		friendsMap[friends[i]] = true
 	}
 
 	for i := 0; i < len(users); i++ {
-		var status storage.FriendStatus
+		var status FriendStatus
 		if users[i].Id == sender {
-			status = storage.FriendStatusMe
+			status = FriendStatusMe
 		} else if pendingFriendsMap[users[i].Id] {
-			status = storage.FriendStatusOutgoingRequest
+			status = FriendStatusOutgoingRequest
 		} else if incomingFriendsMap[users[i].Id] {
-			status = storage.FriendStatusIncomingRequest
+			status = FriendStatusIncomingRequest
 		} else if friendsMap[users[i].Id] {
-			status = storage.FriendStatusFriends
+			status = FriendStatusFriends
 		} else {
-			status = storage.FriendStatusNo
+			status = FriendStatusNo
 		}
 		users[i].FriendStatus = status
 	}
 	return users, nil
 }
 
-func (s *Storage) SearchUsers(sender storage.UserId, query string) ([]storage.User, error) {
+func (s *YdbStorage) SearchUsers(sender UserId, query string) ([]User, error) {
 	const op = "storage.ydb.SearchUsers"
 	log.Printf("%s: start", op)
 	if len(query) == 0 {
-		return []storage.User{}, nil
+		return []User{}, nil
 	}
 	var (
 		readTx  = table.TxControl(table.BeginTx(table.WithOnlineReadOnly()), table.CommitTx())
-		targets []storage.UserId
+		targets []UserId
 	)
-	err := s.db.Table().Do(s.ctx,
+	err := s.Db.Table().Do(s.Ctx,
 		func(ctx context.Context, s table.Session) (err error) {
 			_, res, err := s.Execute(ctx, readTx, fmt.Sprintf(`
 DECLARE $query AS Text;
@@ -1592,7 +1562,7 @@ WHERE
 					if err := res.Scan(&sender); err != nil {
 						return err
 					}
-					targets = append(targets, storage.UserId(sender))
+					targets = append(targets, UserId(sender))
 				}
 			}
 			return res.Err()
@@ -1600,12 +1570,12 @@ WHERE
 	)
 	if err != nil {
 		log.Printf("%s: unexpected err %v", op, err)
-		return []storage.User{}, err
+		return []User{}, err
 	}
 	return s.GetUsers(sender, targets)
 }
 
-func (s *Storage) InsertDeal(deal storage.Deal) (storage.DealId, error) {
+func (s *YdbStorage) InsertDeal(deal Deal) (DealId, error) {
 	const op = "storage.ydb.InsertDeal"
 	log.Printf("%s: start", op)
 	var (
@@ -1615,9 +1585,9 @@ func (s *Storage) InsertDeal(deal storage.Deal) (storage.DealId, error) {
 			),
 			table.CommitTx(),
 		)
-		dealId = storage.DealId(uuid.New().String())
+		dealId = DealId(uuid.New().String())
 	)
-	err := s.db.Table().Do(s.ctx, func(ctx context.Context, s table.Session) (err error) {
+	err := s.Db.Table().Do(s.Ctx, func(ctx context.Context, s table.Session) (err error) {
 		_, res, err := s.Execute(ctx, writeTx, `
 DECLARE $id AS Text;
 DECLARE $timestamp AS Int64;
@@ -1670,14 +1640,14 @@ VALUES($id, $dealId, $cost, $counterparty);`,
 	return dealId, nil
 }
 
-func (s *Storage) GetDeal(did storage.DealId) (*storage.IdentifiableDeal, error) {
+func (s *YdbStorage) GetDeal(did DealId) (*IdentifiableDeal, error) {
 	const op = "storage.ydb.GetDeal"
 	log.Printf("%s: start", op)
 	var (
 		readTx = table.TxControl(table.BeginTx(table.WithOnlineReadOnly()), table.CommitTx())
-		deal   *storage.IdentifiableDeal
+		deal   *IdentifiableDeal
 	)
-	err := s.db.Table().Do(s.ctx, func(ctx context.Context, s table.Session) (err error) {
+	err := s.Db.Table().Do(s.Ctx, func(ctx context.Context, s table.Session) (err error) {
 		_, res, err := s.Execute(ctx, readTx, `
 DECLARE $id AS Text;
 SELECT 
@@ -1701,9 +1671,9 @@ WHERE
 		defer res.Close()
 		for res.NextResultSet(ctx) {
 			for res.NextRow() {
-				var _deal storage.IdentifiableDeal
+				var _deal IdentifiableDeal
 				if deal == nil {
-					_deal = storage.IdentifiableDeal{}
+					_deal = IdentifiableDeal{}
 				} else {
 					_deal = *deal
 				}
@@ -1717,7 +1687,7 @@ WHERE
 					&_deal.Currency,
 					&cost,
 					&counterparty)
-				_deal.Spendings = append(_deal.Spendings, storage.Spending{UserId: storage.UserId(counterparty), Cost: cost})
+				_deal.Spendings = append(_deal.Spendings, Spending{UserId: UserId(counterparty), Cost: cost})
 				deal = &_deal
 			}
 		}
@@ -1733,7 +1703,7 @@ WHERE
 	return deal, nil
 }
 
-func (s *Storage) RemoveDeal(did storage.DealId) error {
+func (s *YdbStorage) RemoveDeal(did DealId) error {
 	const op = "storage.ydb.RemoveDeal"
 	log.Printf("%s: start", op)
 	var (
@@ -1744,7 +1714,7 @@ func (s *Storage) RemoveDeal(did storage.DealId) error {
 			table.CommitTx(),
 		)
 	)
-	err := s.db.Table().Do(s.ctx, func(ctx context.Context, s table.Session) (err error) {
+	err := s.Db.Table().Do(s.Ctx, func(ctx context.Context, s table.Session) (err error) {
 		_, res, err := s.Execute(ctx, writeTx, `
 DECLARE $id AS Text;
 DELETE FROM 
@@ -1782,7 +1752,7 @@ WHERE
 	return nil
 }
 
-func (s *Storage) GetDeals(counterparty1 storage.UserId, counterparty2 storage.UserId) ([]storage.IdentifiableDeal, error) {
+func (s *YdbStorage) GetDeals(counterparty1 UserId, counterparty2 UserId) ([]IdentifiableDeal, error) {
 	const op = "storage.ydb.GetDeals"
 	log.Printf("%s: start", op)
 	var (
@@ -1792,9 +1762,9 @@ func (s *Storage) GetDeals(counterparty1 storage.UserId, counterparty2 storage.U
 			),
 			table.CommitTx(),
 		)
-		deals = []storage.IdentifiableDeal{}
+		deals = []IdentifiableDeal{}
 	)
-	err := s.db.Table().Do(s.ctx,
+	err := s.Db.Table().Do(s.Ctx,
 		func(ctx context.Context, s table.Session) (err error) {
 			var (
 				res result.Result
@@ -1830,8 +1800,8 @@ WHERE
 			log.Printf("> select_simple_transaction:\n")
 			for res.NextResultSet(ctx) {
 				for res.NextRow() {
-					deal := storage.IdentifiableDeal{}
-					deal.Spendings = make([]storage.Spending, 2)
+					deal := IdentifiableDeal{}
+					deal.Spendings = make([]Spending, 2)
 					var uid1 string
 					var uid2 string
 					var did string
@@ -1848,9 +1818,9 @@ WHERE
 					if err != nil {
 						return err
 					}
-					deal.Id = storage.DealId(did)
-					deal.Spendings[0].UserId = storage.UserId(uid1)
-					deal.Spendings[1].UserId = storage.UserId(uid2)
+					deal.Id = DealId(did)
+					deal.Spendings[0].UserId = UserId(uid1)
+					deal.Spendings[1].UserId = UserId(uid2)
 					deals = append(deals, deal)
 				}
 			}
@@ -1864,14 +1834,14 @@ WHERE
 	return deals, nil
 }
 
-func (s *Storage) GetCounterpartiesForDeal(did storage.DealId) ([]storage.UserId, error) {
+func (s *YdbStorage) GetCounterpartiesForDeal(did DealId) ([]UserId, error) {
 	const op = "storage.ydb.GetCounterpartiesForDeal"
 	log.Printf("%s: start", op)
 	var (
 		readTx         = table.TxControl(table.BeginTx(table.WithOnlineReadOnly()), table.CommitTx())
-		counterparties []storage.UserId
+		counterparties []UserId
 	)
-	err := s.db.Table().Do(s.ctx,
+	err := s.Db.Table().Do(s.Ctx,
 		func(ctx context.Context, s table.Session) (err error) {
 			_, res, err := s.Execute(ctx, readTx, `
 DECLARE $dealId AS Text;
@@ -1895,7 +1865,7 @@ WHERE
 					if err := res.Scan(&counterparty); err != nil {
 						return err
 					}
-					counterparties = append(counterparties, storage.UserId(counterparty))
+					counterparties = append(counterparties, UserId(counterparty))
 				}
 			}
 			return res.Err()
@@ -1908,7 +1878,7 @@ WHERE
 	return counterparties, nil
 }
 
-func (s *Storage) GetCounterparties(target storage.UserId) ([]storage.SpendingsPreview, error) {
+func (s *YdbStorage) GetCounterparties(target UserId) ([]SpendingsPreview, error) {
 	const op = "storage.ydb.GetCounterparties"
 	log.Printf("%s: start", op)
 	var (
@@ -1918,9 +1888,9 @@ func (s *Storage) GetCounterparties(target storage.UserId) ([]storage.SpendingsP
 			),
 			table.CommitTx(),
 		)
-		spendingsMap = map[string]storage.SpendingsPreview{}
+		spendingsMap = map[string]SpendingsPreview{}
 	)
-	err := s.db.Table().Do(s.ctx,
+	err := s.Db.Table().Do(s.Ctx,
 		func(ctx context.Context, s table.Session) (err error) {
 			var (
 				res      result.Result
@@ -1960,7 +1930,7 @@ WHERE
 					}
 					_, ok := spendingsMap[user]
 					if !ok {
-						spendingsMap[user] = storage.SpendingsPreview{
+						spendingsMap[user] = SpendingsPreview{
 							Counterparty: user,
 							Balance:      map[string]int64{},
 						}
@@ -1971,7 +1941,7 @@ WHERE
 			return res.Err()
 		},
 	)
-	spendings := make([]storage.SpendingsPreview, 0, len(spendingsMap))
+	spendings := make([]SpendingsPreview, 0, len(spendingsMap))
 	if err != nil {
 		log.Printf("%s: unexpected err %v", op, err)
 		return spendings, err
@@ -1983,7 +1953,7 @@ WHERE
 	return spendings, nil
 }
 
-func (s *Storage) Close() {
+func (s *YdbStorage) Close() {
 	log.Printf("storage closed")
-	s.db.Close(s.ctx)
+	s.Db.Close(s.Ctx)
 }

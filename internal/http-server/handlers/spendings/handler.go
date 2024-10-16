@@ -2,17 +2,19 @@ package spendings
 
 import (
 	"net/http"
+	"verni/internal/apns"
 	"verni/internal/auth/jwt"
+	spendingsController "verni/internal/controllers/spendings"
 	httpserver "verni/internal/http-server"
+	"verni/internal/http-server/longpoll"
 	"verni/internal/http-server/middleware"
 	"verni/internal/http-server/responses"
-	spendingsController "verni/internal/http-server/router/spendings"
 	"verni/internal/storage"
 
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes(router *gin.Engine, db storage.Storage, jwtService jwt.Service) {
+func RegisterRoutes(router *gin.Engine, db storage.Storage, jwtService jwt.Service, apns apns.Service, longpoll longpoll.Service) {
 	ensureLoggedIn := middleware.EnsureLoggedIn(db, jwtService)
 	hostFromToken := func(c *gin.Context) spendingsController.UserId {
 		return spendingsController.UserId(c.Request.Header.Get(middleware.LoggedInSubjectKey))

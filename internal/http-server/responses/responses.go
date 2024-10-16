@@ -2,6 +2,7 @@ package responses
 
 import (
 	"fmt"
+	"verni/internal/common"
 )
 
 type Code int
@@ -41,21 +42,14 @@ func Success[T any](result T) Response[T] {
 	}
 }
 
-func Failure(error Error) Response[Error] {
-	if error.Description == nil {
-		message := error.Code.Message()
-		return Response[Error]{
-			Status: "failed",
-			Response: Error{
-				Code:        error.Code,
-				Description: &message,
-			},
-		}
-	} else {
-		return Response[Error]{
-			Status:   "failed",
-			Response: error,
-		}
+func Failure(error common.CodeBasedError[Code]) Response[Error] {
+	description := error.Error()
+	return Response[Error]{
+		Status: "failed",
+		Response: Error{
+			Code:        error.Code,
+			Description: &description,
+		},
 	}
 }
 

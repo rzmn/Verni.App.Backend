@@ -28,7 +28,7 @@ type Controller interface {
 func DefaultController(
 	storage storage.Storage,
 	jwtService jwt.Service,
-	confirmation confirmation.EmailConfirmation,
+	confirmation confirmation.Service,
 ) Controller {
 	return &defaultController{
 		storage: storage,

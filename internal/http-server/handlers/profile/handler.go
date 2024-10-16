@@ -3,10 +3,10 @@ package profile
 import (
 	"net/http"
 	"verni/internal/auth/jwt"
+	profileController "verni/internal/controllers/profile"
 	httpserver "verni/internal/http-server"
 	"verni/internal/http-server/middleware"
 	"verni/internal/http-server/responses"
-	profileController "verni/internal/http-server/router/profile"
 	"verni/internal/storage"
 
 	"github.com/gin-gonic/gin"
@@ -24,14 +24,7 @@ func RegisterRoutes(router *gin.Engine, db storage.Storage, jwtService jwt.Servi
 		if err != nil {
 			switch err.Code {
 			case profileController.GetInfoErrorNotFound:
-				c.JSON(
-					http.StatusConflict,
-					responses.Failure(
-						responses.Error{
-							Code: responses.CodeNoSuchUser,
-						},
-					),
-				)
+				httpserver.Answer(c, err, http.StatusConflict, responses.CodeNoSuchRequest)
 			default:
 				httpserver.AnswerWithUnknownError(c, err)
 			}

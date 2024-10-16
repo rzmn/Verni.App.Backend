@@ -4,21 +4,21 @@ import (
 	"net/http"
 	"verni/internal/auth/confirmation"
 	"verni/internal/auth/jwt"
+	authController "verni/internal/controllers/auth"
 	httpserver "verni/internal/http-server"
 	"verni/internal/http-server/middleware"
 	"verni/internal/http-server/responses"
-	authController "verni/internal/http-server/router/auth"
 	"verni/internal/storage"
 
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes(router *gin.Engine, db storage.Storage, jwtService jwt.Service) {
+func RegisterRoutes(router *gin.Engine, db storage.Storage, jwtService jwt.Service, emailConfirmation confirmation.Service) {
 	ensureLoggedIn := middleware.EnsureLoggedIn(db, jwtService)
 	hostFromToken := func(c *gin.Context) storage.UserId {
 		return storage.UserId(c.Request.Header.Get(middleware.LoggedInSubjectKey))
 	}
-	controller := authController.DefaultController(db, jwtService, confirmation.EmailConfirmation{})
+	controller := authController.DefaultController(db, jwtService, emailConfirmation)
 	router.PUT("/auth/signup", func(c *gin.Context) {
 		type SignupRequest struct {
 			Credentials storage.UserCredentials `json:"credentials"`
@@ -32,23 +32,9 @@ func RegisterRoutes(router *gin.Engine, db storage.Storage, jwtService jwt.Servi
 		if err != nil {
 			switch err.Code {
 			case authController.SignupErrorAlreadyTaken:
-				c.JSON(
-					http.StatusConflict,
-					responses.Failure(
-						responses.Error{
-							Code: responses.CodeAlreadyTaken,
-						},
-					),
-				)
+				httpserver.Answer(c, err, http.StatusConflict, responses.CodeAlreadyTaken)
 			case authController.SignupErrorWrongFormat:
-				c.JSON(
-					http.StatusUnprocessableEntity,
-					responses.Failure(
-						responses.Error{
-							Code: responses.CodeWrongFormat,
-						},
-					),
-				)
+				httpserver.Answer(c, err, http.StatusUnprocessableEntity, responses.CodeWrongFormat)
 			default:
 				httpserver.AnswerWithUnknownError(c, err)
 			}

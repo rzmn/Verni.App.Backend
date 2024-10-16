@@ -22,15 +22,25 @@ func (e *CodeBasedError[_]) Error() string {
 	}
 }
 
-func NewError[Code ErrorCode](code Code) *CodeBasedError[Code] {
-	return &CodeBasedError[Code]{
+func NewErrorValue[Code ErrorCode](code Code) CodeBasedError[Code] {
+	return CodeBasedError[Code]{
 		Code: code,
 	}
 }
 
-func NewErrorWithDescription[Code ErrorCode](code Code, description string) *CodeBasedError[Code] {
-	return &CodeBasedError[Code]{
+func NewError[Code ErrorCode](code Code) *CodeBasedError[Code] {
+	value := NewErrorValue(code)
+	return &value
+}
+
+func NewErrorWithDescriptionValue[Code ErrorCode](code Code, description string) CodeBasedError[Code] {
+	return CodeBasedError[Code]{
 		Code:        code,
 		Description: &description,
 	}
+}
+
+func NewErrorWithDescription[Code ErrorCode](code Code, description string) *CodeBasedError[Code] {
+	value := NewErrorWithDescriptionValue(code, description)
+	return &value
 }

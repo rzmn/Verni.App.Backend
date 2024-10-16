@@ -3,9 +3,9 @@ package avatars
 import (
 	"net/http"
 	"verni/internal/common"
+	avatarsController "verni/internal/controllers/avatars"
 	httpserver "verni/internal/http-server"
 	"verni/internal/http-server/responses"
-	avatarsController "verni/internal/http-server/router/avatars"
 	"verni/internal/storage"
 
 	"github.com/gin-gonic/gin"

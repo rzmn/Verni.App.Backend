@@ -1,5 +1,14 @@
 package storage
 
+import (
+	"context"
+	"fmt"
+	"log"
+
+	"github.com/ydb-platform/ydb-go-sdk/v3"
+	yc "github.com/ydb-platform/ydb-go-yc"
+)
+
 type FriendStatus int
 
 const (
@@ -70,8 +79,6 @@ type SpendingsPreview struct {
 	Balance      map[string]int64 `json:"balance"`
 }
 
-type LongPollUpdatePayload struct{}
-
 type Storage interface {
 	GetAccountInfo(uid UserId) (*ProfileInfo, error)
 
@@ -124,4 +131,18 @@ type Storage interface {
 	GetCounterpartiesForDeal(did DealId) ([]UserId, error)
 
 	Close()
+}
+
+func YDB(storagePath string, keyPath string) (Storage, error) {
+	const op = "storage.ydb.New"
+	ctx := context.Background()
+	db, err := ydb.Open(ctx, storagePath, yc.WithServiceAccountKeyFileCredentials(keyPath))
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	log.Printf("%s: connection created", op)
+	return &YdbStorage{
+		Db:  db,
+		Ctx: ctx,
+	}, nil
 }

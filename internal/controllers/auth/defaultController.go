@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"errors"
 	"log"
 	"verni/internal/auth/confirmation"
 	"verni/internal/auth/jwt"
@@ -14,7 +13,7 @@ import (
 type defaultController struct {
 	storage      storage.Storage
 	jwtService   jwt.Service
-	confirmation confirmation.EmailConfirmation
+	confirmation confirmation.Service
 }
 
 func (c *defaultController) Signup(email string, password string) (Session, *common.CodeBasedError[SignupErrorCode]) {
@@ -273,10 +272,11 @@ func (c *defaultController) SendEmailConfirmationCode(id UserId) *common.CodeBas
 		return common.NewError(SendEmailConfirmationCodeErrorAlreadyConfirmed)
 	}
 	if err := c.confirmation.SendConfirmationCode(account.Email); err != nil {
-		if errors.Is(err, confirmation.ErrNotDeliveded) {
+		switch err.Code {
+		case confirmation.SendConfirmationCodeErrorNotDelivered:
 			log.Printf("%s: confirmation message is not delivered, %v", op, err)
 			return common.NewErrorWithDescription(SendEmailConfirmationCodeErrorNotDelivered, err.Error())
-		} else {
+		default:
 			log.Printf("%s: confirmation message send failed %v", op, err)
 			return common.NewErrorWithDescription(SendEmailConfirmationCodeErrorInternal, err.Error())
 		}
@@ -299,9 +299,10 @@ func (c *defaultController) ConfirmEmail(code string, id UserId) *common.CodeBas
 	}
 	if err := c.confirmation.ConfirmEmail(account.Email, code); err != nil {
 		log.Printf("%s: confirmation failed err: %v", op, err)
-		if errors.Is(err, confirmation.ErrCodeDidNotMatch) {
+		switch err.Code {
+		case confirmation.ConfirmEmailErrorWrongConfirmationCode:
 			return common.NewErrorWithDescription(ConfirmEmailErrorWrongConfirmationCode, err.Error())
-		} else {
+		default:
 			return common.NewErrorWithDescription(ConfirmEmailErrorInternal, err.Error())
 		}
 	}

@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"verni/internal/auth/jwt"
 	"verni/internal/common"
+	usersController "verni/internal/controllers/users"
 	httpserver "verni/internal/http-server"
 	"verni/internal/http-server/middleware"
 	"verni/internal/http-server/responses"
-	usersController "verni/internal/http-server/router/users"
 	"verni/internal/storage"
 
 	"github.com/gin-gonic/gin"

@@ -3,10 +3,8 @@ package storage_test
 import (
 	"log"
 	"math/rand"
-	"os"
 	"testing"
 	"verni/internal/storage"
-	"verni/internal/storage/ydbStorage"
 
 	"github.com/google/uuid"
 )
@@ -36,12 +34,13 @@ func getStorage(t *testing.T) storage.Storage {
 	if _s != nil {
 		return *_s
 	}
-	storage, err := ydbStorage.New(os.Getenv("YDB_TEST_ENDPOINT"), "./ydbStorage/key.json")
-	if err != nil {
-		t.Fatalf("%v", err)
-	}
-	_s = &storage
-	return storage
+	return nil
+	// storage, err := ydbStorage.New(os.Getenv("YDB_TEST_ENDPOINT"), "./ydbStorage/key.json")
+	// if err != nil {
+	// 	t.Fatalf("%v", err)
+	// }
+	// _s = &storage
+	// return storage
 }
 
 func TestIsUserExistsFalse(t *testing.T) {
