@@ -41,6 +41,7 @@ func main() {
 		Storage     Module `json:"storage"`
 		Apns        Module `json:"apns"`
 		EmailSender Module `json:"emailSender"`
+		Jwt         Module `json:"jwt"`
 		Server      Module `json:"server"`
 	}
 	var config Config
@@ -102,13 +103,32 @@ func main() {
 			return nil
 		}
 	}()
-	jwtService := jwt.DefaultService(
-		time.Hour*24*30,
-		time.Hour,
-		func() time.Time {
-			return time.Now()
-		},
-	)
+	jwtService := func() jwt.Service {
+		switch config.Jwt.Type {
+		case "default":
+			type DefaultConfig struct {
+				AccessTokenLifetimeHours  int `json:"accessTokenLifetimeHours"`
+				RefreshTokenLifetimeHours int `json:"refreshTokenLifetimeHours"`
+			}
+			data, err := json.Marshal(config.Jwt.Config)
+			if err != nil {
+				log.Fatalf("failed to serialize jwt config err: %v", err)
+			}
+			var defaultConfig DefaultConfig
+			json.Unmarshal(data, &defaultConfig)
+			log.Printf("creating jwt token service with config %v", defaultConfig)
+			return jwt.DefaultService(
+				time.Hour*time.Duration(defaultConfig.RefreshTokenLifetimeHours),
+				time.Hour*time.Duration(defaultConfig.AccessTokenLifetimeHours),
+				func() time.Time {
+					return time.Now()
+				},
+			)
+		default:
+			log.Fatalf("unknown jwt service type %s", config.Jwt.Type)
+			return nil
+		}
+	}()
 	emailConfirmation := func() confirmation.Service {
 		switch config.EmailSender.Type {
 		case "yandex":
