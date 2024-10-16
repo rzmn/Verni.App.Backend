@@ -11,7 +11,7 @@ type Service interface {
 }
 
 func YandexService(storage storage.Storage, sender string, password string, host string, port string) Service {
-	return &defaultService{
+	return &yandexService{
 		Storage:  storage,
 		Sender:   sender,
 		Password: password,

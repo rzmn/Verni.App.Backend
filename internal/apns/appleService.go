@@ -9,7 +9,7 @@ import (
 	"github.com/sideshow/apns2"
 )
 
-type defaultService struct {
+type appleService struct {
 	client  *apns2.Client
 	storage storage.Storage
 }
@@ -47,7 +47,7 @@ type Config struct {
 	Password string `json:"cert_pwd"`
 }
 
-func (s *defaultService) FriendRequestHasBeenAccepted(receiver UserId, acceptedBy UserId) {
+func (s *appleService) FriendRequestHasBeenAccepted(receiver UserId, acceptedBy UserId) {
 	const op = "apns.defaultService.FriendRequestHasBeenAccepted"
 	log.Printf("%s: start[receiver=%s acceptedBy=%s]", op, receiver, acceptedBy)
 	receiverToken, err := s.storage.GetPushToken(storage.UserId(receiver))
@@ -92,7 +92,7 @@ func (s *defaultService) FriendRequestHasBeenAccepted(receiver UserId, acceptedB
 	log.Printf("%s: success[receiver=%s acceptedBy=%s]", op, receiver, acceptedBy)
 }
 
-func (s *defaultService) FriendRequestHasBeenReceived(receiver UserId, sentBy UserId) {
+func (s *appleService) FriendRequestHasBeenReceived(receiver UserId, sentBy UserId) {
 	const op = "apns.defaultService.FriendRequestHasBeenReceived"
 	log.Printf("%s: start[receiver=%s sentBy=%s]", op, receiver, sentBy)
 	receiverToken, err := s.storage.GetPushToken(storage.UserId(receiver))
@@ -137,7 +137,7 @@ func (s *defaultService) FriendRequestHasBeenReceived(receiver UserId, sentBy Us
 	log.Printf("%s: success[receiver=%s sentBy=%s]", op, receiver, sentBy)
 }
 
-func (s *defaultService) NewExpenseReceived(receiver UserId, deal Deal, author UserId) {
+func (s *appleService) NewExpenseReceived(receiver UserId, deal Deal, author UserId) {
 	const op = "apns.defaultService.NewExpenseReceived"
 	log.Printf("%s: start[receiver=%s did=%s author=%s]", op, receiver, deal.Id, author)
 	receiverToken, err := s.storage.GetPushToken(storage.UserId(receiver))
@@ -192,7 +192,7 @@ func (s *defaultService) NewExpenseReceived(receiver UserId, deal Deal, author U
 	log.Printf("%s: success[receiver=%s did=%s author=%s]", op, receiver, deal.Id, author)
 }
 
-func (s *defaultService) send(token string, payloadString string) error {
+func (s *appleService) send(token string, payloadString string) error {
 	const op = "apns.defaultService.send"
 	notification := &apns2.Notification{}
 	notification.DeviceToken = token

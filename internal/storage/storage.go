@@ -141,7 +141,7 @@ func YDB(storagePath string, keyPath string) (Storage, error) {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 	log.Printf("%s: connection created", op)
-	return &YdbStorage{
+	return &ydbStorage{
 		Db:  db,
 		Ctx: ctx,
 	}, nil

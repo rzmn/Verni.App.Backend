@@ -9,7 +9,7 @@ import (
 	"verni/internal/storage"
 )
 
-type defaultService struct {
+type yandexService struct {
 	Storage  storage.Storage
 	Sender   string
 	Password string
@@ -17,7 +17,7 @@ type defaultService struct {
 	Port     string
 }
 
-func (s *defaultService) SendConfirmationCode(email string) *common.CodeBasedError[SendConfirmationCodeErrorCode] {
+func (s *yandexService) SendConfirmationCode(email string) *common.CodeBasedError[SendConfirmationCodeErrorCode] {
 	const op = "confirmation.EmailConfirmation.SendConfirmationCode"
 	log.Printf("%s: start", op)
 	code := fmt.Sprintf("%d", generate6DigitCode())
@@ -45,7 +45,7 @@ func (s *defaultService) SendConfirmationCode(email string) *common.CodeBasedErr
 	return nil
 }
 
-func (s *defaultService) ConfirmEmail(email string, code string) *common.CodeBasedError[ConfirmEmailErrorCode] {
+func (s *yandexService) ConfirmEmail(email string, code string) *common.CodeBasedError[ConfirmEmailErrorCode] {
 	const op = "confirmation.EmailConfirmation.ConfirmEmail"
 	log.Printf("%s: start", op)
 	sentCode, err := s.Storage.ExtractEmailValidationToken(email)

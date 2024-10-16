@@ -16,12 +16,12 @@ import (
 	"github.com/ydb-platform/ydb-go-sdk/v3/table/types"
 )
 
-type YdbStorage struct {
+type ydbStorage struct {
 	Db  *ydb.Driver
 	Ctx context.Context
 }
 
-func (s *YdbStorage) CreateTables() error {
+func (s *ydbStorage) CreateTables() error {
 	const op = "storage.ydb.CreateTables"
 	dbName := s.Db.Name()
 	err := s.Db.Table().Do(s.Ctx,
@@ -133,7 +133,7 @@ func checkPasswordHash(password, hash string) bool {
 	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)) == nil
 }
 
-func (s *YdbStorage) GetAccountInfo(uid UserId) (*ProfileInfo, error) {
+func (s *ydbStorage) GetAccountInfo(uid UserId) (*ProfileInfo, error) {
 	const op = "storage.ydb.GetAccountInfo"
 	log.Printf("%s: start", op)
 	var (
@@ -197,7 +197,7 @@ WHERE
 	return result, nil
 }
 
-func (s *YdbStorage) GetUserId(email string) (*UserId, error) {
+func (s *ydbStorage) GetUserId(email string) (*UserId, error) {
 	const op = "storage.ydb.GetUserId"
 	log.Printf("%s: start", op)
 	var (
@@ -242,7 +242,7 @@ WHERE
 	return uid, nil
 }
 
-func (s *YdbStorage) StoreEmailValidationToken(email string, token string) error {
+func (s *ydbStorage) StoreEmailValidationToken(email string, token string) error {
 	const op = "storage.ydb.StoreEmailValidationToken"
 	log.Printf("%s: start", op)
 	var (
@@ -278,7 +278,7 @@ VALUES($email, False, $validationToken);`,
 	return nil
 }
 
-func (s *YdbStorage) ExtractEmailValidationToken(email string) (*string, error) {
+func (s *ydbStorage) ExtractEmailValidationToken(email string) (*string, error) {
 	const op = "storage.ydb.ExtractEmailValidationToken"
 	log.Printf("%s: start", op)
 	var (
@@ -345,7 +345,7 @@ VALUES($email, False, NULL);`,
 	return token, nil
 }
 
-func (s *YdbStorage) ValidateEmail(email string) error {
+func (s *ydbStorage) ValidateEmail(email string) error {
 	const op = "storage.ydb.ValidateEmail"
 	log.Printf("%s: start", op)
 	var (
@@ -379,7 +379,7 @@ VALUES($email, True, NULL);`,
 	return nil
 }
 
-func (s *YdbStorage) UpdateEmail(uid UserId, email string) error {
+func (s *ydbStorage) UpdateEmail(uid UserId, email string) error {
 	const op = "storage.ydb.UpdateEmail"
 	log.Printf("%s: start", op)
 	var (
@@ -428,7 +428,7 @@ VALUES($email, False, NULL);
 	return nil
 }
 
-func (s *YdbStorage) IsEmailExists(email string) (bool, error) {
+func (s *ydbStorage) IsEmailExists(email string) (bool, error) {
 	const op = "storage.ydb.IsEmailExists"
 	log.Printf("%s: start", op)
 	var (
@@ -466,7 +466,7 @@ WHERE
 	return exists, nil
 }
 
-func (s *YdbStorage) IsUserExists(uid UserId) (bool, error) {
+func (s *ydbStorage) IsUserExists(uid UserId) (bool, error) {
 	const op = "storage.ydb.IsUserExists"
 	log.Printf("%s: start", op)
 	var (
@@ -504,7 +504,7 @@ WHERE
 	return exists, nil
 }
 
-func (s *YdbStorage) CheckCredentials(credentials UserCredentials) (bool, error) {
+func (s *ydbStorage) CheckCredentials(credentials UserCredentials) (bool, error) {
 	const op = "storage.ydb.CheckCredentials"
 	log.Printf("%s: start", op)
 	var (
@@ -548,7 +548,7 @@ WHERE
 	return passed, nil
 }
 
-func (s *YdbStorage) CheckPasswordForId(uid UserId, password string) (bool, error) {
+func (s *ydbStorage) CheckPasswordForId(uid UserId, password string) (bool, error) {
 	const op = "storage.ydb.CheckPasswordForId"
 	log.Printf("%s: start", op)
 	var (
@@ -592,7 +592,7 @@ WHERE
 	return passed, nil
 }
 
-func (s *YdbStorage) UpdatePasswordForId(uid UserId, password string) error {
+func (s *ydbStorage) UpdatePasswordForId(uid UserId, password string) error {
 	const op = "storage.ydb.UpdatePasswordForId"
 	log.Printf("%s: start", op)
 	passwordHash, err := hashPassword(password)
@@ -637,7 +637,7 @@ WHERE
 	return nil
 }
 
-func (s *YdbStorage) StoreCredentials(uid UserId, credentials UserCredentials) error {
+func (s *ydbStorage) StoreCredentials(uid UserId, credentials UserCredentials) error {
 	const op = "storage.ydb.StoreCredentials"
 	log.Printf("%s: start", op)
 	passwordHash, err := hashPassword(credentials.Password)
@@ -689,7 +689,7 @@ VALUES($email, False, NULL);
 	return nil
 }
 
-func (s *YdbStorage) StorePushToken(uid UserId, token string) error {
+func (s *ydbStorage) StorePushToken(uid UserId, token string) error {
 	const op = "storage.ydb.StorePushToken"
 	log.Printf("%s: start", op)
 	var (
@@ -725,7 +725,7 @@ VALUES($id, $token);`,
 	return nil
 }
 
-func (s *YdbStorage) GetPushToken(uid UserId) (*string, error) {
+func (s *ydbStorage) GetPushToken(uid UserId) (*string, error) {
 	const op = "storage.ydb.GetPushToken"
 	log.Printf("%s: start", op)
 	var (
@@ -769,7 +769,7 @@ WHERE
 	return token, nil
 }
 
-func (s *YdbStorage) StoreDisplayName(uid UserId, displayName string) error {
+func (s *ydbStorage) StoreDisplayName(uid UserId, displayName string) error {
 	const op = "storage.ydb.StoreDisplayName"
 	log.Printf("%s: start", op)
 	var (
@@ -808,7 +808,7 @@ WHERE
 	return nil
 }
 
-func (s *YdbStorage) GetAvatarsBase64(aids []AvatarId) (map[AvatarId]AvatarData, error) {
+func (s *ydbStorage) GetAvatarsBase64(aids []AvatarId) (map[AvatarId]AvatarData, error) {
 	const op = "storage.ydb.GetAvatarsBase64"
 	log.Printf("%s: start", op)
 
@@ -865,7 +865,7 @@ WHERE
 	return result, nil
 }
 
-func (s *YdbStorage) StoreAvatarBase64(uid UserId, data string) (AvatarId, error) {
+func (s *ydbStorage) StoreAvatarBase64(uid UserId, data string) (AvatarId, error) {
 	const op = "storage.ydb.StoreAvatar"
 	log.Printf("%s: start", op)
 	var (
@@ -921,7 +921,7 @@ WHERE
 	return AvatarId(avatarId), nil
 }
 
-func (s *YdbStorage) GetRefreshToken(uid UserId) (*string, error) {
+func (s *ydbStorage) GetRefreshToken(uid UserId) (*string, error) {
 	const op = "storage.ydb.GetRefreshToken"
 	log.Printf("%s: start", op)
 	var (
@@ -965,7 +965,7 @@ WHERE
 	return token, nil
 }
 
-func (s *YdbStorage) StoreRefreshToken(token string, uid UserId) error {
+func (s *ydbStorage) StoreRefreshToken(token string, uid UserId) error {
 	const op = "storage.ydb.StoreRefreshToken"
 	log.Printf("%s: start", op)
 	var (
@@ -1001,7 +1001,7 @@ VALUES($id, $token);`,
 	return nil
 }
 
-func (s *YdbStorage) RemoveRefreshToken(uid UserId) error {
+func (s *ydbStorage) RemoveRefreshToken(uid UserId) error {
 	const op = "storage.ydb.RemoveRefreshToken"
 	log.Printf("%s: start", op)
 	var (
@@ -1036,7 +1036,7 @@ WHERE
 	return nil
 }
 
-func (s *YdbStorage) StoreFriendRequest(sender UserId, target UserId) error {
+func (s *ydbStorage) StoreFriendRequest(sender UserId, target UserId) error {
 	const op = "storage.ydb.StoreFriendRequest"
 	log.Printf("%s: start", op)
 	var (
@@ -1072,7 +1072,7 @@ VALUES($sender, $target);`,
 	return nil
 }
 
-func (s *YdbStorage) HasFriendRequest(sender UserId, target UserId) (bool, error) {
+func (s *ydbStorage) HasFriendRequest(sender UserId, target UserId) (bool, error) {
 	const op = "storage.ydb.HasFriendRequest"
 	log.Printf("%s: start", op)
 	var (
@@ -1115,7 +1115,7 @@ WHERE
 	return hasRequest, nil
 }
 
-func (s *YdbStorage) RemoveFriendRequest(sender UserId, target UserId) error {
+func (s *ydbStorage) RemoveFriendRequest(sender UserId, target UserId) error {
 	const op = "storage.ydb.RemoveFriendRequest"
 	log.Printf("%s: start", op)
 	var (
@@ -1152,7 +1152,7 @@ WHERE
 	return nil
 }
 
-func (s *YdbStorage) StoreFriendship(friendA UserId, friendB UserId) error {
+func (s *ydbStorage) StoreFriendship(friendA UserId, friendB UserId) error {
 	const op = "storage.ydb.StoreFriendship"
 	log.Printf("%s: start", op)
 	if friendA > friendB {
@@ -1191,7 +1191,7 @@ VALUES($friendA, $friendB);`,
 	return nil
 }
 
-func (s *YdbStorage) HasFriendship(friendA UserId, friendB UserId) (bool, error) {
+func (s *ydbStorage) HasFriendship(friendA UserId, friendB UserId) (bool, error) {
 	const op = "storage.ydb.HasFriendship"
 	log.Printf("%s: start", op)
 	if friendA > friendB {
@@ -1237,7 +1237,7 @@ WHERE
 	return hasFriendship, nil
 }
 
-func (s *YdbStorage) RemoveFriendship(friendA UserId, friendB UserId) error {
+func (s *ydbStorage) RemoveFriendship(friendA UserId, friendB UserId) error {
 	const op = "storage.ydb.RemoveFriendship"
 	log.Printf("%s: start", op)
 	if friendA > friendB {
@@ -1277,7 +1277,7 @@ WHERE
 	return nil
 }
 
-func (s *YdbStorage) GetFriends(uid UserId) ([]UserId, error) {
+func (s *ydbStorage) GetFriends(uid UserId) ([]UserId, error) {
 	const op = "storage.ydb.GetFriends"
 	log.Printf("%s: start", op)
 	var (
@@ -1325,7 +1325,7 @@ WHERE
 	return friends, nil
 }
 
-func (s *YdbStorage) GetIncomingRequests(uid UserId) ([]UserId, error) {
+func (s *ydbStorage) GetIncomingRequests(uid UserId) ([]UserId, error) {
 	const op = "storage.ydb.GetIncomingRequests"
 	log.Printf("%s: start", op)
 	var (
@@ -1369,7 +1369,7 @@ WHERE
 	return senders, nil
 }
 
-func (s *YdbStorage) GetPendingRequests(uid UserId) ([]UserId, error) {
+func (s *ydbStorage) GetPendingRequests(uid UserId) ([]UserId, error) {
 	const op = "storage.ydb.GetIncomingRequests"
 	log.Printf("%s: start", op)
 	var (
@@ -1413,7 +1413,7 @@ WHERE
 	return targets, nil
 }
 
-func (s *YdbStorage) getUsersWithoutFriendRelationInfo(ids []UserId) ([]User, error) {
+func (s *ydbStorage) getUsersWithoutFriendRelationInfo(ids []UserId) ([]User, error) {
 	const op = "storage.ydb.getUsersWithoutFriendRelationInfo"
 	log.Printf("%s: start args: %v", op, ids)
 	var (
@@ -1472,7 +1472,7 @@ WHERE
 	return uids, nil
 }
 
-func (s *YdbStorage) GetUsers(sender UserId, ids []UserId) ([]User, error) {
+func (s *ydbStorage) GetUsers(sender UserId, ids []UserId) ([]User, error) {
 	const op = "storage.ydb.GetUsers"
 	log.Printf("%s: start args: %v", op, ids)
 	if len(ids) == 0 {
@@ -1528,7 +1528,7 @@ func (s *YdbStorage) GetUsers(sender UserId, ids []UserId) ([]User, error) {
 	return users, nil
 }
 
-func (s *YdbStorage) SearchUsers(sender UserId, query string) ([]User, error) {
+func (s *ydbStorage) SearchUsers(sender UserId, query string) ([]User, error) {
 	const op = "storage.ydb.SearchUsers"
 	log.Printf("%s: start", op)
 	if len(query) == 0 {
@@ -1575,7 +1575,7 @@ WHERE
 	return s.GetUsers(sender, targets)
 }
 
-func (s *YdbStorage) InsertDeal(deal Deal) (DealId, error) {
+func (s *ydbStorage) InsertDeal(deal Deal) (DealId, error) {
 	const op = "storage.ydb.InsertDeal"
 	log.Printf("%s: start", op)
 	var (
@@ -1640,7 +1640,7 @@ VALUES($id, $dealId, $cost, $counterparty);`,
 	return dealId, nil
 }
 
-func (s *YdbStorage) GetDeal(did DealId) (*IdentifiableDeal, error) {
+func (s *ydbStorage) GetDeal(did DealId) (*IdentifiableDeal, error) {
 	const op = "storage.ydb.GetDeal"
 	log.Printf("%s: start", op)
 	var (
@@ -1703,7 +1703,7 @@ WHERE
 	return deal, nil
 }
 
-func (s *YdbStorage) RemoveDeal(did DealId) error {
+func (s *ydbStorage) RemoveDeal(did DealId) error {
 	const op = "storage.ydb.RemoveDeal"
 	log.Printf("%s: start", op)
 	var (
@@ -1752,7 +1752,7 @@ WHERE
 	return nil
 }
 
-func (s *YdbStorage) GetDeals(counterparty1 UserId, counterparty2 UserId) ([]IdentifiableDeal, error) {
+func (s *ydbStorage) GetDeals(counterparty1 UserId, counterparty2 UserId) ([]IdentifiableDeal, error) {
 	const op = "storage.ydb.GetDeals"
 	log.Printf("%s: start", op)
 	var (
@@ -1834,7 +1834,7 @@ WHERE
 	return deals, nil
 }
 
-func (s *YdbStorage) GetCounterpartiesForDeal(did DealId) ([]UserId, error) {
+func (s *ydbStorage) GetCounterpartiesForDeal(did DealId) ([]UserId, error) {
 	const op = "storage.ydb.GetCounterpartiesForDeal"
 	log.Printf("%s: start", op)
 	var (
@@ -1878,7 +1878,7 @@ WHERE
 	return counterparties, nil
 }
 
-func (s *YdbStorage) GetCounterparties(target UserId) ([]SpendingsPreview, error) {
+func (s *ydbStorage) GetCounterparties(target UserId) ([]SpendingsPreview, error) {
 	const op = "storage.ydb.GetCounterparties"
 	log.Printf("%s: start", op)
 	var (
@@ -1953,7 +1953,7 @@ WHERE
 	return spendings, nil
 }
 
-func (s *YdbStorage) Close() {
+func (s *ydbStorage) Close() {
 	log.Printf("storage closed")
 	s.Db.Close(s.Ctx)
 }

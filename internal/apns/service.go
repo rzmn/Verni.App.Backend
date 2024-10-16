@@ -24,16 +24,16 @@ func AppleService(storage storage.Storage, certPath string, configPath string) (
 	byteValue, err := os.ReadFile(configPath)
 	if err != nil {
 		log.Printf("%s: failed to open config: %v", op, err)
-		return &defaultService{}, err
+		return &appleService{}, err
 	}
 	var config Config
 	json.Unmarshal(byteValue, &config)
 	cert, err := certificate.FromP12File(certPath, config.Password)
 	if err != nil {
 		log.Printf("%s: failed to open p12: %v", op, err)
-		return &defaultService{}, err
+		return &appleService{}, err
 	}
-	return &defaultService{
+	return &appleService{
 		client:  apns2.NewClient(cert).Development(),
 		storage: storage,
 	}, nil
