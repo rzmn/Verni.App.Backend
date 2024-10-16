@@ -24,7 +24,7 @@ import (
 )
 
 func main() {
-	configFile, err := os.Open("users.json")
+	configFile, err := os.Open("./cmd/verni/prod.json")
 	if err != nil {
 		log.Fatalf("failed to open config file: %s", err)
 	}
@@ -49,7 +49,7 @@ func main() {
 
 	db := func() storage.Storage {
 		switch config.Storage.Type {
-		case "yandex":
+		case "ydb":
 			type YDBConfig struct {
 				Endpoint        string `json:"endpoint"`
 				CredentialsPath string `json:"credentialsPath"`
