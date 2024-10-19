@@ -14,12 +14,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes(router *gin.Engine, db storage.Storage, jwtService jwt.Service, apns pushNotifications.Service, longpoll longpoll.Service) {
+func RegisterRoutes(router *gin.Engine, db storage.Storage, jwtService jwt.Service, pushNotifications pushNotifications.Service, longpoll longpoll.Service) {
 	ensureLoggedIn := middleware.EnsureLoggedIn(db, jwtService)
 	hostFromToken := func(c *gin.Context) spendingsController.UserId {
 		return spendingsController.UserId(c.Request.Header.Get(middleware.LoggedInSubjectKey))
 	}
-	controller := spendingsController.DefaultController(db)
+	controller := spendingsController.DefaultController(db, pushNotifications)
 	methodGroup := router.Group("/spendings", ensureLoggedIn)
 	methodGroup.POST("/createDeal", func(c *gin.Context) {
 		type CreateDealRequest struct {

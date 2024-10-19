@@ -31,6 +31,8 @@ func DefaultController(
 	confirmation confirmation.Service,
 ) Controller {
 	return &defaultController{
-		storage: storage,
+		storage:      storage,
+		jwtService:   jwtService,
+		confirmation: confirmation,
 	}
 }

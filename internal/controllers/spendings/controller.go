@@ -2,6 +2,7 @@ package spendings
 
 import (
 	"verni/internal/common"
+	"verni/internal/pushNotifications"
 	"verni/internal/storage"
 )
 
@@ -19,8 +20,9 @@ type Controller interface {
 	GetCounterparties(userId UserId) ([]SpendingsPreview, *common.CodeBasedError[GetCounterpartiesErrorCode])
 }
 
-func DefaultController(storage storage.Storage) Controller {
+func DefaultController(storage storage.Storage, pushNotifications pushNotifications.Service) Controller {
 	return &defaultController{
-		storage: storage,
+		storage:           storage,
+		pushNotifications: pushNotifications,
 	}
 }

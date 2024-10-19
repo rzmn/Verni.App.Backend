@@ -24,7 +24,7 @@ import (
 )
 
 func main() {
-	configFile, err := os.Open("./cmd/verni/prod.json")
+	configFile, err := os.Open("./config/prod/verni.json")
 	if err != nil {
 		log.Fatalf("failed to open config file: %s", err)
 	}
@@ -178,8 +178,8 @@ func main() {
 			return http.Server{
 				Addr:         address,
 				Handler:      router,
-				ReadTimeout:  time.Duration(ginConfig.IdleTimeoutSec),
-				WriteTimeout: time.Duration(ginConfig.IdleTimeoutSec),
+				ReadTimeout:  time.Second * time.Duration(ginConfig.IdleTimeoutSec),
+				WriteTimeout: time.Second * time.Duration(ginConfig.IdleTimeoutSec),
 			}
 		default:
 			log.Fatalf("unknown server type %s", config.Server.Type)

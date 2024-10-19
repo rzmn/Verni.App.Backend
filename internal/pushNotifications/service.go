@@ -33,10 +33,10 @@ func ApnsService(config ApnsConfig, db storage.Storage) (Service, error) {
 		return &appleService{}, err
 	}
 	var credentials ApnsCredentials
-	json.Unmarshal(credentialsData, &config)
+	json.Unmarshal(credentialsData, &credentials)
 	cert, err := certificate.FromP12File(common.AbsolutePath(config.CertificatePath), credentials.Password)
 	if err != nil {
-		log.Printf("%s: failed to open p12: %v", op, err)
+		log.Printf("%s: failed to open p12 creds %v: %v", op, err, credentials)
 		return &appleService{}, err
 	}
 	return &appleService{
