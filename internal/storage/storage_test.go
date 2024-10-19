@@ -1,9 +1,13 @@
 package storage_test
 
 import (
+	"encoding/json"
+	"io"
 	"log"
 	"math/rand"
+	"os"
 	"testing"
+	"verni/internal/common"
 	"verni/internal/storage"
 
 	"github.com/google/uuid"
@@ -34,13 +38,26 @@ func getStorage(t *testing.T) storage.Storage {
 	if _s != nil {
 		return *_s
 	}
-	return nil
-	// storage, err := ydbStorage.New(os.Getenv("YDB_TEST_ENDPOINT"), "./ydbStorage/key.json")
-	// if err != nil {
-	// 	t.Fatalf("%v", err)
-	// }
-	// _s = &storage
-	// return storage
+
+	common.RegisterRelativePathRoot(os.Getenv("VERNI_PROJECT_ROOT"))
+	configFile, err := os.Open(common.AbsolutePath("./config/test/ydb_test_environment.json"))
+	if err != nil {
+		t.Fatalf("failed to open config file: %s", err)
+	}
+	defer configFile.Close()
+	configData, err := io.ReadAll(configFile)
+	if err != nil {
+		t.Fatalf("failed to read config file: %s", err)
+	}
+	var config storage.YDBConfig
+	json.Unmarshal([]byte(configData), &config)
+	log.Printf("initializing with config %v", config)
+	db, err := storage.YDB(config)
+	if err != nil {
+		t.Fatalf("failed to init db err: %v", err)
+	}
+	_s = &db
+	return db
 }
 
 func TestIsUserExistsFalse(t *testing.T) {

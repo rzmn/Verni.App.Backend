@@ -8,7 +8,6 @@ import (
 	"os"
 	"time"
 
-	"verni/internal/apns"
 	"verni/internal/auth/confirmation"
 	"verni/internal/auth/jwt"
 	"verni/internal/http-server/handlers/auth"
@@ -18,6 +17,7 @@ import (
 	"verni/internal/http-server/handlers/spendings"
 	"verni/internal/http-server/handlers/users"
 	"verni/internal/http-server/longpoll"
+	"verni/internal/pushNotifications"
 	"verni/internal/storage"
 
 	"github.com/gin-gonic/gin"
@@ -38,11 +38,11 @@ func main() {
 		Config map[string]interface{} `json:"config"`
 	}
 	type Config struct {
-		Storage     Module `json:"storage"`
-		Apns        Module `json:"apns"`
-		EmailSender Module `json:"emailSender"`
-		Jwt         Module `json:"jwt"`
-		Server      Module `json:"server"`
+		Storage           Module `json:"storage"`
+		PushNotifications Module `json:"pushNotifications"`
+		EmailSender       Module `json:"emailSender"`
+		Jwt               Module `json:"jwt"`
+		Server            Module `json:"server"`
 	}
 	var config Config
 	json.Unmarshal([]byte(configData), &config)
@@ -51,18 +51,14 @@ func main() {
 	db := func() storage.Storage {
 		switch config.Storage.Type {
 		case "ydb":
-			type YDBConfig struct {
-				Endpoint        string `json:"endpoint"`
-				CredentialsPath string `json:"credentialsPath"`
-			}
 			data, err := json.Marshal(config.Storage.Config)
 			if err != nil {
 				log.Fatalf("failed to serialize ydb config err: %v", err)
 			}
-			var ydbConfig YDBConfig
+			var ydbConfig storage.YDBConfig
 			json.Unmarshal(data, &ydbConfig)
 			log.Printf("creating ydb with config %v", ydbConfig)
-			db, err := storage.YDB(ydbConfig.Endpoint, ydbConfig.CredentialsPath)
+			db, err := storage.YDB(ydbConfig)
 			if err != nil {
 				log.Fatalf("failed to initialize ydb err: %v", err)
 			}
@@ -74,32 +70,24 @@ func main() {
 		}
 	}()
 	defer db.Close()
-	pushService := func() apns.Service {
-		switch config.Apns.Type {
-		case "apple":
-			type AppleConfig struct {
-				CertificatePath string `json:"certificatePath"`
-				CredentialsPath string `json:"credentialsPath"`
-			}
-			data, err := json.Marshal(config.Apns.Config)
+	pushService := func() pushNotifications.Service {
+		switch config.PushNotifications.Type {
+		case "apns":
+			data, err := json.Marshal(config.PushNotifications.Config)
 			if err != nil {
 				log.Fatalf("failed to serialize apple apns config err: %v", err)
 			}
-			var appleConfig AppleConfig
-			json.Unmarshal(data, &appleConfig)
-			log.Printf("creating apple apns service with config %v", appleConfig)
-			service, err := apns.AppleService(
-				db,
-				appleConfig.CertificatePath,
-				appleConfig.CredentialsPath,
-			)
+			var apnsConfig pushNotifications.ApnsConfig
+			json.Unmarshal(data, &apnsConfig)
+			log.Printf("creating apple apns service with config %v", apnsConfig)
+			service, err := pushNotifications.ApnsService(apnsConfig, db)
 			if err != nil {
 				log.Fatalf("failed to initialize apple apns service err: %v", err)
 			}
 			log.Printf("initialized apple apns service")
 			return service
 		default:
-			log.Fatalf("unknown apns type %s", config.Apns.Type)
+			log.Fatalf("unknown apns type %s", config.PushNotifications.Type)
 			return nil
 		}
 	}()

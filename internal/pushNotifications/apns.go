@@ -1,4 +1,4 @@
-package apns
+package pushNotifications
 
 import (
 	"encoding/json"
@@ -43,7 +43,7 @@ type PushPayloadAlert struct {
 	Body     *string `json:"body,omitempty"`
 }
 
-type Config struct {
+type ApnsCredentials struct {
 	Password string `json:"cert_pwd"`
 }
 

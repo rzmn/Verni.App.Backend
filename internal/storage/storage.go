@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"verni/internal/common"
 
 	"github.com/ydb-platform/ydb-go-sdk/v3"
 	yc "github.com/ydb-platform/ydb-go-yc"
@@ -133,10 +134,15 @@ type Storage interface {
 	Close()
 }
 
-func YDB(storagePath string, keyPath string) (Storage, error) {
+type YDBConfig struct {
+	Endpoint        string `json:"endpoint"`
+	CredentialsPath string `json:"credentialsPath"`
+}
+
+func YDB(config YDBConfig) (Storage, error) {
 	const op = "storage.ydb.New"
 	ctx := context.Background()
-	db, err := ydb.Open(ctx, storagePath, yc.WithServiceAccountKeyFileCredentials(keyPath))
+	db, err := ydb.Open(ctx, config.Endpoint, yc.WithServiceAccountKeyFileCredentials(common.AbsolutePath(config.CredentialsPath)))
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}

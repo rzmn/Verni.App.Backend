@@ -2,14 +2,14 @@ package spendings
 
 import (
 	"log"
-	"verni/internal/apns"
 	"verni/internal/common"
+	"verni/internal/pushNotifications"
 	"verni/internal/storage"
 )
 
 type defaultController struct {
-	storage storage.Storage
-	apns    apns.Service
+	storage           storage.Storage
+	pushNotifications pushNotifications.Service
 }
 
 func (s *defaultController) CreateDeal(deal Deal, userId UserId) *common.CodeBasedError[CreateDealErrorCode] {
@@ -40,10 +40,10 @@ func (s *defaultController) CreateDeal(deal Deal, userId UserId) *common.CodeBas
 		if spending.UserId == storage.UserId(userId) {
 			continue
 		}
-		s.apns.NewExpenseReceived(apns.UserId(spending.UserId), apns.Deal{
+		s.pushNotifications.NewExpenseReceived(pushNotifications.UserId(spending.UserId), pushNotifications.Deal{
 			Deal: storage.Deal(deal),
 			Id:   dealId,
-		}, apns.UserId(userId))
+		}, pushNotifications.UserId(userId))
 	}
 	log.Printf("%s: success[uid=%s]", op, userId)
 	return nil
