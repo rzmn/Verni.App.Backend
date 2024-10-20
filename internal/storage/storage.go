@@ -107,29 +107,10 @@ type Storage interface {
 	GetRefreshToken(uid UserId) (*string, error)
 	RemoveRefreshToken(uid UserId) error
 
-	StoreFriendRequest(sender UserId, target UserId) error
-	HasFriendRequest(sender UserId, target UserId) (bool, error)
-	RemoveFriendRequest(sender UserId, target UserId) error
-
-	GetIncomingRequests(uid UserId) ([]UserId, error)
-	GetPendingRequests(uid UserId) ([]UserId, error)
-
-	StoreFriendship(friendA UserId, friendB UserId) error
-	HasFriendship(friendA UserId, friendB UserId) (bool, error)
-	RemoveFriendship(friendA UserId, friendB UserId) error
-
 	GetFriends(uid UserId) ([]UserId, error)
 
 	GetUsers(sender UserId, ids []UserId) ([]User, error)
 	SearchUsers(sender UserId, query string) ([]User, error)
-
-	InsertDeal(deal Deal) (DealId, error)
-	GetDeal(did DealId) (*IdentifiableDeal, error)
-	RemoveDeal(did DealId) error
-
-	GetDeals(counterparty1 UserId, counterparty2 UserId) ([]IdentifiableDeal, error)
-	GetCounterparties(uid UserId) ([]SpendingsPreview, error)
-	GetCounterpartiesForDeal(did DealId) ([]UserId, error)
 
 	Close()
 }
