@@ -22,15 +22,7 @@ type Repository interface {
 	RemoveFriendRequest(sender UserId, target UserId) repositories.MutationWorkItem
 }
 
-type PostgresConfig struct {
-	Host     string
-	Port     int
-	User     string
-	Password string
-	DbName   string
-}
-
-func PostgresRepository(config PostgresConfig) (Repository, error) {
+func PostgresRepository(config repositories.PostgresConfig) (Repository, error) {
 	const op = "repositories.friends.PostgresRepository"
 	psqlConnection := fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",

@@ -3,6 +3,7 @@ package spendings_test
 import (
 	"log"
 	"testing"
+	"verni/internal/repositories"
 	"verni/internal/repositories/spendings"
 	"verni/internal/storage"
 
@@ -18,7 +19,7 @@ func getRepository(t *testing.T) spendings.Repository {
 		return *_s
 	}
 	repository, err := spendings.PostgresRepository(
-		spendings.PostgresConfig{
+		repositories.PostgresConfig{
 			Host:     "localhost",
 			Port:     5432,
 			User:     "tester",

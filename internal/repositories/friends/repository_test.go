@@ -2,6 +2,7 @@ package friends_test
 
 import (
 	"testing"
+	"verni/internal/repositories"
 	"verni/internal/repositories/friends"
 
 	"github.com/google/uuid"
@@ -16,7 +17,7 @@ func getRepository(t *testing.T) friends.Repository {
 		return *_s
 	}
 	repository, err := friends.PostgresRepository(
-		friends.PostgresConfig{
+		repositories.PostgresConfig{
 			Host:     "localhost",
 			Port:     5432,
 			User:     "tester",
