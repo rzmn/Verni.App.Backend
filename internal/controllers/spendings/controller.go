@@ -3,6 +3,7 @@ package spendings
 import (
 	"verni/internal/common"
 	"verni/internal/pushNotifications"
+	spendingsRepository "verni/internal/repositories/spendings"
 	"verni/internal/storage"
 )
 
@@ -11,6 +12,7 @@ type Deal storage.Deal
 type DealId storage.DealId
 type IdentifiableDeal storage.IdentifiableDeal
 type SpendingsPreview storage.SpendingsPreview
+type Repository spendingsRepository.Repository
 
 type Controller interface {
 	CreateDeal(deal Deal, userId UserId) *common.CodeBasedError[CreateDealErrorCode]
@@ -20,9 +22,9 @@ type Controller interface {
 	GetCounterparties(userId UserId) ([]SpendingsPreview, *common.CodeBasedError[GetCounterpartiesErrorCode])
 }
 
-func DefaultController(storage storage.Storage, pushNotifications pushNotifications.Service) Controller {
+func DefaultController(repository Repository, pushNotifications pushNotifications.Service) Controller {
 	return &defaultController{
-		storage:           storage,
+		repository:        repository,
 		pushNotifications: pushNotifications,
 	}
 }

@@ -7,7 +7,6 @@ const (
 	SendFriendRequestErrorAlreadySent
 	SendFriendRequestErrorHaveIncomingRequest
 	SendFriendRequestErrorAlreadyFriends
-	SendFriendRequestErrorNoSuchUser
 	SendFriendRequestErrorInternal
 )
 
@@ -19,8 +18,6 @@ func (c SendFriendRequestErrorCode) Message() string {
 		return "already have incoming friend request"
 	case SendFriendRequestErrorAlreadyFriends:
 		return "already friends"
-	case SendFriendRequestErrorNoSuchUser:
-		return "no such user"
 	case SendFriendRequestErrorInternal:
 		return "internal error"
 	default:

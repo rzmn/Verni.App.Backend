@@ -9,17 +9,18 @@ import (
 	"verni/internal/http-server/middleware"
 	"verni/internal/http-server/responses"
 	"verni/internal/pushNotifications"
+	spendingsRepository "verni/internal/repositories/spendings"
 	"verni/internal/storage"
 
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes(router *gin.Engine, db storage.Storage, jwtService jwt.Service, pushNotifications pushNotifications.Service, longpoll longpoll.Service) {
+func RegisterRoutes(router *gin.Engine, db storage.Storage, repository spendingsRepository.Repository, jwtService jwt.Service, pushNotifications pushNotifications.Service, longpoll longpoll.Service) {
 	ensureLoggedIn := middleware.EnsureLoggedIn(db, jwtService)
 	hostFromToken := func(c *gin.Context) spendingsController.UserId {
 		return spendingsController.UserId(c.Request.Header.Get(middleware.LoggedInSubjectKey))
 	}
-	controller := spendingsController.DefaultController(db, pushNotifications)
+	controller := spendingsController.DefaultController(repository, pushNotifications)
 	methodGroup := router.Group("/spendings", ensureLoggedIn)
 	methodGroup.POST("/createDeal", func(c *gin.Context) {
 		type CreateDealRequest struct {
@@ -91,8 +92,6 @@ func RegisterRoutes(router *gin.Engine, db storage.Storage, jwtService jwt.Servi
 		deals, err := controller.GetDeals(spendingsController.UserId(request.Counterparty), hostFromToken(c))
 		if err != nil {
 			switch err.Code {
-			case spendingsController.GetDealsErrorNoSuchUser:
-				httpserver.Answer(c, err, http.StatusConflict, responses.CodeNoSuchUser)
 			default:
 				httpserver.AnswerWithUnknownError(c, err)
 			}
