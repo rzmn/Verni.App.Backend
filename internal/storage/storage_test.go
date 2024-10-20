@@ -198,7 +198,7 @@ func TestUpdateDisplayName(t *testing.T) {
 	if info.User.DisplayName != email {
 		t.Fatalf("initial display name should be a email, found %s", info.User.DisplayName)
 	}
-	newDisplayName := "newDisplayName"
+	newDisplayName := "newDisplayName 💅🇷🇺"
 	if err := s.StoreDisplayName(uid, newDisplayName); err != nil {
 		t.Fatalf("unexpected err: %v", err)
 	}

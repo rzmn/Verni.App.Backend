@@ -1606,6 +1606,7 @@ VALUES($id, $timestamp, $details, $cost, $currency);`,
 			),
 		)
 		if err != nil {
+			log.Printf("%s: insert deal failed err: %v", op, err)
 			return err
 		}
 
@@ -1627,6 +1628,7 @@ VALUES($id, $dealId, $cost, $counterparty);`,
 				),
 			)
 			if err != nil {
+				log.Printf("%s: insert spending %d failed err: %v", op, i, err)
 				return err
 			}
 			defer res.Close()
@@ -1677,16 +1679,18 @@ WHERE
 				} else {
 					_deal = *deal
 				}
+				var dealIdString string
 				var cost int64
 				var counterparty string
 				err = res.Scan(
-					&_deal.Id,
+					&dealIdString,
 					&_deal.Timestamp,
 					&_deal.Details,
 					&_deal.Cost,
 					&_deal.Currency,
 					&cost,
 					&counterparty)
+				_deal.Id = DealId(dealIdString)
 				_deal.Spendings = append(_deal.Spendings, Spending{UserId: UserId(counterparty), Cost: cost})
 				deal = &_deal
 			}
