@@ -9,14 +9,15 @@ import (
 	"verni/internal/http-server/middleware"
 	"verni/internal/http-server/responses"
 	"verni/internal/pushNotifications"
+	authRepository "verni/internal/repositories/auth"
 	spendingsRepository "verni/internal/repositories/spendings"
 	"verni/internal/storage"
 
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes(router *gin.Engine, db storage.Storage, repository spendingsRepository.Repository, jwtService jwt.Service, pushNotifications pushNotifications.Service, longpoll longpoll.Service) {
-	ensureLoggedIn := middleware.EnsureLoggedIn(db, jwtService)
+func RegisterRoutes(router *gin.Engine, authRepository authRepository.Repository, repository spendingsRepository.Repository, jwtService jwt.Service, pushNotifications pushNotifications.Service, longpoll longpoll.Service) {
+	ensureLoggedIn := middleware.EnsureLoggedIn(authRepository, jwtService)
 	hostFromToken := func(c *gin.Context) spendingsController.UserId {
 		return spendingsController.UserId(c.Request.Header.Get(middleware.LoggedInSubjectKey))
 	}

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 	"verni/internal/repositories"
+	"verni/internal/storage"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -80,7 +81,7 @@ func (c *postgresRepository) GetUserIdByEmail(email string) (*UserId, error) {
 func (c *postgresRepository) UpdateRefreshToken(uid UserId, token string) repositories.MutationWorkItem {
 	const op = "repositories.auth.postgresRepository.UpdateRefreshToken"
 	log.Printf("%s: start[uid=%s]", op, uid)
-	existed, err := c.getCredentials(uid)
+	existed, err := c.GetCredentials(uid)
 	return repositories.MutationWorkItem{
 		Perform: func() error {
 			if err != nil {
@@ -94,7 +95,7 @@ func (c *postgresRepository) UpdateRefreshToken(uid UserId, token string) reposi
 				log.Printf("%s: failed to get current credentals err: %v", op, err)
 				return err
 			}
-			return c.updateRefreshToken(uid, existed.refreshToken)
+			return c.updateRefreshToken(uid, existed.RefreshToken)
 		},
 	}
 }
@@ -115,7 +116,7 @@ func (c *postgresRepository) updateRefreshToken(uid UserId, token string) error 
 func (c *postgresRepository) UpdatePassword(uid UserId, password string) repositories.MutationWorkItem {
 	const op = "repositories.auth.postgresRepository.UpdatePassword"
 	log.Printf("%s: start[uid=%s]", op, uid)
-	existed, getCredentialsErr := c.getCredentials(uid)
+	existed, getCredentialsErr := c.GetCredentials(uid)
 	passwordHash, hashPasswordErr := hashPassword(password)
 	return repositories.MutationWorkItem{
 		Perform: func() error {
@@ -134,7 +135,7 @@ func (c *postgresRepository) UpdatePassword(uid UserId, password string) reposit
 				log.Printf("%s: failed to get current credentals err: %v", op, getCredentialsErr)
 				return getCredentialsErr
 			}
-			return c.updatePassword(uid, existed.passwordHash)
+			return c.updatePassword(uid, existed.PasswordHash)
 		},
 	}
 }
@@ -155,7 +156,7 @@ func (c *postgresRepository) updatePassword(uid UserId, passwordHash string) err
 func (c *postgresRepository) UpdateEmail(uid UserId, newEmail string) repositories.MutationWorkItem {
 	const op = "repositories.auth.postgresRepository.UpdateEmail"
 	log.Printf("%s: start[uid=%s]", op, uid)
-	existed, err := c.getCredentials(uid)
+	existed, err := c.GetCredentials(uid)
 	return repositories.MutationWorkItem{
 		Perform: func() error {
 			if err != nil {
@@ -169,7 +170,7 @@ func (c *postgresRepository) UpdateEmail(uid UserId, newEmail string) repositori
 				log.Printf("%s: failed to get current credentals err: %v", op, err)
 				return err
 			}
-			return c.updateEmail(uid, existed.email)
+			return c.updateEmail(uid, existed.Email)
 		},
 	}
 }
@@ -209,7 +210,7 @@ func (c *postgresRepository) createUser(uid UserId, email string, password strin
 		log.Printf("%s: cannot hash password %v", op, err)
 		return err
 	}
-	query := `INSERT INTO credentials(id, email, password, token) VALUES($1, $2, $3, $4);`
+	query := `INSERT INTO credentials(id, email, password, token, emailVerified) VALUES($1, $2, $3, $4, False);`
 	_, err = c.db.Exec(query, string(uid), string(email), passwordHash, refreshToken)
 	if err != nil {
 		log.Printf("%s: failed to perform query err: %v", op, err)
@@ -232,25 +233,32 @@ func (c *postgresRepository) deleteUser(uid UserId) error {
 	return nil
 }
 
-type credentials struct {
-	uid          UserId
-	email        string
-	passwordHash string
-	refreshToken string
-}
-
-func (c *postgresRepository) getCredentials(uid UserId) (credentials, error) {
-	const op = "repositories.auth.postgresRepository.getCredentials"
+func (c *postgresRepository) GetCredentials(uid UserId) (UserAuthData, error) {
+	const op = "repositories.auth.postgresRepository.GetCredentials"
 	log.Printf("%s: start[uid=%s]", op, uid)
-	query := `SELECT email, password, token FROM credentials WHERE id = $1;`
+	query := `SELECT email, password, token, emailVerified FROM credentials WHERE id = $1;`
 	row := c.db.QueryRow(query, string(uid))
-	result := credentials{
-		uid: uid,
+	result := UserAuthData{
+		UserId: storage.UserId(uid),
 	}
-	if err := row.Scan(&result.email, result.passwordHash, result.refreshToken); err != nil {
+	if err := row.Scan(&result.Email, &result.PasswordHash, &result.RefreshToken, &result.EmailVerified); err != nil {
 		log.Printf("%s: failed to perform scan err: %v", op, err)
-		return credentials{}, err
+		return UserAuthData{}, err
 	}
 	log.Printf("%s: success[uid=%s]", op, uid)
 	return result, nil
+}
+
+func (c *postgresRepository) IsUserExists(uid UserId) (bool, error) {
+	const op = "repositories.auth.postgresRepository.IsUserExists"
+	log.Printf("%s: start[uid=%s]", op, uid)
+	query := `SELECT EXISTS(SELECT 1 FROM credentials WHERE id = $1);`
+	row := c.db.QueryRow(query, string(uid))
+	var exists bool
+	if err := row.Scan(&exists); err != nil {
+		log.Printf("%s: failed to perform scan err: %v", op, err)
+		return false, err
+	}
+	log.Printf("%s: success[uid=%s]", op, uid)
+	return exists, nil
 }

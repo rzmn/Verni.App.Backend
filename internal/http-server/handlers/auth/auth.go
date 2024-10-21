@@ -8,17 +8,25 @@ import (
 	httpserver "verni/internal/http-server"
 	"verni/internal/http-server/middleware"
 	"verni/internal/http-server/responses"
+	authRepository "verni/internal/repositories/auth"
+	pushTokensRepository "verni/internal/repositories/pushNotifications"
 	"verni/internal/storage"
 
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes(router *gin.Engine, db storage.Storage, jwtService jwt.Service, emailConfirmation confirmation.Service) {
-	ensureLoggedIn := middleware.EnsureLoggedIn(db, jwtService)
+func RegisterRoutes(
+	router *gin.Engine,
+	authRepository authRepository.Repository,
+	pushTokensRepository pushTokensRepository.Repository,
+	jwtService jwt.Service,
+	emailConfirmation confirmation.Service,
+) {
+	ensureLoggedIn := middleware.EnsureLoggedIn(authRepository, jwtService)
 	hostFromToken := func(c *gin.Context) storage.UserId {
 		return storage.UserId(c.Request.Header.Get(middleware.LoggedInSubjectKey))
 	}
-	controller := authController.DefaultController(db, jwtService, emailConfirmation)
+	controller := authController.DefaultController(authRepository, pushTokensRepository, jwtService, emailConfirmation)
 	router.PUT("/auth/signup", func(c *gin.Context) {
 		type SignupRequest struct {
 			Credentials storage.UserCredentials `json:"credentials"`

@@ -5,7 +5,6 @@ import (
 	"log"
 	"verni/internal/auth/jwt"
 	"verni/internal/http-server/middleware"
-	"verni/internal/storage"
 
 	"github.com/jcuga/golongpoll"
 
@@ -13,10 +12,10 @@ import (
 )
 
 type defaultService struct {
-	engine     *gin.Engine
-	db         storage.Storage
-	jwtService jwt.Service
-	longPoll   *golongpoll.LongpollManager
+	engine         *gin.Engine
+	authRepository AuthRepository
+	jwtService     jwt.Service
+	longPoll       *golongpoll.LongpollManager
 }
 
 func (s *defaultService) RegisterRoutes() {
@@ -29,7 +28,7 @@ func (s *defaultService) RegisterRoutes() {
 	}
 	log.Printf("%s: success", op)
 	s.longPoll = longpoll
-	ensureLoggedIn := middleware.EnsureLoggedIn(s.db, s.jwtService)
+	ensureLoggedIn := middleware.EnsureLoggedIn(s.authRepository, s.jwtService)
 	s.engine.GET("/queue/subscribe", ensureLoggedIn, func(c *gin.Context) {
 		longpoll.SubscriptionHandler(c.Writer, c.Request)
 	})

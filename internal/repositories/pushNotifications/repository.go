@@ -1,4 +1,4 @@
-package auth
+package pushNotifications
 
 import (
 	"database/sql"
@@ -11,20 +11,10 @@ import (
 )
 
 type UserId storage.UserId
-type UserAuthData storage.UserAuthData
+
 type Repository interface {
-	CreateUser(uid UserId, email string, password string, refreshToken string) repositories.MutationWorkItem
-	IsUserExists(uid UserId) (bool, error)
-
-	CheckCredentials(email string, password string) (bool, error)
-	GetUserIdByEmail(email string) (*UserId, error)
-
-	UpdateRefreshToken(uid UserId, token string) repositories.MutationWorkItem
-	UpdatePassword(uid UserId, newPassword string) repositories.MutationWorkItem
-	UpdateEmail(uid UserId, newEmail string) repositories.MutationWorkItem
-
-	GetRefreshToken(uid UserId) (string, error)
-	GetCredentials(uid UserId) (UserAuthData, error)
+	StorePushToken(uid UserId, token string) repositories.MutationWorkItem
+	GetPushToken(uid UserId) (*string, error)
 }
 
 func PostgresRepository(config repositories.PostgresConfig) (Repository, error) {

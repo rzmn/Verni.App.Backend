@@ -39,6 +39,14 @@ type ProfileInfo struct {
 	EmailVerified bool   `json:"emailVerified"`
 }
 
+type UserAuthData struct {
+	UserId        UserId
+	Email         string
+	PasswordHash  string
+	RefreshToken  string
+	EmailVerified bool
+}
+
 type User struct {
 	Id           UserId       `json:"id"`
 	DisplayName  string       `json:"displayName"`
@@ -95,9 +103,6 @@ type Storage interface {
 	CheckPasswordForId(uid UserId, password string) (bool, error)
 	UpdatePasswordForId(uid UserId, password string) error
 	StoreCredentials(uid UserId, credentials UserCredentials) error
-
-	StorePushToken(uid UserId, token string) error
-	GetPushToken(uid UserId) (*string, error)
 
 	StoreDisplayName(uid UserId, displayName string) error
 	StoreAvatarBase64(uid UserId, avatarBase64 string) (AvatarId, error)

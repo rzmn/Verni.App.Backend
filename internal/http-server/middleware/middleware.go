@@ -9,7 +9,7 @@ import (
 
 	"verni/internal/auth/jwt"
 	httpserver "verni/internal/http-server"
-	"verni/internal/storage"
+	authRepository "verni/internal/repositories/auth"
 
 	"verni/internal/http-server/responses"
 )
@@ -18,7 +18,7 @@ const (
 	LoggedInSubjectKey = "verni-subject"
 )
 
-func EnsureLoggedIn(s storage.Storage, jwtService jwt.Service) gin.HandlerFunc {
+func EnsureLoggedIn(repository authRepository.Repository, jwtService jwt.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		const op = "handlers.friends.ensureLoggedInMiddleware"
 		log.Printf("%s: validating access token", op)
@@ -40,7 +40,7 @@ func EnsureLoggedIn(s storage.Storage, jwtService jwt.Service) gin.HandlerFunc {
 			httpserver.AnswerWithUnknownError(c, getSubjectError)
 			return
 		}
-		exists, err := s.IsUserExists(storage.UserId(subject))
+		exists, err := repository.IsUserExists(authRepository.UserId(subject))
 		if err != nil {
 			httpserver.AnswerWithUnknownError(c, err)
 			return

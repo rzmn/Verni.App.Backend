@@ -5,10 +5,15 @@ import (
 	"verni/internal/auth/jwt"
 	"verni/internal/common"
 	"verni/internal/storage"
+
+	authRepository "verni/internal/repositories/auth"
+	pushNotificationsRepository "verni/internal/repositories/pushNotifications"
 )
 
 type UserId storage.UserId
 type Session storage.AuthenticatedSession
+type AuthRepository authRepository.Repository
+type PushTokensRepository pushNotificationsRepository.Repository
 
 type Controller interface {
 	Signup(email string, password string) (Session, *common.CodeBasedError[SignupErrorCode])
@@ -26,13 +31,15 @@ type Controller interface {
 }
 
 func DefaultController(
-	storage storage.Storage,
+	authRepository AuthRepository,
+	pushTokensRepository PushTokensRepository,
 	jwtService jwt.Service,
 	confirmation confirmation.Service,
 ) Controller {
 	return &defaultController{
-		storage:      storage,
-		jwtService:   jwtService,
-		confirmation: confirmation,
+		authRepository:       authRepository,
+		pushTokensRepository: pushTokensRepository,
+		jwtService:           jwtService,
+		confirmation:         confirmation,
 	}
 }

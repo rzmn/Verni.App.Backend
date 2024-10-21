@@ -4,14 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"verni/internal/repositories/pushNotifications"
 	"verni/internal/storage"
 
 	"github.com/sideshow/apns2"
 )
 
 type appleService struct {
-	client  *apns2.Client
-	storage storage.Storage
+	client     *apns2.Client
+	repository Repository
 }
 
 type PushDataType int
@@ -50,7 +51,7 @@ type ApnsCredentials struct {
 func (s *appleService) FriendRequestHasBeenAccepted(receiver UserId, acceptedBy UserId) {
 	const op = "apns.defaultService.FriendRequestHasBeenAccepted"
 	log.Printf("%s: start[receiver=%s acceptedBy=%s]", op, receiver, acceptedBy)
-	receiverToken, err := s.storage.GetPushToken(storage.UserId(receiver))
+	receiverToken, err := s.repository.GetPushToken(pushNotifications.UserId(receiver))
 	if err != nil {
 		log.Printf("%s: cannot get receiver token from db err: %v", op, err)
 		return
@@ -95,7 +96,7 @@ func (s *appleService) FriendRequestHasBeenAccepted(receiver UserId, acceptedBy 
 func (s *appleService) FriendRequestHasBeenReceived(receiver UserId, sentBy UserId) {
 	const op = "apns.defaultService.FriendRequestHasBeenReceived"
 	log.Printf("%s: start[receiver=%s sentBy=%s]", op, receiver, sentBy)
-	receiverToken, err := s.storage.GetPushToken(storage.UserId(receiver))
+	receiverToken, err := s.repository.GetPushToken(pushNotifications.UserId(receiver))
 	if err != nil {
 		log.Printf("%s: cannot get receiver token from db err: %v", op, err)
 		return
@@ -140,7 +141,7 @@ func (s *appleService) FriendRequestHasBeenReceived(receiver UserId, sentBy User
 func (s *appleService) NewExpenseReceived(receiver UserId, deal Deal, author UserId) {
 	const op = "apns.defaultService.NewExpenseReceived"
 	log.Printf("%s: start[receiver=%s did=%s author=%s]", op, receiver, deal.Id, author)
-	receiverToken, err := s.storage.GetPushToken(storage.UserId(receiver))
+	receiverToken, err := s.repository.GetPushToken(pushNotifications.UserId(receiver))
 	if err != nil {
 		log.Printf("%s: cannot get receiver token from db err: %v", op, err)
 		return

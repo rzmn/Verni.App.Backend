@@ -9,18 +9,19 @@ import (
 	"verni/internal/http-server/middleware"
 	"verni/internal/http-server/responses"
 	"verni/internal/pushNotifications"
+	authRepository "verni/internal/repositories/auth"
 	friendsRepository "verni/internal/repositories/friends"
 	"verni/internal/storage"
 
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes(router *gin.Engine, db storage.Storage, repository friendsRepository.Repository, jwtService jwt.Service, apns pushNotifications.Service, longpoll longpoll.Service) {
-	ensureLoggedIn := middleware.EnsureLoggedIn(db, jwtService)
+func RegisterRoutes(router *gin.Engine, authRepository authRepository.Repository, friendsRepository friendsRepository.Repository, jwtService jwt.Service, apns pushNotifications.Service, longpoll longpoll.Service) {
+	ensureLoggedIn := middleware.EnsureLoggedIn(authRepository, jwtService)
 	hostFromToken := func(c *gin.Context) friendsController.UserId {
 		return friendsController.UserId(c.Request.Header.Get(middleware.LoggedInSubjectKey))
 	}
-	controller := friendsController.DefaultController(repository)
+	controller := friendsController.DefaultController(friendsRepository)
 	methodGroup := router.Group("/friends", ensureLoggedIn)
 	methodGroup.POST("/acceptRequest", func(c *gin.Context) {
 		type AcceptFriendRequest struct {

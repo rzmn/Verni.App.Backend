@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"verni/internal/common"
+	pushNotificationsRepository "verni/internal/repositories/pushNotifications"
 	"verni/internal/storage"
 
 	"github.com/sideshow/apns2"
@@ -13,6 +14,7 @@ import (
 
 type UserId storage.UserId
 type Deal storage.IdentifiableDeal
+type Repository pushNotificationsRepository.Repository
 
 type Service interface {
 	FriendRequestHasBeenAccepted(receiver UserId, acceptedBy UserId)
@@ -25,7 +27,7 @@ type ApnsConfig struct {
 	CredentialsPath string `json:"credentialsPath"`
 }
 
-func ApnsService(config ApnsConfig, db storage.Storage) (Service, error) {
+func ApnsService(config ApnsConfig, repository Repository) (Service, error) {
 	const op = "apns.AppleService"
 	credentialsData, err := os.ReadFile(common.AbsolutePath(config.CredentialsPath))
 	if err != nil {
@@ -40,7 +42,7 @@ func ApnsService(config ApnsConfig, db storage.Storage) (Service, error) {
 		return &appleService{}, err
 	}
 	return &appleService{
-		client:  apns2.NewClient(cert).Development(),
-		storage: db,
+		client:     apns2.NewClient(cert).Development(),
+		repository: repository,
 	}, nil
 }
