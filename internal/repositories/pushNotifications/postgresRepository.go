@@ -38,7 +38,6 @@ func (c *postgresRepository) StorePushToken(uid UserId, token string) repositori
 func (c *postgresRepository) storePushToken(uid UserId, token string) error {
 	const op = "repositories.pushNotifications.postgresRepository.storePushToken"
 	log.Printf("%s: start[uid=%v]", op, uid)
-
 	query := `
 INSERT INTO pushTokens(id, token) VALUES ($1, $2) 
 ON CONFLICT (id) DO UPDATE SET token = $2;

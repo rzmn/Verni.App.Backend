@@ -2,21 +2,19 @@ package avatars
 
 import (
 	"verni/internal/common"
-	"verni/internal/storage"
+	imagesRepository "verni/internal/repositories/images"
 )
 
 type AvatarId string
-type Avatar struct {
-	Id         AvatarId
-	Base64Data *string
-}
+type Avatar imagesRepository.Image
+type Repository imagesRepository.Repository
 
 type Controller interface {
-	GetAvatars(ids []AvatarId) (map[AvatarId]Avatar, *common.CodeBasedError[GetAvatarsErrorCode])
+	GetAvatars(ids []AvatarId) ([]Avatar, *common.CodeBasedError[GetAvatarsErrorCode])
 }
 
-func DefaultController(storage storage.Storage) Controller {
+func DefaultController(repository Repository) Controller {
 	return &defaultController{
-		storage: storage,
+		repository: repository,
 	}
 }

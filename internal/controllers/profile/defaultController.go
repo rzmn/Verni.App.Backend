@@ -1,29 +1,48 @@
 package profile
 
 import (
+	"errors"
 	"log"
 	"verni/internal/common"
-	"verni/internal/storage"
+	"verni/internal/repositories/auth"
+	"verni/internal/repositories/users"
 )
 
 type defaultController struct {
-	storage storage.Storage
+	auth    AuthRepository
+	images  ImagesRepository
+	users   UsersRepository
+	friends FriendsRepository
 }
 
 func (c *defaultController) GetProfileInfo(id UserId) (ProfileInfo, *common.CodeBasedError[GetInfoErrorCode]) {
 	const op = "profile.defaultController.GetProfileInfo"
 	log.Printf("%s: start[id=%s]", op, id)
-	info, err := c.storage.GetAccountInfo(storage.UserId(id))
+
+	users, err := c.users.GetUsers([]users.UserId{users.UserId(id)})
 	if err != nil {
-		log.Printf("%s: failed read from db err: %v", op, err)
-		return ProfileInfo{}, common.NewError(GetInfoErrorInternal)
+		log.Printf("%s: cannot get user info err: %v", op, err)
+		return ProfileInfo{}, common.NewErrorWithDescription(GetInfoErrorInternal, err.Error())
 	}
-	if info == nil {
-		log.Printf("%s: not found", op)
-		return ProfileInfo{}, common.NewError(GetInfoErrorNotFound)
+	if len(users) == 0 {
+		err := errors.New("no such user exists")
+		log.Printf("%s: cannot get user info err: %v", op, err)
+		return ProfileInfo{}, common.NewErrorWithDescription(GetInfoErrorInternal, err.Error())
 	}
+	credentials, err := c.auth.GetUserInfo(auth.UserId(id))
+	if err != nil {
+		log.Printf("%s: cannot get user credentials err: %v", op, err)
+		return ProfileInfo{}, common.NewErrorWithDescription(GetInfoErrorInternal, err.Error())
+	}
+
 	log.Printf("%s: success[id=%s]", op, id)
-	return ProfileInfo(*info), nil
+	return ProfileInfo{
+		Id:            id,
+		DisplayName:   users[0].DisplayName,
+		AvatarId:      (*AvatarId)(users[0].AvatarId),
+		Email:         credentials.Email,
+		EmailVerified: credentials.EmailVerified,
+	}, nil
 }
 
 func (c *defaultController) UpdateDisplayName(name string, id UserId) *common.CodeBasedError[UpdateDisplayNameErrorCode] {
@@ -33,7 +52,8 @@ func (c *defaultController) UpdateDisplayName(name string, id UserId) *common.Co
 		log.Printf("%s: invalid display name format err: %v", op, err)
 		return common.NewError(UpdateDisplayNameErrorWrongFormat)
 	}
-	if err := c.storage.StoreDisplayName(storage.UserId(id), name); err != nil {
+	transaction := c.users.UpdateDisplayName(name, users.UserId(id))
+	if err := transaction.Perform(); err != nil {
 		log.Printf("%s: cannot write to db err: %v", op, err)
 		return common.NewError(UpdateDisplayNameErrorInternal)
 	}
@@ -44,8 +64,15 @@ func (c *defaultController) UpdateDisplayName(name string, id UserId) *common.Co
 func (c *defaultController) UpdateAvatar(base64 string, id UserId) (AvatarId, *common.CodeBasedError[UpdateAvatarErrorCode]) {
 	const op = "profile.defaultController.UpdateAvatar"
 	log.Printf("%s: start[id=%s, base64 len=%d]", op, id, len(base64))
-	aid, err := c.storage.StoreAvatarBase64(storage.UserId(id), base64)
+	uploadImageTransaction := c.images.UploadImageBase64(base64)
+	aid, err := uploadImageTransaction.Perform()
 	if err != nil {
+		log.Printf("%s: cannot write to db err: %v", op, err)
+		return AvatarId(aid), common.NewError(UpdateAvatarErrorInternal)
+	}
+	updateAvatarTransaction := c.users.UpdateAvatarId((*users.AvatarId)(&aid), users.UserId(id))
+	if err := updateAvatarTransaction.Perform(); err != nil {
+		uploadImageTransaction.Rollback()
 		log.Printf("%s: cannot write to db err: %v", op, err)
 		return AvatarId(aid), common.NewError(UpdateAvatarErrorInternal)
 	}

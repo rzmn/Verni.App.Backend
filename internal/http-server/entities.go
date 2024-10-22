@@ -17,7 +17,7 @@ const (
 
 type Image struct {
 	Id         ImageId `json:"id"`
-	Base64Data *string `json:"base64"`
+	Base64Data string  `json:"base64"`
 }
 
 type User struct {

@@ -6,23 +6,23 @@ import (
 	avatarsController "verni/internal/controllers/avatars"
 	httpserver "verni/internal/http-server"
 	"verni/internal/http-server/responses"
-	"verni/internal/storage"
+	imagesRepository "verni/internal/repositories/images"
 
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes(router *gin.Engine, db storage.Storage) {
-	controller := avatarsController.DefaultController(db)
+func RegisterRoutes(router *gin.Engine, imagesRepository imagesRepository.Repository) {
 	router.GET("/avatars/get", func(c *gin.Context) {
+		controller := avatarsController.DefaultController(imagesRepository)
 		type GetAvatarsRequest struct {
-			Ids []storage.AvatarId `json:"ids"`
+			Ids []httpserver.ImageId `json:"ids"`
 		}
 		var request GetAvatarsRequest
 		if err := c.BindJSON(&request); err != nil {
 			httpserver.AnswerWithBadRequest(c, err)
 			return
 		}
-		info, err := controller.GetAvatars(common.Map(request.Ids, func(id storage.AvatarId) avatarsController.AvatarId {
+		info, err := controller.GetAvatars(common.Map(request.Ids, func(id httpserver.ImageId) avatarsController.AvatarId {
 			return avatarsController.AvatarId(id)
 		}))
 		if err != nil {
@@ -32,6 +32,13 @@ func RegisterRoutes(router *gin.Engine, db storage.Storage) {
 			}
 			return
 		}
-		c.JSON(http.StatusOK, responses.Success(info))
+		response := map[httpserver.ImageId]httpserver.Image{}
+		for _, avatar := range info {
+			response[httpserver.ImageId(avatar.Id)] = httpserver.Image{
+				Id:         httpserver.ImageId(avatar.Id),
+				Base64Data: avatar.Base64,
+			}
+		}
+		c.JSON(http.StatusOK, responses.Success(response))
 	})
 }
