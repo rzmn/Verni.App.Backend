@@ -14,9 +14,9 @@ type FriendStatus int
 
 const (
 	FriendStatusNo = iota
-	FriendStatusIncomingRequest
-	FriendStatusOutgoingRequest
-	FriendStatusFriends
+	FriendStatusSubscriber
+	FriendStatusSubscription
+	FriendStatusFriend
 	FriendStatusMe
 )
 

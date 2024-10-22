@@ -5,13 +5,18 @@ import (
 	"fmt"
 	"log"
 	"verni/internal/repositories"
-	"verni/internal/storage"
 
 	_ "github.com/lib/pq"
 )
 
-type UserId storage.UserId
-type UserAuthData storage.UserAuthData
+type UserId string
+type UserInfo struct {
+	UserId        UserId
+	Email         string
+	PasswordHash  string
+	RefreshToken  string
+	EmailVerified bool
+}
 type Repository interface {
 	CreateUser(uid UserId, email string, password string, refreshToken string) repositories.MutationWorkItem
 	IsUserExists(uid UserId) (bool, error)
@@ -24,7 +29,7 @@ type Repository interface {
 	UpdateEmail(uid UserId, newEmail string) repositories.MutationWorkItem
 
 	GetRefreshToken(uid UserId) (string, error)
-	GetCredentials(uid UserId) (UserAuthData, error)
+	GetUserInfo(uid UserId) (UserInfo, error)
 }
 
 func PostgresRepository(config repositories.PostgresConfig) (Repository, error) {

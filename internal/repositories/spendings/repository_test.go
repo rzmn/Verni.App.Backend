@@ -5,7 +5,6 @@ import (
 	"testing"
 	"verni/internal/repositories"
 	"verni/internal/repositories/spendings"
-	"verni/internal/storage"
 
 	"github.com/google/uuid"
 )
@@ -34,192 +33,136 @@ func getRepository(t *testing.T) spendings.Repository {
 	return repository
 }
 
-func randomUid() spendings.UserId {
-	return spendings.UserId(uuid.New().String())
+func randomUid() spendings.CounterpartyId {
+	return spendings.CounterpartyId(uuid.New().String())
 }
 
-func TestDealsAndCounterparties(t *testing.T) {
+func TestExpensesAndCounterparties(t *testing.T) {
 	s := getRepository(t)
 	counterparty1 := randomUid()
 	counterparty2 := randomUid()
-	cost1 := int64(456)
-	cost2 := int64(888)
-	currency := uuid.New().String()
+	cost1 := spendings.Cost(456)
+	cost2 := spendings.Cost(888)
+	currency := spendings.Currency(uuid.New().String())
 
-	deal1 := spendings.Deal{
+	expense1 := spendings.Expense{
 		Timestamp: 123,
 		Details:   uuid.New().String(),
-		Cost:      cost1,
+		Total:     cost1,
 		Currency:  currency,
-		Spendings: []storage.Spending{
+		Shares: []spendings.ShareOfExpense{
 			{
-				UserId: storage.UserId(counterparty1),
-				Cost:   cost1,
+				Counterparty: counterparty1,
+				Cost:         cost1,
 			},
 			{
-				UserId: storage.UserId(counterparty2),
-				Cost:   -cost1,
+				Counterparty: counterparty2,
+				Cost:         -cost1,
 			},
 		},
 	}
-	insertTransaction := s.InsertDeal(deal1)
+	insertTransaction := s.AddExpense(expense1)
 	_, err := insertTransaction.Perform()
 	if err != nil {
 		t.Fatalf("unexpected err: %v", err)
 	}
-	deal2 := storage.Deal{
+	expense2 := spendings.Expense{
 		Timestamp: 123,
 		Details:   uuid.New().String(),
-		Cost:      cost2,
+		Total:     cost2,
 		Currency:  currency,
-		Spendings: []storage.Spending{
+		Shares: []spendings.ShareOfExpense{
 			{
-				UserId: storage.UserId(counterparty2),
-				Cost:   -cost2 / 2,
+				Counterparty: counterparty2,
+				Cost:         -cost2 / 2,
 			},
 			{
-				UserId: storage.UserId(counterparty1),
-				Cost:   cost2 / 2,
+				Counterparty: counterparty1,
+				Cost:         cost2 / 2,
 			},
 		},
 	}
-	insertTransaction = s.InsertDeal(spendings.Deal(deal2))
+	insertTransaction = s.AddExpense(expense2)
 	_, err = insertTransaction.Perform()
 	if err != nil {
 		t.Fatalf("unexpected err: %v", err)
 	}
-	deals, err := s.GetDeals(counterparty1, counterparty2)
+	expenses, err := s.GetExpensesBetween(counterparty1, counterparty2)
 	if err != nil {
 		t.Fatalf("unexpected err: %v", err)
 	}
-	if len(deals) != 2 {
-		t.Fatalf("should be 2 deals, found: %v", deals)
+	if len(expenses) != 2 {
+		t.Fatalf("should be 2 expenses, found: %v", expenses)
 	} else {
-		log.Printf("deals ok: %v\n", deals)
+		log.Printf("expenses ok: %v\n", expenses)
 	}
-	counterparties, err := s.GetCounterparties(counterparty1)
+	counterparties, err := s.GetBalance(counterparty1)
 	if err != nil {
 		t.Fatalf("unexpected err: %v", err)
 	}
-	if len(counterparties) != 1 || counterparties[0].Counterparty != string(counterparty2) || counterparties[0].Balance[currency] != (cost1+cost2/2) {
+	if len(counterparties) != 1 || counterparties[0].Counterparty != counterparty2 || counterparties[0].Currencies[currency] != (cost1+cost2/2) {
 		t.Fatalf("unexpected counterparty, found: %v", counterparties)
 	}
-	counterparties, err = s.GetCounterparties(counterparty2)
+	counterparties, err = s.GetBalance(counterparty2)
 	if err != nil {
 		t.Fatalf("unexpected err: %v", err)
 	}
-	if len(counterparties) != 1 || counterparties[0].Counterparty != string(counterparty1) || counterparties[0].Balance[currency] != -(cost1+cost2/2) {
+	if len(counterparties) != 1 || counterparties[0].Counterparty != counterparty1 || counterparties[0].Currencies[currency] != -(cost1+cost2/2) {
 		t.Fatalf("unexpected counterparty, found: %v", counterparties)
 	}
 }
 
-func TestInsertAndRemoveDeal(t *testing.T) {
+func TestAddAndRemoveExpense(t *testing.T) {
 	s := getRepository(t)
 	counterparty1 := randomUid()
 	counterparty2 := randomUid()
-	cost := int64(456)
-	currency := uuid.New().String()
+	cost := spendings.Cost(456)
+	currency := spendings.Currency(uuid.New().String())
 
-	deal := storage.Deal{
+	expense := spendings.Expense{
 		Timestamp: 123,
 		Details:   uuid.New().String(),
-		Cost:      cost,
+		Total:     cost,
 		Currency:  currency,
-		Spendings: []storage.Spending{
+		Shares: []spendings.ShareOfExpense{
 			{
-				UserId: storage.UserId(counterparty1),
-				Cost:   cost,
+				Counterparty: counterparty1,
+				Cost:         cost,
 			},
 			{
-				UserId: storage.UserId(counterparty2),
-				Cost:   -cost,
+				Counterparty: counterparty2,
+				Cost:         -cost,
 			},
 		},
 	}
-	insertTransaction := s.InsertDeal(spendings.Deal(deal))
+	insertTransaction := s.AddExpense(expense)
 	_, err := insertTransaction.Perform()
 	if err != nil {
 		t.Fatalf("unexpected err: %v", err)
 	}
-	deals, err := s.GetDeals(counterparty1, counterparty2)
+	expenses, err := s.GetExpensesBetween(counterparty1, counterparty2)
 	if err != nil {
 		t.Fatalf("unexpected err: %v", err)
 	}
-	if len(deals) != 1 {
-		t.Fatalf("deals len should be 1, found: %v", deals)
+	if len(expenses) != 1 {
+		t.Fatalf("expenses len should be 1, found: %v", expenses)
 	}
-	dealFromDb, err := s.GetDeal(spendings.DealId(deals[0].Id))
+	expenseFromDb, err := s.GetExpense(expenses[0].Id)
 	if err != nil {
 		t.Fatalf("unexpected err: %v", err)
 	}
-	if dealFromDb == nil {
+	if expenseFromDb == nil {
 		t.Fatalf("deal should exists: %v", err)
 	}
-	deleteTransaction := s.RemoveDeal(spendings.DealId(deals[0].Id))
+	deleteTransaction := s.RemoveExpense(expenses[0].Id)
 	if err := deleteTransaction.Perform(); err != nil {
 		t.Fatalf("unexpected err: %v", err)
 	}
-	dealFromDb, err = s.GetDeal(spendings.DealId(deals[0].Id))
+	expenseFromDb, err = s.GetExpense(expenses[0].Id)
 	if err != nil {
 		t.Fatalf("unexpected err: %v", err)
 	}
-	if dealFromDb != nil {
+	if expenseFromDb != nil {
 		t.Fatalf("deal should not exists: %v", err)
-	}
-}
-
-func TestGetCounterpartiesForDeal(t *testing.T) {
-	s := getRepository(t)
-	counterparty1 := randomUid()
-	counterparty2 := randomUid()
-	cost := int64(456)
-	currency := uuid.New().String()
-
-	deal := storage.Deal{
-		Timestamp: 123,
-		Details:   uuid.New().String(),
-		Cost:      cost,
-		Currency:  currency,
-		Spendings: []storage.Spending{
-			{
-				UserId: storage.UserId(counterparty1),
-				Cost:   cost,
-			},
-			{
-				UserId: storage.UserId(counterparty2),
-				Cost:   -cost,
-			},
-		},
-	}
-	insertTransaction := s.InsertDeal(spendings.Deal(deal))
-	_, err := insertTransaction.Perform()
-	if err != nil {
-		t.Fatalf("unexpected err: %v", err)
-	}
-	deals, err := s.GetDeals(counterparty1, counterparty2)
-	if err != nil {
-		t.Fatalf("unexpected err: %v", err)
-	}
-	if len(deals) != 1 {
-		t.Fatalf("deals len should be 1, found: %v", deals)
-	}
-	counterparties, err := s.GetCounterpartiesForDeal(spendings.DealId(deals[0].Id))
-	if err != nil {
-		t.Fatalf("unexpected err: %v", err)
-	}
-	if len(counterparties) != 2 {
-		t.Fatalf("counterparties len should be 2, found: %v", counterparties)
-	}
-	passedUsers := map[spendings.UserId]bool{}
-	for i := 0; i < len(counterparties); i++ {
-		if counterparties[i] == counterparty1 {
-			passedUsers[counterparties[i]] = true
-		}
-		if counterparties[i] == counterparty2 {
-			passedUsers[counterparties[i]] = true
-		}
-	}
-	if len(passedUsers) != 2 {
-		t.Fatalf("passedUsers len should be 2, found: %v", passedUsers)
 	}
 }

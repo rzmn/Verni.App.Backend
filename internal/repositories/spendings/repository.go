@@ -5,26 +5,46 @@ import (
 	"fmt"
 	"log"
 	"verni/internal/repositories"
-	"verni/internal/storage"
 
 	_ "github.com/lib/pq"
 )
 
-type Deal storage.Deal
-type DealId storage.DealId
-type IdentifiableDeal storage.IdentifiableDeal
-type UserId storage.UserId
-type SpendingsPreview storage.SpendingsPreview
+type ExpenseId string
+type CounterpartyId string
+type Currency string
+type Cost int64
+
+type ShareOfExpense struct {
+	Counterparty CounterpartyId
+	Cost         Cost
+}
+
+type Expense struct {
+	Timestamp int64
+	Details   string
+	Total     Cost
+	Currency  Currency
+	Shares    []ShareOfExpense
+}
+
+type IdentifiableExpense struct {
+	Expense
+	Id ExpenseId
+}
+
+type Balance struct {
+	Counterparty CounterpartyId
+	Currencies   map[Currency]Cost
+}
 
 type Repository interface {
-	InsertDeal(deal Deal) repositories.MutationWorkItemWithReturnValue[DealId]
-	RemoveDeal(did DealId) repositories.MutationWorkItem
+	AddExpense(id Expense) repositories.MutationWorkItemWithReturnValue[ExpenseId]
+	RemoveExpense(id ExpenseId) repositories.MutationWorkItem
 
-	GetDeal(did DealId) (*IdentifiableDeal, error)
+	GetExpense(id ExpenseId) (*IdentifiableExpense, error)
 
-	GetDeals(counterparty1 UserId, counterparty2 UserId) ([]IdentifiableDeal, error)
-	GetCounterparties(uid UserId) ([]SpendingsPreview, error)
-	GetCounterpartiesForDeal(did DealId) ([]UserId, error)
+	GetExpensesBetween(counterparty1 CounterpartyId, counterparty2 CounterpartyId) ([]IdentifiableExpense, error)
+	GetBalance(counterparty CounterpartyId) ([]Balance, error)
 }
 
 func PostgresRepository(config repositories.PostgresConfig) (Repository, error) {

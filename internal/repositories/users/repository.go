@@ -1,19 +1,21 @@
-package pushNotifications
+package users
 
 import (
 	"database/sql"
 	"fmt"
 	"log"
 	"verni/internal/repositories"
-
-	_ "github.com/lib/pq"
 )
 
 type UserId string
+type User struct {
+	Id          UserId
+	DisplayName string
+}
 
 type Repository interface {
-	StorePushToken(uid UserId, token string) repositories.MutationWorkItem
-	GetPushToken(uid UserId) (*string, error)
+	GetUsers(ids []UserId) ([]User, error)
+	SearchUsers(query string) ([]User, error)
 }
 
 func PostgresRepository(config repositories.PostgresConfig) (Repository, error) {

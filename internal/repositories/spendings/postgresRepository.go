@@ -6,7 +6,6 @@ import (
 	"errors"
 	"log"
 	"verni/internal/repositories"
-	"verni/internal/storage"
 
 	"github.com/google/uuid"
 )
@@ -15,26 +14,26 @@ type postgresRepository struct {
 	db *sql.DB
 }
 
-func (c *postgresRepository) InsertDeal(deal Deal) repositories.MutationWorkItemWithReturnValue[DealId] {
-	const op = "repositories.spendings.postgresRepository.InsertDeal"
-	dealId := DealId(uuid.New().String())
-	return repositories.MutationWorkItemWithReturnValue[DealId]{
-		Perform: func() (DealId, error) {
-			if err := c.insertDeal(deal, dealId); err != nil {
+func (c *postgresRepository) AddExpense(expense Expense) repositories.MutationWorkItemWithReturnValue[ExpenseId] {
+	const op = "repositories.spendings.postgresRepository.AddExpense"
+	expenseId := ExpenseId(uuid.New().String())
+	return repositories.MutationWorkItemWithReturnValue[ExpenseId]{
+		Perform: func() (ExpenseId, error) {
+			if err := c.addExpense(expense, expenseId); err != nil {
 				log.Printf("%s: failed to insert err: %v", op, err)
-				return dealId, err
+				return expenseId, err
 			}
-			return dealId, nil
+			return expenseId, nil
 		},
 		Rollback: func() error {
-			return c.removeDeal(dealId)
+			return c.removeExpense(expenseId)
 		},
 	}
 }
 
-func (c *postgresRepository) insertDeal(deal Deal, did DealId) error {
-	const op = "repositories.spendings.postgresRepository.insertDeal"
-	log.Printf("%s: start[deal=%v did=%s]", op, deal, did)
+func (c *postgresRepository) addExpense(expense Expense, id ExpenseId) error {
+	const op = "repositories.spendings.postgresRepository.addExpense"
+	log.Printf("%s: start[expense=%v id=%s]", op, expense, id)
 	tx, err := c.db.BeginTx(context.Background(), nil)
 	if err != nil {
 		log.Printf("%s: failed to create tx err: %v", op, err)
@@ -44,21 +43,21 @@ func (c *postgresRepository) insertDeal(deal Deal, did DealId) error {
 INSERT INTO 
 	deals(id, timestamp, details, cost, currency) 
 VALUES($1, $2, $3, $4, $5);
-`, string(did), deal.Timestamp, deal.Details, deal.Cost, deal.Currency)
+`, string(id), expense.Timestamp, expense.Details, int64(expense.Total), string(expense.Currency))
 	if err != nil {
-		log.Printf("%s: failed to insert deal err: %v", op, err)
+		log.Printf("%s: failed to insert expense err: %v", op, err)
 		tx.Rollback()
 		return err
 	}
-	for i := 0; i < len(deal.Spendings); i++ {
-		spending := deal.Spendings[i]
+	for i := 0; i < len(expense.Shares); i++ {
+		share := expense.Shares[i]
 		_, err = c.db.Exec(`
 INSERT INTO 
 	spendings(id, dealId, cost, counterparty) 
 VALUES($1, $2, $3, $4);
-		`, uuid.New().String(), string(did), spending.Cost, string(spending.UserId))
+		`, uuid.New().String(), string(id), int64(share.Cost), string(share.Counterparty))
 		if err != nil {
-			log.Printf("%s: failed to insert spending %d err: %v", op, i, err)
+			log.Printf("%s: failed to insert share %d err: %v", op, i, err)
 			tx.Rollback()
 			return err
 		}
@@ -67,56 +66,56 @@ VALUES($1, $2, $3, $4);
 		log.Printf("%s: failed to commit tx err: %v", op, err)
 		return err
 	}
-	log.Printf("%s: success[deal=%v did=%s]", op, deal, did)
+	log.Printf("%s: success[expense=%v id=%s]", op, expense, id)
 	return nil
 }
 
-func (c *postgresRepository) RemoveDeal(did DealId) repositories.MutationWorkItem {
-	const op = "repositories.spendings.postgresRepository.RemoveDeal"
-	deal, err := c.GetDeal(did)
+func (c *postgresRepository) RemoveExpense(expenseId ExpenseId) repositories.MutationWorkItem {
+	const op = "repositories.spendings.postgresRepository.RemoveExpense"
+	expense, err := c.GetExpense(expenseId)
 	return repositories.MutationWorkItem{
 		Perform: func() error {
 			if err != nil {
-				log.Printf("%s: failed to get deal to remove err: %v", op, err)
+				log.Printf("%s: failed to get expense to remove err: %v", op, err)
 				return err
 			}
-			if deal == nil {
-				log.Printf("%s: deal to remove not found", op)
-				return errors.New("deal to remove not found")
+			if expense == nil {
+				log.Printf("%s: expense to remove not found", op)
+				return errors.New("expense to remove not found")
 			}
-			return c.removeDeal(did)
+			return c.removeExpense(expenseId)
 		},
 		Rollback: func() error {
 			if err != nil {
-				log.Printf("%s: failed to get deal to remove err: %v", op, err)
+				log.Printf("%s: failed to get expense to remove err: %v", op, err)
 				return err
 			}
-			if deal == nil {
-				log.Printf("%s: deal to remove not found", op)
-				return errors.New("deal to remove not found")
+			if expense == nil {
+				log.Printf("%s: expense to remove not found", op)
+				return errors.New("expense to remove not found")
 			}
-			return c.insertDeal(Deal((*deal).Deal), DealId((*deal).Id))
+			return c.addExpense(Expense((*expense).Expense), ExpenseId((*expense).Id))
 		},
 	}
 }
 
-func (c *postgresRepository) removeDeal(did DealId) error {
-	const op = "repositories.spendings.postgresRepository.removeDeal"
-	log.Printf("%s: start[did=%s]", op, did)
+func (c *postgresRepository) removeExpense(id ExpenseId) error {
+	const op = "repositories.spendings.postgresRepository.removeExpense"
+	log.Printf("%s: start[id=%s]", op, id)
 	tx, err := c.db.BeginTx(context.Background(), nil)
 	if err != nil {
 		log.Printf("%s: failed to create tx err: %v", op, err)
 		return err
 	}
-	_, err = c.db.Exec(`DELETE FROM deals WHERE id = $1;`, string(did))
+	_, err = c.db.Exec(`DELETE FROM deals WHERE id = $1;`, string(id))
 	if err != nil {
-		log.Printf("%s: failed to remove deal err: %v", op, err)
+		log.Printf("%s: failed to remove expense err: %v", op, err)
 		tx.Rollback()
 		return err
 	}
-	_, err = c.db.Exec(`DELETE FROM spendings WHERE dealId = $1;`, string(did))
+	_, err = c.db.Exec(`DELETE FROM spendings WHERE dealId = $1;`, string(id))
 	if err != nil {
-		log.Printf("%s: failed to remove associated spendings err: %v", op, err)
+		log.Printf("%s: failed to remove shares err: %v", op, err)
 		tx.Rollback()
 		return err
 	}
@@ -124,13 +123,13 @@ func (c *postgresRepository) removeDeal(did DealId) error {
 		log.Printf("%s: failed to commit tx err: %v", op, err)
 		return err
 	}
-	log.Printf("%s: success[did=%s]", op, did)
+	log.Printf("%s: success[id=%s]", op, id)
 	return nil
 }
 
-func (c *postgresRepository) GetDeal(did DealId) (*IdentifiableDeal, error) {
-	const op = "repositories.spendings.postgresRepository.GetDeal"
-	log.Printf("%s: start[did=%s]", op, did)
+func (c *postgresRepository) GetExpense(id ExpenseId) (*IdentifiableExpense, error) {
+	const op = "repositories.spendings.postgresRepository.GetExpense"
+	log.Printf("%s: start[id=%s]", op, id)
 	query := `
 SELECT 
 	d.id, 
@@ -146,52 +145,52 @@ FROM
 WHERE 
 	d.id = $1;
 `
-	rows, err := c.db.Query(query, string(did))
+	rows, err := c.db.Query(query, string(id))
 	if err != nil {
 		log.Printf("%s: failed to perform query err: %v", op, err)
 		return nil, err
 	}
 	defer rows.Close()
-	var deal *IdentifiableDeal
+	var expense *IdentifiableExpense
 	for rows.Next() {
-		var _deal IdentifiableDeal
-		if deal == nil {
-			_deal = IdentifiableDeal{}
+		var _expense IdentifiableExpense
+		if expense == nil {
+			_expense = IdentifiableExpense{}
 		} else {
-			_deal = *deal
+			_expense = *expense
 		}
-		var dealIdString string
+		var expenseIdString string
 		var cost int64
 		var counterparty string
 		err = rows.Scan(
-			&dealIdString,
-			&_deal.Timestamp,
-			&_deal.Details,
-			&_deal.Cost,
-			&_deal.Currency,
+			&expenseIdString,
+			&_expense.Timestamp,
+			&_expense.Details,
+			&_expense.Total,
+			&_expense.Currency,
 			&cost,
 			&counterparty)
 		if err != nil {
 			log.Printf("%s: scan failed err: %v", op, err)
 			return nil, err
 		}
-		_deal.Id = storage.DealId(dealIdString)
-		_deal.Spendings = append(_deal.Spendings, storage.Spending{
-			UserId: storage.UserId(counterparty),
-			Cost:   cost,
+		_expense.Id = ExpenseId(expenseIdString)
+		_expense.Shares = append(_expense.Shares, ShareOfExpense{
+			Counterparty: CounterpartyId(counterparty),
+			Cost:         Cost(cost),
 		})
-		deal = &_deal
+		expense = &_expense
 	}
 	if err := rows.Err(); err != nil {
 		log.Printf("%s: found rows err: %v", op, err)
 		return nil, err
 	}
-	log.Printf("%s: success[did=%s]", op, did)
-	return deal, nil
+	log.Printf("%s: success[id=%s]", op, id)
+	return expense, nil
 }
 
-func (c *postgresRepository) GetDeals(counterparty1 UserId, counterparty2 UserId) ([]IdentifiableDeal, error) {
-	const op = "repositories.spendings.postgresRepository.GetDeals"
+func (c *postgresRepository) GetExpensesBetween(counterparty1 CounterpartyId, counterparty2 CounterpartyId) ([]IdentifiableExpense, error) {
+	const op = "repositories.spendings.postgresRepository.GetExpensesBetween"
 	log.Printf("%s: start[c1=%s c2=%s]", op, counterparty1, counterparty2)
 	query := `
 SELECT
@@ -217,43 +216,43 @@ WHERE
 		return nil, err
 	}
 	defer rows.Close()
-	deals := []IdentifiableDeal{}
+	expenses := []IdentifiableExpense{}
 	for rows.Next() {
-		deal := IdentifiableDeal{}
-		deal.Spendings = make([]storage.Spending, 2)
+		expense := IdentifiableExpense{}
+		expense.Shares = make([]ShareOfExpense, 2)
 		var uid1 string
 		var uid2 string
 		var did string
 		err = rows.Scan(
 			&did,
 			&uid1,
-			&deal.Spendings[0].Cost,
+			&expense.Shares[0].Cost,
 			&uid2,
-			&deal.Spendings[1].Cost,
-			&deal.Timestamp,
-			&deal.Details,
-			&deal.Cost,
-			&deal.Currency)
+			&expense.Shares[1].Cost,
+			&expense.Timestamp,
+			&expense.Details,
+			&expense.Total,
+			&expense.Currency)
 		if err != nil {
 			log.Printf("%s: scan failed err: %v", op, err)
 			return nil, err
 		}
-		deal.Id = storage.DealId(did)
-		deal.Spendings[0].UserId = storage.UserId(uid1)
-		deal.Spendings[1].UserId = storage.UserId(uid2)
-		deals = append(deals, deal)
+		expense.Id = ExpenseId(did)
+		expense.Shares[0].Counterparty = CounterpartyId(uid1)
+		expense.Shares[1].Counterparty = CounterpartyId(uid2)
+		expenses = append(expenses, expense)
 	}
 	if err := rows.Err(); err != nil {
 		log.Printf("%s: found rows err: %v", op, err)
 		return nil, err
 	}
 	log.Printf("%s: success[c1=%s c2=%s]", op, counterparty1, counterparty2)
-	return deals, nil
+	return expenses, nil
 }
 
-func (c *postgresRepository) GetCounterparties(uid UserId) ([]SpendingsPreview, error) {
+func (c *postgresRepository) GetBalance(counterparty CounterpartyId) ([]Balance, error) {
 	const op = "repositories.spendings.postgresRepository.GetCounterparties"
-	log.Printf("%s: start[uid=%s]", op, uid)
+	log.Printf("%s: start[counterparty=%s]", op, counterparty)
 	query := `
 SELECT
   d.currency,
@@ -266,13 +265,13 @@ FROM
 WHERE 
   s1.counterparty = $1 AND s2.counterparty != $1;
 `
-	rows, err := c.db.Query(query, string(uid))
+	rows, err := c.db.Query(query, string(counterparty))
 	if err != nil {
 		log.Printf("%s: failed to perform query err: %v", op, err)
 		return nil, err
 	}
 	defer rows.Close()
-	spendingsMap := map[string]SpendingsPreview{}
+	balancesMap := map[CounterpartyId]Balance{}
 	for rows.Next() {
 		var currency string
 		var user string
@@ -284,55 +283,29 @@ WHERE
 		)
 		if err != nil {
 			log.Printf("%s: scan failed err: %v", op, err)
-			return []SpendingsPreview{}, err
+			return []Balance{}, err
 		}
-		_, ok := spendingsMap[user]
+		_, ok := balancesMap[CounterpartyId(user)]
 		if !ok {
-			spendingsMap[user] = SpendingsPreview{
-				Counterparty: user,
-				Balance:      map[string]int64{},
+			balancesMap[CounterpartyId(user)] = Balance{
+				Counterparty: CounterpartyId(user),
+				Currencies:   map[Currency]Cost{},
 			}
 		}
-		spendingsMap[user].Balance[currency] += cost
+		balancesMap[CounterpartyId(user)].Currencies[Currency(currency)] += Cost(cost)
 	}
 	if err := rows.Err(); err != nil {
 		log.Printf("%s: found rows err: %v", op, err)
 		return nil, err
 	}
-	spendings := make([]SpendingsPreview, 0, len(spendingsMap))
+	balance := make([]Balance, 0, len(balancesMap))
 	if err != nil {
 		log.Printf("%s: unexpected err %v", op, err)
-		return spendings, err
+		return balance, err
 	}
-	for _, value := range spendingsMap {
-		spendings = append(spendings, value)
+	for _, value := range balancesMap {
+		balance = append(balance, value)
 	}
-	log.Printf("%s: success[uid=%s]", op, uid)
-	return spendings, nil
-}
-
-func (c *postgresRepository) GetCounterpartiesForDeal(did DealId) ([]UserId, error) {
-	const op = "repositories.spendings.postgresRepository.GetCounterpartiesForDeal"
-	log.Printf("%s: start[did=%s]", op, did)
-	query := `SELECT counterparty FROM spendings WHERE dealId = $1;`
-	rows, err := c.db.Query(query, string(did))
-	if err != nil {
-		log.Printf("%s: failed to perform query err: %v", op, err)
-		return nil, err
-	}
-	defer rows.Close()
-	counterparties := []UserId{}
-	for rows.Next() {
-		var counterparty string
-		if err := rows.Scan(&counterparty); err != nil {
-			log.Printf("%s: scan failed err: %v", op, err)
-			return []UserId{}, err
-		}
-		counterparties = append(counterparties, UserId(counterparty))
-	}
-	if err := rows.Err(); err != nil {
-		log.Printf("%s: found rows err: %v", op, err)
-		return nil, err
-	}
-	return counterparties, nil
+	log.Printf("%s: start[success=%s]", op, counterparty)
+	return balance, nil
 }

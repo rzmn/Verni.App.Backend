@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"log"
 	"verni/internal/repositories"
-	"verni/internal/storage"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -81,7 +80,7 @@ func (c *postgresRepository) GetUserIdByEmail(email string) (*UserId, error) {
 func (c *postgresRepository) UpdateRefreshToken(uid UserId, token string) repositories.MutationWorkItem {
 	const op = "repositories.auth.postgresRepository.UpdateRefreshToken"
 	log.Printf("%s: start[uid=%s]", op, uid)
-	existed, err := c.GetCredentials(uid)
+	existed, err := c.GetUserInfo(uid)
 	return repositories.MutationWorkItem{
 		Perform: func() error {
 			if err != nil {
@@ -116,7 +115,7 @@ func (c *postgresRepository) updateRefreshToken(uid UserId, token string) error 
 func (c *postgresRepository) UpdatePassword(uid UserId, password string) repositories.MutationWorkItem {
 	const op = "repositories.auth.postgresRepository.UpdatePassword"
 	log.Printf("%s: start[uid=%s]", op, uid)
-	existed, getCredentialsErr := c.GetCredentials(uid)
+	existed, getCredentialsErr := c.GetUserInfo(uid)
 	passwordHash, hashPasswordErr := hashPassword(password)
 	return repositories.MutationWorkItem{
 		Perform: func() error {
@@ -156,7 +155,7 @@ func (c *postgresRepository) updatePassword(uid UserId, passwordHash string) err
 func (c *postgresRepository) UpdateEmail(uid UserId, newEmail string) repositories.MutationWorkItem {
 	const op = "repositories.auth.postgresRepository.UpdateEmail"
 	log.Printf("%s: start[uid=%s]", op, uid)
-	existed, err := c.GetCredentials(uid)
+	existed, err := c.GetUserInfo(uid)
 	return repositories.MutationWorkItem{
 		Perform: func() error {
 			if err != nil {
@@ -233,17 +232,17 @@ func (c *postgresRepository) deleteUser(uid UserId) error {
 	return nil
 }
 
-func (c *postgresRepository) GetCredentials(uid UserId) (UserAuthData, error) {
+func (c *postgresRepository) GetUserInfo(uid UserId) (UserInfo, error) {
 	const op = "repositories.auth.postgresRepository.GetCredentials"
 	log.Printf("%s: start[uid=%s]", op, uid)
 	query := `SELECT email, password, token, emailVerified FROM credentials WHERE id = $1;`
 	row := c.db.QueryRow(query, string(uid))
-	result := UserAuthData{
-		UserId: storage.UserId(uid),
+	result := UserInfo{
+		UserId: UserId(uid),
 	}
 	if err := row.Scan(&result.Email, &result.PasswordHash, &result.RefreshToken, &result.EmailVerified); err != nil {
 		log.Printf("%s: failed to perform scan err: %v", op, err)
-		return UserAuthData{}, err
+		return UserInfo{}, err
 	}
 	log.Printf("%s: success[uid=%s]", op, uid)
 	return result, nil
