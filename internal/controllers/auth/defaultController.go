@@ -223,7 +223,7 @@ func (c *defaultController) UpdateEmail(email string, id UserId) (Session, *comm
 func (c *defaultController) UpdatePassword(oldPassword string, newPassword string, id UserId) (Session, *common.CodeBasedError[UpdatePasswordErrorCode]) {
 	const op = "auth.defaultController.UpdatePassword"
 	log.Printf("%s: start[id=%s]", op, id)
-	account, err := c.authRepository.GetCredentials(auth.UserId(id))
+	account, err := c.authRepository.GetUserInfo(auth.UserId(id))
 	if err != nil {
 		log.Printf("%s: cannot get credentials for id in db err: %v", op, err)
 		return Session{}, common.NewErrorWithDescription(UpdatePasswordErrorInternal, err.Error())
@@ -273,7 +273,7 @@ func (c *defaultController) UpdatePassword(oldPassword string, newPassword strin
 func (c *defaultController) SendEmailConfirmationCode(id UserId) *common.CodeBasedError[SendEmailConfirmationCodeErrorCode] {
 	const op = "auth.defaultController.SendEmailConfirmationCode"
 	log.Printf("%s: start[id=%s]", op, id)
-	account, err := c.authRepository.GetCredentials(auth.UserId(id))
+	account, err := c.authRepository.GetUserInfo(auth.UserId(id))
 	if err != nil {
 		log.Printf("%s: cannot get account info from db %v", op, err)
 		return common.NewErrorWithDescription(SendEmailConfirmationCodeErrorInternal, err.Error())
@@ -299,7 +299,7 @@ func (c *defaultController) SendEmailConfirmationCode(id UserId) *common.CodeBas
 func (c *defaultController) ConfirmEmail(code string, id UserId) *common.CodeBasedError[ConfirmEmailErrorCode] {
 	const op = "auth.defaultController.ConfirmEmail"
 	log.Printf("%s: start[id=%s]", op, id)
-	account, err := c.authRepository.GetCredentials(auth.UserId(id))
+	account, err := c.authRepository.GetUserInfo(auth.UserId(id))
 	if err != nil {
 		log.Printf("%s: cannot get account info from db err: %v", op, err)
 		return common.NewErrorWithDescription(ConfirmEmailErrorInternal, err.Error())

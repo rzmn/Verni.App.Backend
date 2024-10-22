@@ -5,7 +5,6 @@ import (
 	"verni/internal/common"
 	"verni/internal/pushNotifications"
 	"verni/internal/repositories/spendings"
-	"verni/internal/storage"
 )
 
 type defaultController struct {
@@ -13,106 +12,101 @@ type defaultController struct {
 	pushNotifications pushNotifications.Service
 }
 
-func (s *defaultController) CreateDeal(deal Deal, userId UserId) *common.CodeBasedError[CreateDealErrorCode] {
-	const op = "spendings.defaultController.CreateDeal"
-	log.Printf("%s: start[uid=%s]", op, userId)
-	transaction := s.repository.InsertDeal(spendings.Deal(deal))
-	dealId, err := transaction.Perform()
+func (s *defaultController) AddExpense(expense Expense, actor CounterpartyId) *common.CodeBasedError[CreateDealErrorCode] {
+	const op = "spendings.defaultController.AddExpense"
+	log.Printf("%s: start[actor=%s]", op, actor)
+	transaction := s.repository.AddExpense(spendings.Expense(expense))
+	expenseId, err := transaction.Perform()
 	if err != nil {
-		log.Printf("%s: cannot insert deal into db err: %v", op, err)
+		log.Printf("%s: cannot insert expense into db err: %v", op, err)
 		return common.NewErrorWithDescription(CreateDealErrorInternal, err.Error())
 	}
-	for i := 0; i < len(deal.Spendings); i++ {
-		spending := deal.Spendings[i]
-		if spending.UserId == storage.UserId(userId) {
+	for i := 0; i < len(expense.Shares); i++ {
+		spending := expense.Shares[i]
+		if spending.Counterparty == spendings.CounterpartyId(actor) {
 			continue
 		}
-		s.pushNotifications.NewExpenseReceived(pushNotifications.UserId(spending.UserId), pushNotifications.Deal{
-			Deal: storage.Deal(deal),
-			Id:   storage.DealId(dealId),
-		}, pushNotifications.UserId(userId))
+		s.pushNotifications.NewExpenseReceived(pushNotifications.UserId(spending.Counterparty), pushNotifications.Expense{
+			Expense: spendings.Expense(expense),
+			Id:      expenseId,
+		}, pushNotifications.UserId(actor))
 	}
-	log.Printf("%s: success[uid=%s]", op, userId)
+	log.Printf("%s: success[actor=%s]", op, actor)
 	return nil
 }
 
-func (s *defaultController) DeleteDeal(dealId DealId, userId UserId) (IdentifiableDeal, *common.CodeBasedError[DeleteDealErrorCode]) {
-	const op = "spendings.defaultController.DeleteDeal"
-	log.Printf("%s: start[did=%s uid=%s]", op, dealId, userId)
-	dealFromDb, err := s.repository.GetDeal(spendings.DealId(dealId))
+func (s *defaultController) RemoveExpense(expenseId ExpenseId, actor CounterpartyId) (IdentifiableExpense, *common.CodeBasedError[DeleteDealErrorCode]) {
+	const op = "spendings.defaultController.RemoveExpense"
+	log.Printf("%s: start[expenseId=%s actor=%s]", op, expenseId, actor)
+	expense, err := s.repository.GetExpense(spendings.ExpenseId(expenseId))
 	if err != nil {
-		log.Printf("%s: cannot get deal from db err: %v", op, err)
-		return IdentifiableDeal{}, common.NewErrorWithDescription(DeleteDealErrorInternal, err.Error())
+		log.Printf("%s: cannot get expense from db err: %v", op, err)
+		return IdentifiableExpense{}, common.NewErrorWithDescription(DeleteDealErrorInternal, err.Error())
 	}
-	if dealFromDb == nil {
-		log.Printf("%s: deal %s does not exists", op, dealId)
-		return IdentifiableDeal{}, common.NewError(DeleteDealErrorDealNotFound)
+	if expense == nil {
+		log.Printf("%s: expense %s does not exists", op, expenseId)
+		return IdentifiableExpense{}, common.NewError(DeleteDealErrorDealNotFound)
 	}
-	counterparties, err := s.repository.GetCounterpartiesForDeal(spendings.DealId(dealId))
-	if err != nil {
-		log.Printf("%s: cannot get deal counterparties from db err: %v", op, err)
-		return IdentifiableDeal{}, common.NewErrorWithDescription(DeleteDealErrorInternal, err.Error())
-	}
-	var isYourDeal bool
-	for i := 0; i < len(counterparties); i++ {
-		if counterparties[i] == spendings.UserId(userId) {
-			isYourDeal = true
+	var isYourExpense bool
+	for i := 0; i < len(expense.Shares); i++ {
+		if expense.Shares[i].Counterparty == spendings.CounterpartyId(actor) {
+			isYourExpense = true
 			break
 		}
 	}
-	if !isYourDeal {
-		log.Printf("%s: user %s is not found in deals %s counterparties", op, userId, dealId)
-		return IdentifiableDeal{}, common.NewError(DeleteDealErrorNotYourDeal)
+	if !isYourExpense {
+		log.Printf("%s: user %s is not found in expense %s shares", op, actor, expenseId)
+		return IdentifiableExpense{}, common.NewError(DeleteDealErrorNotYourDeal)
 	}
-	transaction := s.repository.RemoveDeal(spendings.DealId(dealId))
+	transaction := s.repository.RemoveExpense(spendings.ExpenseId(expenseId))
 	if err := transaction.Perform(); err != nil {
-		log.Printf("%s: cannot remove deal from db err: %v", op, err)
-		return IdentifiableDeal{}, common.NewErrorWithDescription(DeleteDealErrorInternal, err.Error())
+		log.Printf("%s: cannot remove expense from db err: %v", op, err)
+		return IdentifiableExpense{}, common.NewErrorWithDescription(DeleteDealErrorInternal, err.Error())
 	}
-	log.Printf("%s: success[did=%s uid=%s]", op, dealId, userId)
-	return IdentifiableDeal(*dealFromDb), nil
+	log.Printf("%s: success[expenseId=%s actor=%s]", op, expenseId, actor)
+	return IdentifiableExpense(*expense), nil
 }
 
-func (s *defaultController) GetDeal(dealId DealId, userId UserId) (IdentifiableDeal, *common.CodeBasedError[GetDealErrorCode]) {
-	const op = "spendings.defaultController.GetDeal"
-	log.Printf("%s: start[did=%s uid=%s]", op, dealId, userId)
-	deal, err := s.repository.GetDeal(spendings.DealId(dealId))
+func (s *defaultController) GetExpense(expenseId ExpenseId, actor CounterpartyId) (IdentifiableExpense, *common.CodeBasedError[GetDealErrorCode]) {
+	const op = "spendings.defaultController.GetExpense"
+	log.Printf("%s: start[expenseId=%s actor=%s]", op, expenseId, actor)
+	expense, err := s.repository.GetExpense(spendings.ExpenseId(expenseId))
 	if err != nil {
-		log.Printf("%s: cannot get deal from db err: %v", op, err)
-		return IdentifiableDeal{}, common.NewErrorWithDescription(GetDealErrorInternal, err.Error())
+		log.Printf("%s: cannot get expense from db err: %v", op, err)
+		return IdentifiableExpense{}, common.NewErrorWithDescription(GetDealErrorInternal, err.Error())
 	}
-	if deal == nil {
-		log.Printf("%s: deal %s is not found in db", op, dealId)
-		return IdentifiableDeal{}, common.NewError(GetDealErrorDealNotFound)
+	if expense == nil {
+		log.Printf("%s: expense %s is not found in db", op, expenseId)
+		return IdentifiableExpense{}, common.NewError(GetDealErrorDealNotFound)
 	}
-	log.Printf("%s: success[did=%s uid=%s]", op, dealId, userId)
-	return IdentifiableDeal(*deal), nil
+	log.Printf("%s: success[expenseId=%s actor=%s]", op, expenseId, actor)
+	return IdentifiableExpense(*expense), nil
 }
 
-func (s *defaultController) GetDeals(counterparty UserId, userId UserId) ([]IdentifiableDeal, *common.CodeBasedError[GetDealsErrorCode]) {
-	const op = "spendings.defaultController.GetDeals"
-	log.Printf("%s: start[counterparty=%s uid=%s]", op, counterparty, userId)
-	deals, err := s.repository.GetDeals(spendings.UserId(counterparty), spendings.UserId(userId))
+func (s *defaultController) GetExpensesWith(counterparty CounterpartyId, actor CounterpartyId) ([]IdentifiableExpense, *common.CodeBasedError[GetDealsErrorCode]) {
+	const op = "spendings.defaultController.GetExpensesWith"
+	log.Printf("%s: start[counterparty=%s actor=%s]", op, counterparty, actor)
+	expenses, err := s.repository.GetExpensesBetween(spendings.CounterpartyId(counterparty), spendings.CounterpartyId(actor))
 	if err != nil {
-		log.Printf("%s: cannot get deals from db err: %v", op, err)
-		return []IdentifiableDeal{}, common.NewErrorWithDescription(GetDealsErrorInternal, err.Error())
+		log.Printf("%s: cannot get expenses from db err: %v", op, err)
+		return []IdentifiableExpense{}, common.NewErrorWithDescription(GetDealsErrorInternal, err.Error())
 	}
-	log.Printf("%s: success[counterparty=%s uid=%s]", op, counterparty, userId)
-	return common.Map(deals, func(deal spendings.IdentifiableDeal) IdentifiableDeal {
-		return IdentifiableDeal(deal)
+	log.Printf("%s: success[counterparty=%s actor=%s]", op, counterparty, actor)
+	return common.Map(expenses, func(expense spendings.IdentifiableExpense) IdentifiableExpense {
+		return IdentifiableExpense(expense)
 	}), nil
 }
 
-func (s *defaultController) GetCounterparties(userId UserId) ([]SpendingsPreview, *common.CodeBasedError[GetCounterpartiesErrorCode]) {
-	const op = "spendings.defaultController.GetCounterparties"
-	log.Printf("%s: start[uid=%s]", op, userId)
-	preview, err := s.repository.GetCounterparties(spendings.UserId(userId))
+func (s *defaultController) GetBalance(actor CounterpartyId) ([]Balance, *common.CodeBasedError[GetCounterpartiesErrorCode]) {
+	const op = "spendings.defaultController.GetBalance"
+	log.Printf("%s: start[actor=%s]", op, actor)
+	balance, err := s.repository.GetBalance(spendings.CounterpartyId(actor))
 	if err != nil {
-		log.Printf("%s: cannot get spendings preview for %s from db err: %v", op, userId, err)
-		return []SpendingsPreview{}, common.NewErrorWithDescription(GetCounterpartiesErrorInternal, err.Error())
+		log.Printf("%s: cannot get balance for %s from db err: %v", op, actor, err)
+		return []Balance{}, common.NewErrorWithDescription(GetCounterpartiesErrorInternal, err.Error())
 	}
-	log.Printf("%s: success[uid=%s]", op, userId)
-	return common.Map(preview, func(preview spendings.SpendingsPreview) SpendingsPreview {
-		return SpendingsPreview(preview)
+	log.Printf("%s: success[actor=%s]", op, actor)
+	return common.Map(balance, func(balance spendings.Balance) Balance {
+		return Balance(balance)
 	}), nil
 }

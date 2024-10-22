@@ -4,22 +4,21 @@ import (
 	"verni/internal/common"
 	"verni/internal/pushNotifications"
 	spendingsRepository "verni/internal/repositories/spendings"
-	"verni/internal/storage"
 )
 
-type UserId storage.UserId
-type Deal storage.Deal
-type DealId storage.DealId
-type IdentifiableDeal storage.IdentifiableDeal
-type SpendingsPreview storage.SpendingsPreview
+type CounterpartyId spendingsRepository.CounterpartyId
+type ExpenseId spendingsRepository.ExpenseId
+type Expense spendingsRepository.Expense
+type IdentifiableExpense spendingsRepository.IdentifiableExpense
+type Balance spendingsRepository.Balance
 type Repository spendingsRepository.Repository
 
 type Controller interface {
-	CreateDeal(deal Deal, userId UserId) *common.CodeBasedError[CreateDealErrorCode]
-	DeleteDeal(dealId DealId, userId UserId) (IdentifiableDeal, *common.CodeBasedError[DeleteDealErrorCode])
-	GetDeal(dealId DealId, userId UserId) (IdentifiableDeal, *common.CodeBasedError[GetDealErrorCode])
-	GetDeals(counterparty UserId, userId UserId) ([]IdentifiableDeal, *common.CodeBasedError[GetDealsErrorCode])
-	GetCounterparties(userId UserId) ([]SpendingsPreview, *common.CodeBasedError[GetCounterpartiesErrorCode])
+	AddExpense(expense Expense, actor CounterpartyId) *common.CodeBasedError[CreateDealErrorCode]
+	RemoveExpense(expenseId ExpenseId, actor CounterpartyId) (IdentifiableExpense, *common.CodeBasedError[DeleteDealErrorCode])
+	GetExpense(expenseId ExpenseId, actor CounterpartyId) (IdentifiableExpense, *common.CodeBasedError[GetDealErrorCode])
+	GetExpensesWith(counterparty CounterpartyId, actor CounterpartyId) ([]IdentifiableExpense, *common.CodeBasedError[GetDealsErrorCode])
+	GetBalanse(actor CounterpartyId) ([]Balance, *common.CodeBasedError[GetCounterpartiesErrorCode])
 }
 
 func DefaultController(repository Repository, pushNotifications pushNotifications.Service) Controller {

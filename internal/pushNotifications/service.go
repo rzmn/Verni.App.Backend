@@ -6,6 +6,7 @@ import (
 	"os"
 	"verni/internal/common"
 	pushNotificationsRepository "verni/internal/repositories/pushNotifications"
+	spendingsRepository "verni/internal/repositories/spendings"
 	"verni/internal/storage"
 
 	"github.com/sideshow/apns2"
@@ -13,13 +14,13 @@ import (
 )
 
 type UserId storage.UserId
-type Deal storage.IdentifiableDeal
+type Expense spendingsRepository.IdentifiableExpense
 type Repository pushNotificationsRepository.Repository
 
 type Service interface {
 	FriendRequestHasBeenAccepted(receiver UserId, acceptedBy UserId)
 	FriendRequestHasBeenReceived(receiver UserId, sentBy UserId)
-	NewExpenseReceived(receiver UserId, deal Deal, author UserId)
+	NewExpenseReceived(receiver UserId, deal Expense, author UserId)
 }
 
 type ApnsConfig struct {
