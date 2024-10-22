@@ -3,6 +3,7 @@ package spendings
 import (
 	"net/http"
 	"verni/internal/auth/jwt"
+	"verni/internal/common"
 	spendingsController "verni/internal/controllers/spendings"
 	httpserver "verni/internal/http-server"
 	"verni/internal/http-server/longpoll"
@@ -11,28 +12,46 @@ import (
 	"verni/internal/pushNotifications"
 	authRepository "verni/internal/repositories/auth"
 	spendingsRepository "verni/internal/repositories/spendings"
-	"verni/internal/storage"
 
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes(router *gin.Engine, authRepository authRepository.Repository, repository spendingsRepository.Repository, jwtService jwt.Service, pushNotifications pushNotifications.Service, longpoll longpoll.Service) {
+func RegisterRoutes(
+	router *gin.Engine,
+	authRepository authRepository.Repository,
+	repository spendingsRepository.Repository,
+	jwtService jwt.Service,
+	pushNotifications pushNotifications.Service,
+	longpoll longpoll.Service,
+) {
 	ensureLoggedIn := middleware.EnsureLoggedIn(authRepository, jwtService)
-	hostFromToken := func(c *gin.Context) spendingsController.UserId {
-		return spendingsController.UserId(c.Request.Header.Get(middleware.LoggedInSubjectKey))
+	hostFromToken := func(c *gin.Context) spendingsController.CounterpartyId {
+		return spendingsController.CounterpartyId(c.Request.Header.Get(middleware.LoggedInSubjectKey))
 	}
 	controller := spendingsController.DefaultController(repository, pushNotifications)
 	methodGroup := router.Group("/spendings", ensureLoggedIn)
-	methodGroup.POST("/createDeal", func(c *gin.Context) {
-		type CreateDealRequest struct {
-			Deal storage.Deal `json:"deal"`
+	methodGroup.POST("/addExpense", func(c *gin.Context) {
+		type AddExpenseRequest struct {
+			Expense httpserver.Expense `json:"expense"`
 		}
-		var request CreateDealRequest
+		var request AddExpenseRequest
 		if err := c.BindJSON(&request); err != nil {
 			httpserver.AnswerWithBadRequest(c, err)
 			return
 		}
-		if err := controller.CreateDeal(spendingsController.Deal(request.Deal), hostFromToken(c)); err != nil {
+		expense := spendingsController.Expense{
+			Timestamp: request.Expense.Timestamp,
+			Details:   request.Expense.Details,
+			Total:     spendingsRepository.Cost(request.Expense.Total),
+			Currency:  spendingsRepository.Currency(request.Expense.Currency),
+			Shares: common.Map(request.Expense.Shares, func(share httpserver.ShareOfExpense) spendingsRepository.ShareOfExpense {
+				return spendingsRepository.ShareOfExpense{
+					Counterparty: spendingsRepository.CounterpartyId(share.UserId),
+					Cost:         spendingsRepository.Cost(share.Cost),
+				}
+			}),
+		}
+		if err := controller.AddExpense(expense, hostFromToken(c)); err != nil {
 			switch err.Code {
 			case spendingsController.CreateDealErrorNoSuchUser:
 				httpserver.Answer(c, err, http.StatusConflict, responses.CodeNoSuchUser)
@@ -45,16 +64,16 @@ func RegisterRoutes(router *gin.Engine, authRepository authRepository.Repository
 		}
 		c.JSON(http.StatusOK, responses.OK())
 	})
-	methodGroup.POST("/deleteDeal", func(c *gin.Context) {
-		type DeleteDealRequest struct {
-			DealId storage.DealId `json:"dealId"`
+	methodGroup.POST("/removeExpense", func(c *gin.Context) {
+		type RemoveExpenseRequest struct {
+			ExpenseId httpserver.ExpenseId `json:"expenseId"`
 		}
-		var request DeleteDealRequest
+		var request RemoveExpenseRequest
 		if err := c.BindJSON(&request); err != nil {
 			httpserver.AnswerWithBadRequest(c, err)
 			return
 		}
-		_, err := controller.DeleteDeal(spendingsController.DealId(request.DealId), hostFromToken(c))
+		_, err := controller.RemoveExpense(spendingsController.ExpenseId(request.ExpenseId), hostFromToken(c))
 		if err != nil {
 			switch err.Code {
 			case spendingsController.DeleteDealErrorDealNotFound:
@@ -70,8 +89,8 @@ func RegisterRoutes(router *gin.Engine, authRepository authRepository.Repository
 		}
 		c.JSON(http.StatusOK, responses.OK())
 	})
-	methodGroup.GET("/getCounterparties", func(c *gin.Context) {
-		preview, err := controller.GetCounterparties(hostFromToken(c))
+	methodGroup.GET("/getBalance", func(c *gin.Context) {
+		balance, err := controller.GetBalance(hostFromToken(c))
 		if err != nil {
 			switch err.Code {
 			default:
@@ -79,18 +98,19 @@ func RegisterRoutes(router *gin.Engine, authRepository authRepository.Repository
 			}
 			return
 		}
-		c.JSON(http.StatusOK, responses.Success(preview))
+		response := common.Map(balance, mapBalance)
+		c.JSON(http.StatusOK, responses.Success(response))
 	})
-	methodGroup.GET("/getDeals", func(c *gin.Context) {
-		type GetDealsRequest struct {
-			Counterparty storage.UserId `json:"counterparty"`
+	methodGroup.GET("/getExpenses", func(c *gin.Context) {
+		type GetExpensesRequest struct {
+			Counterparty httpserver.UserId `json:"counterparty"`
 		}
-		var request GetDealsRequest
+		var request GetExpensesRequest
 		if err := c.BindJSON(&request); err != nil {
 			httpserver.AnswerWithBadRequest(c, err)
 			return
 		}
-		deals, err := controller.GetDeals(spendingsController.UserId(request.Counterparty), hostFromToken(c))
+		expenses, err := controller.GetExpensesWith(spendingsController.CounterpartyId(request.Counterparty), hostFromToken(c))
 		if err != nil {
 			switch err.Code {
 			default:
@@ -98,18 +118,19 @@ func RegisterRoutes(router *gin.Engine, authRepository authRepository.Repository
 			}
 			return
 		}
-		c.JSON(http.StatusOK, responses.Success(deals))
+		response := common.Map(expenses, mapIdentifiableExpense)
+		c.JSON(http.StatusOK, responses.Success(response))
 	})
-	methodGroup.GET("/getDeal", func(c *gin.Context) {
-		type GetDealRequest struct {
-			Id storage.DealId `json:"dealId"`
+	methodGroup.GET("/getExpense", func(c *gin.Context) {
+		type GetExpenseRequest struct {
+			Id httpserver.ExpenseId `json:"id"`
 		}
-		var request GetDealRequest
+		var request GetExpenseRequest
 		if err := c.BindJSON(&request); err != nil {
 			httpserver.AnswerWithBadRequest(c, err)
 			return
 		}
-		deal, err := controller.GetDeal(spendingsController.DealId(request.Id), hostFromToken(c))
+		expense, err := controller.GetExpense(spendingsController.ExpenseId(request.Id), hostFromToken(c))
 		if err != nil {
 			switch err.Code {
 			case spendingsController.GetDealErrorDealNotFound:
@@ -121,6 +142,42 @@ func RegisterRoutes(router *gin.Engine, authRepository authRepository.Repository
 			}
 			return
 		}
-		c.JSON(http.StatusOK, responses.Success(deal))
+		c.JSON(http.StatusOK, responses.Success(mapIdentifiableExpense(expense)))
 	})
+}
+
+func mapIdentifiableExpense(expense spendingsController.IdentifiableExpense) httpserver.IdentifiableExpense {
+	return httpserver.IdentifiableExpense{
+		Id:      httpserver.ExpenseId(expense.Id),
+		Expense: mapExpense(spendingsController.Expense(expense.Expense)),
+	}
+}
+
+func mapExpense(expense spendingsController.Expense) httpserver.Expense {
+	return httpserver.Expense{
+		Timestamp:   expense.Timestamp,
+		Details:     expense.Details,
+		Total:       httpserver.Cost(expense.Total),
+		Attachments: []httpserver.ExpenseAttachment{},
+		Currency:    httpserver.Currency(expense.Currency),
+		Shares:      common.Map(expense.Shares, mapShareOfExpense),
+	}
+}
+
+func mapShareOfExpense(share spendingsRepository.ShareOfExpense) httpserver.ShareOfExpense {
+	return httpserver.ShareOfExpense{
+		UserId: httpserver.UserId(share.Counterparty),
+		Cost:   httpserver.Cost(share.Cost),
+	}
+}
+
+func mapBalance(balance spendingsController.Balance) httpserver.Balance {
+	currencies := map[httpserver.Currency]httpserver.Cost{}
+	for currency, cost := range balance.Currencies {
+		currencies[httpserver.Currency(currency)] = httpserver.Cost(cost)
+	}
+	return httpserver.Balance{
+		Counterparty: string(balance.Counterparty),
+		Currencies:   currencies,
+	}
 }

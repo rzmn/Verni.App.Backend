@@ -1,15 +1,15 @@
 package auth
 
 import (
-	"database/sql"
 	"log"
+	"verni/internal/db"
 	"verni/internal/repositories"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 type postgresRepository struct {
-	db *sql.DB
+	db db.DB
 }
 
 func hashPassword(password string) (string, error) {

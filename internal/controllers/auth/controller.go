@@ -4,16 +4,20 @@ import (
 	"verni/internal/auth/confirmation"
 	"verni/internal/auth/jwt"
 	"verni/internal/common"
-	"verni/internal/storage"
 
 	authRepository "verni/internal/repositories/auth"
 	pushNotificationsRepository "verni/internal/repositories/pushNotifications"
 )
 
-type UserId storage.UserId
-type Session storage.AuthenticatedSession
+type UserId string
 type AuthRepository authRepository.Repository
 type PushTokensRepository pushNotificationsRepository.Repository
+
+type Session struct {
+	Id           UserId
+	AccessToken  string
+	RefreshToken string
+}
 
 type Controller interface {
 	Signup(email string, password string) (Session, *common.CodeBasedError[SignupErrorCode])

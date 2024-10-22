@@ -3,10 +3,9 @@ package friends
 import (
 	"verni/internal/common"
 	friendsRepository "verni/internal/repositories/friends"
-	"verni/internal/storage"
 )
 
-type UserId storage.UserId
+type UserId string
 type FriendStatus int
 type Repository friendsRepository.Repository
 

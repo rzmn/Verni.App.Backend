@@ -2,16 +2,16 @@ package spendings
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"log"
+	"verni/internal/db"
 	"verni/internal/repositories"
 
 	"github.com/google/uuid"
 )
 
 type postgresRepository struct {
-	db *sql.DB
+	db db.DB
 }
 
 func (c *postgresRepository) AddExpense(expense Expense) repositories.MutationWorkItemWithReturnValue[ExpenseId] {
@@ -222,9 +222,9 @@ WHERE
 		expense.Shares = make([]ShareOfExpense, 2)
 		var uid1 string
 		var uid2 string
-		var did string
+		var expenseId string
 		err = rows.Scan(
-			&did,
+			&expenseId,
 			&uid1,
 			&expense.Shares[0].Cost,
 			&uid2,
@@ -237,7 +237,7 @@ WHERE
 			log.Printf("%s: scan failed err: %v", op, err)
 			return nil, err
 		}
-		expense.Id = ExpenseId(did)
+		expense.Id = ExpenseId(expenseId)
 		expense.Shares[0].Counterparty = CounterpartyId(uid1)
 		expense.Shares[1].Counterparty = CounterpartyId(uid2)
 		expenses = append(expenses, expense)

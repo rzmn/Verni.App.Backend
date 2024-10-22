@@ -2,7 +2,7 @@ package pushNotifications_test
 
 import (
 	"testing"
-	"verni/internal/repositories"
+	"verni/internal/db"
 	"verni/internal/repositories/pushNotifications"
 
 	"github.com/google/uuid"
@@ -16,15 +16,17 @@ func getRepository(t *testing.T) pushNotifications.Repository {
 	if _s != nil {
 		return *_s
 	}
-	repository, err := pushNotifications.PostgresRepository(
-		repositories.PostgresConfig{
-			Host:     "localhost",
-			Port:     5432,
-			User:     "tester",
-			Password: "test_password",
-			DbName:   "mydb",
-		},
-	)
+	db, err := db.Postgres(db.PostgresConfig{
+		Host:     "localhost",
+		Port:     5432,
+		User:     "tester",
+		Password: "test_password",
+		DbName:   "mydb",
+	})
+	if err != nil {
+		t.Fatalf("failed to init repository err: %v", err)
+	}
+	repository := pushNotifications.PostgresRepository(db)
 	if err != nil {
 		t.Fatalf("failed to init repository err: %v", err)
 	}

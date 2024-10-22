@@ -1,16 +1,16 @@
 package friends
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"strings"
 	"verni/internal/common"
+	"verni/internal/db"
 	"verni/internal/repositories"
 )
 
 type postgresRepository struct {
-	db *sql.DB
+	db db.DB
 }
 
 func (c *postgresRepository) GetFriends(userId UserId) ([]UserId, error) {

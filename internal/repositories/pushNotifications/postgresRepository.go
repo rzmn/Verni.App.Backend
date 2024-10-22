@@ -1,13 +1,13 @@
 package pushNotifications
 
 import (
-	"database/sql"
 	"log"
+	"verni/internal/db"
 	"verni/internal/repositories"
 )
 
 type postgresRepository struct {
-	db *sql.DB
+	db db.DB
 }
 
 func (c *postgresRepository) StorePushToken(uid UserId, token string) repositories.MutationWorkItem {

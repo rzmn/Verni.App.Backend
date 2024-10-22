@@ -18,7 +18,7 @@ type Controller interface {
 	RemoveExpense(expenseId ExpenseId, actor CounterpartyId) (IdentifiableExpense, *common.CodeBasedError[DeleteDealErrorCode])
 	GetExpense(expenseId ExpenseId, actor CounterpartyId) (IdentifiableExpense, *common.CodeBasedError[GetDealErrorCode])
 	GetExpensesWith(counterparty CounterpartyId, actor CounterpartyId) ([]IdentifiableExpense, *common.CodeBasedError[GetDealsErrorCode])
-	GetBalanse(actor CounterpartyId) ([]Balance, *common.CodeBasedError[GetCounterpartiesErrorCode])
+	GetBalance(actor CounterpartyId) ([]Balance, *common.CodeBasedError[GetCounterpartiesErrorCode])
 }
 
 func DefaultController(repository Repository, pushNotifications pushNotifications.Service) Controller {

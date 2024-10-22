@@ -5,22 +5,23 @@ import (
 	"log"
 	"os"
 	"verni/internal/common"
+	httpserver "verni/internal/http-server"
 	pushNotificationsRepository "verni/internal/repositories/pushNotifications"
-	spendingsRepository "verni/internal/repositories/spendings"
-	"verni/internal/storage"
 
 	"github.com/sideshow/apns2"
 	"github.com/sideshow/apns2/certificate"
 )
 
-type UserId storage.UserId
-type Expense spendingsRepository.IdentifiableExpense
+type UserId httpserver.UserId
+type Expense httpserver.IdentifiableExpense
+type ExpenseId httpserver.ExpenseId
+type Cost httpserver.Cost
 type Repository pushNotificationsRepository.Repository
 
 type Service interface {
 	FriendRequestHasBeenAccepted(receiver UserId, acceptedBy UserId)
 	FriendRequestHasBeenReceived(receiver UserId, sentBy UserId)
-	NewExpenseReceived(receiver UserId, deal Expense, author UserId)
+	NewExpenseReceived(receiver UserId, expense Expense, author UserId)
 }
 
 type ApnsConfig struct {

@@ -3,6 +3,7 @@ package spendings
 import (
 	"log"
 	"verni/internal/common"
+	httpserver "verni/internal/http-server"
 	"verni/internal/pushNotifications"
 	"verni/internal/repositories/spendings"
 )
@@ -27,8 +28,20 @@ func (s *defaultController) AddExpense(expense Expense, actor CounterpartyId) *c
 			continue
 		}
 		s.pushNotifications.NewExpenseReceived(pushNotifications.UserId(spending.Counterparty), pushNotifications.Expense{
-			Expense: spendings.Expense(expense),
-			Id:      expenseId,
+			Expense: httpserver.Expense{
+				Timestamp:   expense.Timestamp,
+				Details:     expense.Details,
+				Total:       httpserver.Cost(expense.Total),
+				Attachments: []httpserver.ExpenseAttachment{},
+				Currency:    httpserver.Currency(expense.Currency),
+				Shares: common.Map(expense.Shares, func(share spendings.ShareOfExpense) httpserver.ShareOfExpense {
+					return httpserver.ShareOfExpense{
+						UserId: httpserver.UserId(share.Counterparty),
+						Cost:   httpserver.Cost(share.Cost),
+					}
+				}),
+			},
+			Id: httpserver.ExpenseId(expenseId),
 		}, pushNotifications.UserId(actor))
 	}
 	log.Printf("%s: success[actor=%s]", op, actor)

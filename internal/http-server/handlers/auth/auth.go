@@ -10,7 +10,6 @@ import (
 	"verni/internal/http-server/responses"
 	authRepository "verni/internal/repositories/auth"
 	pushTokensRepository "verni/internal/repositories/pushNotifications"
-	"verni/internal/storage"
 
 	"github.com/gin-gonic/gin"
 )
@@ -23,13 +22,13 @@ func RegisterRoutes(
 	emailConfirmation confirmation.Service,
 ) {
 	ensureLoggedIn := middleware.EnsureLoggedIn(authRepository, jwtService)
-	hostFromToken := func(c *gin.Context) storage.UserId {
-		return storage.UserId(c.Request.Header.Get(middleware.LoggedInSubjectKey))
+	hostFromToken := func(c *gin.Context) authController.UserId {
+		return authController.UserId(c.Request.Header.Get(middleware.LoggedInSubjectKey))
 	}
 	controller := authController.DefaultController(authRepository, pushTokensRepository, jwtService, emailConfirmation)
 	router.PUT("/auth/signup", func(c *gin.Context) {
 		type SignupRequest struct {
-			Credentials storage.UserCredentials `json:"credentials"`
+			Credentials httpserver.Credentials `json:"credentials"`
 		}
 		var request SignupRequest
 		if err := c.BindJSON(&request); err != nil {
@@ -52,7 +51,7 @@ func RegisterRoutes(
 	})
 	router.PUT("/auth/login", func(c *gin.Context) {
 		type LoginRequest struct {
-			Credentials storage.UserCredentials `json:"credentials"`
+			Credentials httpserver.Credentials `json:"credentials"`
 		}
 		var request LoginRequest
 		if err := c.BindJSON(&request); err != nil {

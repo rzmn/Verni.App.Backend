@@ -3,12 +3,11 @@ package longpoll
 import (
 	"verni/internal/auth/jwt"
 	authRepository "verni/internal/repositories/auth"
-	"verni/internal/storage"
 
 	"github.com/gin-gonic/gin"
 )
 
-type UserId storage.UserId
+type UserId string
 type AuthRepository authRepository.Repository
 
 type Service interface {

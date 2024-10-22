@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"verni/internal/repositories/pushNotifications"
-	"verni/internal/storage"
 
 	"github.com/sideshow/apns2"
 )
@@ -138,9 +137,9 @@ func (s *appleService) FriendRequestHasBeenReceived(receiver UserId, sentBy User
 	log.Printf("%s: success[receiver=%s sentBy=%s]", op, receiver, sentBy)
 }
 
-func (s *appleService) NewExpenseReceived(receiver UserId, deal Deal, author UserId) {
+func (s *appleService) NewExpenseReceived(receiver UserId, expense Expense, author UserId) {
 	const op = "apns.defaultService.NewExpenseReceived"
-	log.Printf("%s: start[receiver=%s did=%s author=%s]", op, receiver, deal.Id, author)
+	log.Printf("%s: start[receiver=%s id=%s author=%s]", op, receiver, expense.Id, author)
 	receiverToken, err := s.repository.GetPushToken(pushNotifications.UserId(receiver))
 	if err != nil {
 		log.Printf("%s: cannot get receiver token from db err: %v", op, err)
@@ -151,21 +150,21 @@ func (s *appleService) NewExpenseReceived(receiver UserId, deal Deal, author Use
 		return
 	}
 	type Payload struct {
-		DealId   storage.DealId `json:"d"`
-		AuthorId UserId         `json:"u"`
-		Cost     int64          `json:"c"`
+		DealId   ExpenseId `json:"d"`
+		AuthorId UserId    `json:"u"`
+		Cost     Cost      `json:"c"`
 	}
-	body := fmt.Sprintf("%s: %d", deal.Details, deal.Cost)
-	cost := deal.Cost
-	for i := 0; i < len(deal.Spendings); i++ {
-		if deal.Spendings[i].UserId == storage.UserId(receiver) {
-			cost = deal.Spendings[i].Cost
+	body := fmt.Sprintf("%s: %d", expense.Details, expense.Total)
+	cost := expense.Total
+	for i := 0; i < len(expense.Shares); i++ {
+		if UserId(expense.Shares[i].UserId) == receiver {
+			cost = expense.Shares[i].Cost
 		}
 	}
 	payload := Payload{
-		DealId:   deal.Id,
+		DealId:   ExpenseId(expense.Id),
 		AuthorId: author,
-		Cost:     cost,
+		Cost:     Cost(cost),
 	}
 	mutable := 1
 	payloadString, err := json.Marshal(Push[Payload]{
@@ -190,7 +189,7 @@ func (s *appleService) NewExpenseReceived(receiver UserId, deal Deal, author Use
 		log.Printf("%s: failed to send push: %v", op, err)
 		return
 	}
-	log.Printf("%s: success[receiver=%s did=%s author=%s]", op, receiver, deal.Id, author)
+	log.Printf("%s: success[receiver=%s id=%s author=%s]", op, receiver, expense.Id, author)
 }
 
 func (s *appleService) send(token string, payloadString string) error {

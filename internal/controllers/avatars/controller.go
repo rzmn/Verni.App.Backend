@@ -5,11 +5,14 @@ import (
 	"verni/internal/storage"
 )
 
-type AvatarId storage.AvatarId
-type AvatarData storage.AvatarData
+type AvatarId string
+type Avatar struct {
+	Id         AvatarId
+	Base64Data *string
+}
 
 type Controller interface {
-	GetAvatars(ids []AvatarId) (map[AvatarId]AvatarData, *common.CodeBasedError[GetAvatarsErrorCode])
+	GetAvatars(ids []AvatarId) (map[AvatarId]Avatar, *common.CodeBasedError[GetAvatarsErrorCode])
 }
 
 func DefaultController(storage storage.Storage) Controller {

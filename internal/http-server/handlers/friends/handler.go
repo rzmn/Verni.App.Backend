@@ -11,7 +11,6 @@ import (
 	"verni/internal/pushNotifications"
 	authRepository "verni/internal/repositories/auth"
 	friendsRepository "verni/internal/repositories/friends"
-	"verni/internal/storage"
 
 	"github.com/gin-gonic/gin"
 )
@@ -25,7 +24,7 @@ func RegisterRoutes(router *gin.Engine, authRepository authRepository.Repository
 	methodGroup := router.Group("/friends", ensureLoggedIn)
 	methodGroup.POST("/acceptRequest", func(c *gin.Context) {
 		type AcceptFriendRequest struct {
-			Sender storage.UserId `json:"sender"`
+			Sender httpserver.UserId `json:"sender"`
 		}
 		var request AcceptFriendRequest
 		if err := c.BindJSON(&request); err != nil {
@@ -64,7 +63,7 @@ func RegisterRoutes(router *gin.Engine, authRepository authRepository.Repository
 	})
 	methodGroup.POST("/rejectRequest", func(c *gin.Context) {
 		type RejectFriendRequest struct {
-			Sender storage.UserId `json:"sender"`
+			Sender httpserver.UserId `json:"sender"`
 		}
 		var request RejectFriendRequest
 		if err := c.BindJSON(&request); err != nil {
@@ -84,7 +83,7 @@ func RegisterRoutes(router *gin.Engine, authRepository authRepository.Repository
 	})
 	methodGroup.POST("/rollbackRequest", func(c *gin.Context) {
 		type RollbackFriendRequest struct {
-			Target storage.UserId `json:"target"`
+			Target httpserver.UserId `json:"target"`
 		}
 		var request RollbackFriendRequest
 		if err := c.BindJSON(&request); err != nil {
@@ -104,7 +103,7 @@ func RegisterRoutes(router *gin.Engine, authRepository authRepository.Repository
 	})
 	methodGroup.POST("/sendRequest", func(c *gin.Context) {
 		type SendFriendRequest struct {
-			Target storage.UserId `json:"target"`
+			Target httpserver.UserId `json:"target"`
 		}
 		var request SendFriendRequest
 		if err := c.BindJSON(&request); err != nil {
@@ -128,7 +127,7 @@ func RegisterRoutes(router *gin.Engine, authRepository authRepository.Repository
 	})
 	methodGroup.POST("/unfriend", func(c *gin.Context) {
 		type SendFriendRequest struct {
-			Target storage.UserId `json:"target"`
+			Target httpserver.UserId `json:"target"`
 		}
 		var request SendFriendRequest
 		if err := c.BindJSON(&request); err != nil {

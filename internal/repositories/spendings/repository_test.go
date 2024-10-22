@@ -3,7 +3,7 @@ package spendings_test
 import (
 	"log"
 	"testing"
-	"verni/internal/repositories"
+	"verni/internal/db"
 	"verni/internal/repositories/spendings"
 
 	"github.com/google/uuid"
@@ -17,15 +17,17 @@ func getRepository(t *testing.T) spendings.Repository {
 	if _s != nil {
 		return *_s
 	}
-	repository, err := spendings.PostgresRepository(
-		repositories.PostgresConfig{
-			Host:     "localhost",
-			Port:     5432,
-			User:     "tester",
-			Password: "test_password",
-			DbName:   "mydb",
-		},
-	)
+	db, err := db.Postgres(db.PostgresConfig{
+		Host:     "localhost",
+		Port:     5432,
+		User:     "tester",
+		Password: "test_password",
+		DbName:   "mydb",
+	})
+	if err != nil {
+		t.Fatalf("failed to init repository err: %v", err)
+	}
+	repository := spendings.PostgresRepository(db)
 	if err != nil {
 		t.Fatalf("failed to init repository err: %v", err)
 	}

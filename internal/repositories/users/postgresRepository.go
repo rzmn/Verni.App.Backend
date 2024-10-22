@@ -1,15 +1,15 @@
 package users
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"strings"
 	"verni/internal/common"
+	"verni/internal/db"
 )
 
 type postgresRepository struct {
-	db *sql.DB
+	db db.DB
 }
 
 func (c *postgresRepository) GetUsers(ids []UserId) ([]User, error) {

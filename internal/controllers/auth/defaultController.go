@@ -7,7 +7,6 @@ import (
 	"verni/internal/common"
 	"verni/internal/repositories/auth"
 	"verni/internal/repositories/pushNotifications"
-	"verni/internal/storage"
 
 	"github.com/google/uuid"
 )
@@ -39,7 +38,7 @@ func (c *defaultController) Signup(email string, password string) (Session, *com
 		log.Printf("%s: already has an uid accosiated with credentials", op)
 		return Session{}, common.NewError(SignupErrorAlreadyTaken)
 	}
-	uid := storage.UserId(uuid.New().String())
+	uid := uuid.New().String()
 	accessToken, jwtErr := c.jwtService.IssueAccessToken(jwt.Subject(uid))
 	if jwtErr != nil {
 		log.Printf("%s: issuing access token failed err: %v", op, jwtErr)
@@ -57,7 +56,7 @@ func (c *defaultController) Signup(email string, password string) (Session, *com
 	}
 	log.Printf("%s: success", op)
 	return Session{
-		Id:           uid,
+		Id:           UserId(uid),
 		AccessToken:  string(accessToken),
 		RefreshToken: string(refreshToken),
 	}, nil
@@ -101,7 +100,7 @@ func (c *defaultController) Login(email string, password string) (Session, *comm
 	}
 	log.Printf("%s: success", op)
 	return Session{
-		Id:           storage.UserId(*uid),
+		Id:           UserId(*uid),
 		AccessToken:  string(accessToken),
 		RefreshToken: string(refreshToken),
 	}, nil
@@ -152,7 +151,7 @@ func (c *defaultController) Refresh(refreshToken string) (Session, *common.CodeB
 	}
 	log.Printf("%s: success", op)
 	return Session{
-		Id:           storage.UserId(uid),
+		Id:           UserId(uid),
 		AccessToken:  string(newAccessToken),
 		RefreshToken: string(newRefreshToken),
 	}, nil
@@ -214,7 +213,7 @@ func (c *defaultController) UpdateEmail(email string, id UserId) (Session, *comm
 	}
 	log.Printf("%s: success[id=%s]", op, id)
 	return Session{
-		Id:           storage.UserId(id),
+		Id:           id,
 		AccessToken:  string(accessToken),
 		RefreshToken: string(refreshToken),
 	}, nil
@@ -264,7 +263,7 @@ func (c *defaultController) UpdatePassword(oldPassword string, newPassword strin
 	}
 	log.Printf("%s: success[id=%s]", op, id)
 	return Session{
-		Id:           storage.UserId(id),
+		Id:           id,
 		AccessToken:  string(accessToken),
 		RefreshToken: string(refreshToken),
 	}, nil

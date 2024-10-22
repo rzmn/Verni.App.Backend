@@ -2,7 +2,7 @@ package friends_test
 
 import (
 	"testing"
-	"verni/internal/repositories"
+	"verni/internal/db"
 	"verni/internal/repositories/friends"
 
 	"github.com/google/uuid"
@@ -16,15 +16,17 @@ func getRepository(t *testing.T) friends.Repository {
 	if _s != nil {
 		return *_s
 	}
-	repository, err := friends.PostgresRepository(
-		repositories.PostgresConfig{
-			Host:     "localhost",
-			Port:     5432,
-			User:     "tester",
-			Password: "test_password",
-			DbName:   "mydb",
-		},
-	)
+	db, err := db.Postgres(db.PostgresConfig{
+		Host:     "localhost",
+		Port:     5432,
+		User:     "tester",
+		Password: "test_password",
+		DbName:   "mydb",
+	})
+	if err != nil {
+		t.Fatalf("failed to init repository err: %v", err)
+	}
+	repository := friends.PostgresRepository(db)
 	if err != nil {
 		t.Fatalf("failed to init repository err: %v", err)
 	}
