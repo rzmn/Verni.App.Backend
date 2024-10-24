@@ -8,8 +8,9 @@ import (
 	"os"
 	"time"
 
-	"verni/internal/auth/confirmation"
 	"verni/internal/auth/jwt"
+	"verni/internal/controllers/verification"
+	"verni/internal/db"
 	"verni/internal/http-server/handlers/auth"
 	"verni/internal/http-server/handlers/avatars"
 	"verni/internal/http-server/handlers/friends"
@@ -17,11 +18,51 @@ import (
 	"verni/internal/http-server/handlers/spendings"
 	"verni/internal/http-server/handlers/users"
 	"verni/internal/http-server/longpoll"
+	"verni/internal/http-server/middleware"
 	"verni/internal/pushNotifications"
-	"verni/internal/storage"
+	authRepository "verni/internal/repositories/auth"
+	friendsRepository "verni/internal/repositories/friends"
+	imagesRepository "verni/internal/repositories/images"
+	pushRegistryRepository "verni/internal/repositories/pushNotifications"
+	spendingsRepository "verni/internal/repositories/spendings"
+	usersRepository "verni/internal/repositories/users"
+	verificationRepository "verni/internal/repositories/verification"
+
+	authController "verni/internal/controllers/auth"
+	avatarsController "verni/internal/controllers/avatars"
+	friendsController "verni/internal/controllers/friends"
+	profileController "verni/internal/controllers/profile"
+	spendingsController "verni/internal/controllers/spendings"
+	usersController "verni/internal/controllers/users"
+	verificationController "verni/internal/controllers/verification"
 
 	"github.com/gin-gonic/gin"
 )
+
+type Repositories struct {
+	auth         authRepository.Repository
+	friends      friendsRepository.Repository
+	images       imagesRepository.Repository
+	pushRegistry pushRegistryRepository.Repository
+	spendings    spendingsRepository.Repository
+	users        usersRepository.Repository
+	verification verificationRepository.Repository
+}
+
+type Services struct {
+	push pushNotifications.Service
+	jwt  jwt.Service
+}
+
+type Controllers struct {
+	auth         authController.Controller
+	avatars      avatarsController.Controller
+	friends      friendsController.Controller
+	profile      profileController.Controller
+	spendings    spendingsController.Controller
+	users        usersController.Controller
+	verification verificationController.Controller
+}
 
 func main() {
 	configFile, err := os.Open("./config/prod/verni.json")
@@ -48,21 +89,21 @@ func main() {
 	json.Unmarshal([]byte(configData), &config)
 	log.Printf("initializing with config %v", config)
 
-	db := func() storage.Storage {
+	db := func() db.DB {
 		switch config.Storage.Type {
-		case "ydb":
+		case "postgres":
 			data, err := json.Marshal(config.Storage.Config)
 			if err != nil {
 				log.Fatalf("failed to serialize ydb config err: %v", err)
 			}
-			var ydbConfig storage.YDBConfig
-			json.Unmarshal(data, &ydbConfig)
-			log.Printf("creating ydb with config %v", ydbConfig)
-			db, err := storage.YDB(ydbConfig)
+			var postgresConfig db.PostgresConfig
+			json.Unmarshal(data, &postgresConfig)
+			log.Printf("creating postgres with config %v", postgresConfig)
+			db, err := db.Postgres(postgresConfig)
 			if err != nil {
-				log.Fatalf("failed to initialize ydb err: %v", err)
+				log.Fatalf("failed to initialize postgres err: %v", err)
 			}
-			log.Printf("initialized ydb")
+			log.Printf("initialized postgres")
 			return db
 		default:
 			log.Fatalf("unknown storage type %s", config.Storage.Type)
@@ -70,81 +111,105 @@ func main() {
 		}
 	}()
 	defer db.Close()
-	pushService := func() pushNotifications.Service {
-		switch config.PushNotifications.Type {
-		case "apns":
-			data, err := json.Marshal(config.PushNotifications.Config)
-			if err != nil {
-				log.Fatalf("failed to serialize apple apns config err: %v", err)
+	repositories := Repositories{
+		auth:         authRepository.PostgresRepository(db),
+		friends:      friendsRepository.PostgresRepository(db),
+		images:       imagesRepository.PostgresRepository(db),
+		pushRegistry: pushRegistryRepository.PostgresRepository(db),
+		spendings:    spendingsRepository.PostgresRepository(db),
+		users:        usersRepository.PostgresRepository(db),
+		verification: verificationRepository.PostgresRepository(db),
+	}
+	services := Services{
+		push: func() pushNotifications.Service {
+			switch config.PushNotifications.Type {
+			case "apns":
+				data, err := json.Marshal(config.PushNotifications.Config)
+				if err != nil {
+					log.Fatalf("failed to serialize apple apns config err: %v", err)
+				}
+				var apnsConfig pushNotifications.ApnsConfig
+				json.Unmarshal(data, &apnsConfig)
+				log.Printf("creating apple apns service with config %v", apnsConfig)
+				service, err := pushNotifications.ApnsService(apnsConfig, repositories.pushRegistry)
+				if err != nil {
+					log.Fatalf("failed to initialize apple apns service err: %v", err)
+				}
+				log.Printf("initialized apple apns service")
+				return service
+			default:
+				log.Fatalf("unknown apns type %s", config.PushNotifications.Type)
+				return nil
 			}
-			var apnsConfig pushNotifications.ApnsConfig
-			json.Unmarshal(data, &apnsConfig)
-			log.Printf("creating apple apns service with config %v", apnsConfig)
-			service, err := pushNotifications.ApnsService(apnsConfig, db)
-			if err != nil {
-				log.Fatalf("failed to initialize apple apns service err: %v", err)
+		}(),
+		jwt: func() jwt.Service {
+			switch config.Jwt.Type {
+			case "default":
+				data, err := json.Marshal(config.Jwt.Config)
+				if err != nil {
+					log.Fatalf("failed to serialize jwt config err: %v", err)
+				}
+				var defaultConfig jwt.DefaultConfig
+				json.Unmarshal(data, &defaultConfig)
+				log.Printf("creating jwt token service with config %v", defaultConfig)
+				return jwt.DefaultService(
+					defaultConfig,
+					func() time.Time {
+						return time.Now()
+					},
+				)
+			default:
+				log.Fatalf("unknown jwt service type %s", config.Jwt.Type)
+				return nil
 			}
-			log.Printf("initialized apple apns service")
-			return service
-		default:
-			log.Fatalf("unknown apns type %s", config.PushNotifications.Type)
-			return nil
-		}
-	}()
-	jwtService := func() jwt.Service {
-		switch config.Jwt.Type {
-		case "default":
-			type DefaultConfig struct {
-				AccessTokenLifetimeHours  int `json:"accessTokenLifetimeHours"`
-				RefreshTokenLifetimeHours int `json:"refreshTokenLifetimeHours"`
+		}(),
+	}
+	controllers := Controllers{
+		auth: authController.DefaultController(
+			repositories.auth,
+			repositories.pushRegistry,
+			services.jwt,
+		),
+		avatars: avatarsController.DefaultController(
+			repositories.images,
+		),
+		friends: friendsController.DefaultController(
+			repositories.friends,
+		),
+		profile: profileController.DefaultController(
+			repositories.auth,
+			repositories.images,
+			repositories.users,
+			repositories.friends,
+		),
+		spendings: spendingsController.DefaultController(
+			repositories.spendings,
+			services.push,
+		),
+		users: usersController.DefaultController(
+			repositories.users,
+		),
+		verification: func() verification.Controller {
+			switch config.EmailSender.Type {
+			case "yandex":
+				data, err := json.Marshal(config.EmailSender.Config)
+				if err != nil {
+					log.Fatalf("failed to serialize yandex email sender config err: %v", err)
+				}
+				var yandexConfig verification.YandexConfig
+				json.Unmarshal(data, &yandexConfig)
+				log.Printf("creating yandex email sender with config %v", yandexConfig)
+				return verification.YandexController(
+					yandexConfig,
+					repositories.verification,
+					repositories.auth,
+				)
+			default:
+				log.Fatalf("unknown email sender type %s", config.EmailSender.Type)
+				return nil
 			}
-			data, err := json.Marshal(config.Jwt.Config)
-			if err != nil {
-				log.Fatalf("failed to serialize jwt config err: %v", err)
-			}
-			var defaultConfig DefaultConfig
-			json.Unmarshal(data, &defaultConfig)
-			log.Printf("creating jwt token service with config %v", defaultConfig)
-			return jwt.DefaultService(
-				time.Hour*time.Duration(defaultConfig.RefreshTokenLifetimeHours),
-				time.Hour*time.Duration(defaultConfig.AccessTokenLifetimeHours),
-				func() time.Time {
-					return time.Now()
-				},
-			)
-		default:
-			log.Fatalf("unknown jwt service type %s", config.Jwt.Type)
-			return nil
-		}
-	}()
-	emailConfirmation := func() confirmation.Service {
-		switch config.EmailSender.Type {
-		case "yandex":
-			type YandexConfig struct {
-				Address  string `json:"address"`
-				Password string `json:"password"`
-				Host     string `json:"host"`
-				Port     string `json:"port"`
-			}
-			data, err := json.Marshal(config.EmailSender.Config)
-			if err != nil {
-				log.Fatalf("failed to serialize yandex email sender config err: %v", err)
-			}
-			var yandexConfig YandexConfig
-			json.Unmarshal(data, &yandexConfig)
-			log.Printf("creating yandex email sender with config %v", yandexConfig)
-			return confirmation.YandexService(
-				db,
-				yandexConfig.Address,
-				yandexConfig.Password,
-				yandexConfig.Host,
-				yandexConfig.Port,
-			)
-		default:
-			log.Fatalf("unknown email sender type %s", config.EmailSender.Type)
-			return nil
-		}
-	}()
+		}(),
+	}
 	server := func() http.Server {
 		switch config.Server.Type {
 		case "gin":
@@ -163,16 +228,20 @@ func main() {
 			log.Printf("creating gin server with config %v", ginConfig)
 			gin.SetMode(ginConfig.RunMode)
 			router := gin.New()
-			longpollService := longpoll.DefaultService(router, db, jwtService)
+			tokenChecker := middleware.JwsAccessTokenCheck(
+				repositories.auth,
+				services.jwt,
+			)
+			longpollService := longpoll.DefaultService(router, tokenChecker)
 
 			longpollService.RegisterRoutes()
 
-			auth.RegisterRoutes(router, db, jwtService, emailConfirmation)
-			profile.RegisterRoutes(router, db, jwtService)
-			avatars.RegisterRoutes(router, db)
-			users.RegisterRoutes(router, db, jwtService)
-			spendings.RegisterRoutes(router, db, jwtService, pushService, longpollService)
-			friends.RegisterRoutes(router, db, jwtService, pushService, longpollService)
+			auth.RegisterRoutes(router, tokenChecker, controllers.auth)
+			profile.RegisterRoutes(router, tokenChecker, controllers.profile)
+			avatars.RegisterRoutes(router, repositories.images)
+			users.RegisterRoutes(router, tokenChecker, controllers.users)
+			spendings.RegisterRoutes(router, tokenChecker, controllers.spendings)
+			friends.RegisterRoutes(router, tokenChecker, controllers.friends)
 
 			address := ":" + ginConfig.Port
 			return http.Server{
@@ -189,72 +258,3 @@ func main() {
 	log.Printf("[info] start http server listening %s", server.Addr)
 	server.ListenAndServe()
 }
-
-// type MigrationSpendingItem struct {
-// 	Date        string  `json:"Date"`
-// 	Description string  `json:"Description"`
-// 	Category    string  `json:"Category"`
-// 	Cost        float32 `json:"Cost"`
-// 	Currency    string  `json:"Currency"`
-// 	Margo       float32 `json:"margo"`
-// 	Rzmn        float32 `json:"rzmn"`
-// }
-
-// func migrate(db storage.Storage) {
-// 	// jsonFile, err := os.Open("./data/migration.json")
-// 	// if err != nil {
-// 	// 	fmt.Println(err)
-// 	// 	return
-// 	// }
-// 	// fmt.Println("Successfully Opened users.json")
-// 	// defer jsonFile.Close()
-// 	// byteValue, _ := io.ReadAll(jsonFile)
-// 	// var items []MigrationSpendingItem
-// 	// json.Unmarshal(byteValue, &items)
-// 	// for i := 0; i < len(items); i++ {
-// 	// 	format := "2006-01-02"
-// 	// 	t, err := time.Parse(format, items[i].Date)
-// 	// 	if err != nil {
-// 	// 		fmt.Printf("time parse failed %v\n", err)
-// 	// 		return
-// 	// 	}
-// 	// 	fmt.Printf("%s, %v\n", items[i].Date, t)
-
-// 	// 	db.InsertDeal(storage.Deal{
-// 	// 		Timestamp: t.Unix(),
-// 	// 		Details:   items[i].Description,
-// 	// 		Cost:      int(items[i].Cost * 100),
-// 	// 		Currency:  items[i].Currency,
-// 	// 		Spendings: []storage.Spending{
-// 	// 			{
-// 	// 				UserId: "margo",
-// 	// 				Cost:   int(items[i].Margo * 100),
-// 	// 			},
-// 	// 			{
-// 	// 				UserId: "rzmn",
-// 	// 				Cost:   int(items[i].Rzmn * 100),
-// 	// 			},
-// 	// 		},
-// 	// 	})
-// 	// }
-// 	counterpartiesMargo, err := db.GetCounterparties("margo")
-// 	if err != nil {
-// 		fmt.Printf("counterparties margo err: %v\n", err)
-// 	} else {
-// 		fmt.Printf("counterparties margo: %v\n", counterpartiesMargo)
-// 	}
-// 	counterpartiesRzmn, err := db.GetCounterparties("rzmn")
-// 	if err != nil {
-// 		fmt.Printf("counterparties margo err: %v\n", err)
-// 	} else {
-// 		fmt.Printf("counterparties margo: %v\n", counterpartiesRzmn)
-// 	}
-// 	deals, err := db.GetDeals("margo", "rzmn")
-// 	if err != nil {
-// 		fmt.Printf("deals err: %v\n", err)
-// 	} else {
-// 		for i := 0; i < len(deals); i++ {
-// 			fmt.Printf("deal %d: %v\n", i, deals[i])
-// 		}
-// 	}
-// }

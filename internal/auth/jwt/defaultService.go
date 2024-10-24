@@ -13,14 +13,11 @@ const (
 	tokenTypeAccess  = "access"
 )
 
-var (
-	refreshTokenSecret = []byte("refreshTokenSecret")
-	accessTokenSecret  = []byte("accessTokenSecret")
-)
-
 type defaultService struct {
 	refreshTokenLifetime time.Duration
 	accessTokenLifetime  time.Duration
+	refreshTokenSecret   string
+	accessTokenSecret    string
 	currentTime          func() time.Time
 }
 
@@ -34,7 +31,7 @@ func (s *defaultService) IssueRefreshToken(subject Subject) (RefreshToken, *Erro
 			ExpiresAt: jwt.NewNumericDate(currentTime.Add(s.refreshTokenLifetime)),
 			IssuedAt:  jwt.NewNumericDate(currentTime),
 		},
-	}, refreshTokenSecret)
+	}, []byte(s.refreshTokenSecret))
 	if err != nil {
 		log.Printf("%s: cannot generate token %v", op, err)
 		return RefreshToken(rawToken), &Error{
@@ -54,7 +51,7 @@ func (s *defaultService) IssueAccessToken(subject Subject) (AccessToken, *Error)
 			ExpiresAt: jwt.NewNumericDate(currentTime.Add(s.accessTokenLifetime)),
 			IssuedAt:  jwt.NewNumericDate(currentTime),
 		},
-	}, accessTokenSecret)
+	}, []byte(s.accessTokenSecret))
 	if err != nil {
 		log.Printf("%s: cannot generate token %v", op, err)
 		return AccessToken(rawToken), &Error{
@@ -66,7 +63,7 @@ func (s *defaultService) IssueAccessToken(subject Subject) (AccessToken, *Error)
 
 func (s *defaultService) ValidateRefreshToken(token RefreshToken) *Error {
 	const op = "jwt.defaultService.ValidateRefreshToken"
-	rawToken, err := parseToken(string(token), refreshTokenSecret)
+	rawToken, err := parseToken(string(token), []byte(s.refreshTokenSecret))
 	expired := errors.Is(err, jwt.ErrTokenExpired)
 	if rawToken == nil || (err != nil && !expired) {
 		log.Printf("%s: bad jwt token %v", op, err)
@@ -97,7 +94,7 @@ func (s *defaultService) ValidateRefreshToken(token RefreshToken) *Error {
 
 func (s *defaultService) ValidateAccessToken(token AccessToken) *Error {
 	const op = "jwt.defaultService.ValidateAccessToken"
-	rawToken, err := parseToken(string(token), accessTokenSecret)
+	rawToken, err := parseToken(string(token), []byte(s.accessTokenSecret))
 	expired := errors.Is(err, jwt.ErrTokenExpired)
 	if rawToken == nil || (err != nil && !expired) {
 		log.Printf("%s: bad jwt token %v", op, err)
@@ -128,7 +125,7 @@ func (s *defaultService) ValidateAccessToken(token AccessToken) *Error {
 
 func (s *defaultService) GetRefreshTokenSubject(token RefreshToken) (Subject, *Error) {
 	const op = "jwt.defaultService.GetRefreshTokenSubject"
-	rawToken, err := parseToken(string(token), refreshTokenSecret)
+	rawToken, err := parseToken(string(token), []byte(s.refreshTokenSecret))
 	if rawToken == nil || err != nil {
 		if errors.Is(err, jwt.ErrTokenExpired) {
 			log.Printf("%s: jwt token expired %v", op, err)
@@ -154,7 +151,7 @@ func (s *defaultService) GetRefreshTokenSubject(token RefreshToken) (Subject, *E
 
 func (s *defaultService) GetAccessTokenSubject(token AccessToken) (Subject, *Error) {
 	const op = "jwt.defaultService.GetAccessTokenSubject"
-	rawToken, err := parseToken(string(token), accessTokenSecret)
+	rawToken, err := parseToken(string(token), []byte(s.accessTokenSecret))
 	if rawToken == nil || err != nil {
 		if errors.Is(err, jwt.ErrTokenExpired) {
 			log.Printf("%s: jwt token expired %v", op, err)
