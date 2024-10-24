@@ -2,26 +2,22 @@ package friends
 
 import (
 	"net/http"
-	"verni/internal/auth/jwt"
 	friendsController "verni/internal/controllers/friends"
 	httpserver "verni/internal/http-server"
-	"verni/internal/http-server/longpoll"
 	"verni/internal/http-server/middleware"
 	"verni/internal/http-server/responses"
-	"verni/internal/pushNotifications"
-	authRepository "verni/internal/repositories/auth"
-	friendsRepository "verni/internal/repositories/friends"
 
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes(router *gin.Engine, authRepository authRepository.Repository, friendsRepository friendsRepository.Repository, jwtService jwt.Service, apns pushNotifications.Service, longpoll longpoll.Service) {
-	ensureLoggedIn := middleware.EnsureLoggedIn(authRepository, jwtService)
-	hostFromToken := func(c *gin.Context) friendsController.UserId {
-		return friendsController.UserId(c.Request.Header.Get(middleware.LoggedInSubjectKey))
-	}
-	controller := friendsController.DefaultController(friendsRepository)
-	methodGroup := router.Group("/friends", ensureLoggedIn)
+type FriendsController friendsController.Controller
+
+func RegisterRoutes(
+	router *gin.Engine,
+	tokenChecker middleware.AccessTokenChecker,
+	friends FriendsController,
+) {
+	methodGroup := router.Group("/friends", tokenChecker.Handler)
 	methodGroup.POST("/acceptRequest", func(c *gin.Context) {
 		type AcceptFriendRequest struct {
 			Sender httpserver.UserId `json:"sender"`
@@ -31,7 +27,7 @@ func RegisterRoutes(router *gin.Engine, authRepository authRepository.Repository
 			httpserver.AnswerWithBadRequest(c, err)
 			return
 		}
-		if err := controller.AcceptFriendRequest(friendsController.UserId(request.Sender), hostFromToken(c)); err != nil {
+		if err := friends.AcceptFriendRequest(friendsController.UserId(request.Sender), friendsController.UserId(tokenChecker.AccessToken(c))); err != nil {
 			switch err.Code {
 			case friendsController.AcceptFriendRequestErrorNoSuchRequest:
 				httpserver.Answer(c, err, http.StatusConflict, responses.CodeNoSuchRequest)
@@ -51,7 +47,7 @@ func RegisterRoutes(router *gin.Engine, authRepository authRepository.Repository
 			httpserver.AnswerWithBadRequest(c, err)
 			return
 		}
-		friends, err := controller.GetFriends(request.Statuses, hostFromToken(c))
+		friends, err := friends.GetFriends(request.Statuses, friendsController.UserId(tokenChecker.AccessToken(c)))
 		if err != nil {
 			switch err.Code {
 			default:
@@ -70,7 +66,7 @@ func RegisterRoutes(router *gin.Engine, authRepository authRepository.Repository
 			httpserver.AnswerWithBadRequest(c, err)
 			return
 		}
-		if err := controller.RollbackFriendRequest(hostFromToken(c), friendsController.UserId(request.Sender)); err != nil {
+		if err := friends.RollbackFriendRequest(friendsController.UserId(tokenChecker.AccessToken(c)), friendsController.UserId(request.Sender)); err != nil {
 			switch err.Code {
 			case friendsController.RejectFriendRequestErrorNoSuchRequest:
 				httpserver.Answer(c, err, http.StatusConflict, responses.CodeNoSuchRequest)
@@ -90,7 +86,7 @@ func RegisterRoutes(router *gin.Engine, authRepository authRepository.Repository
 			httpserver.AnswerWithBadRequest(c, err)
 			return
 		}
-		if err := controller.RollbackFriendRequest(hostFromToken(c), friendsController.UserId(request.Target)); err != nil {
+		if err := friends.RollbackFriendRequest(friendsController.UserId(tokenChecker.AccessToken(c)), friendsController.UserId(request.Target)); err != nil {
 			switch err.Code {
 			case friendsController.RejectFriendRequestErrorAlreadyFriends:
 				httpserver.Answer(c, err, http.StatusConflict, responses.CodeAlreadyFriends)
@@ -110,7 +106,7 @@ func RegisterRoutes(router *gin.Engine, authRepository authRepository.Repository
 			httpserver.AnswerWithBadRequest(c, err)
 			return
 		}
-		if err := controller.SendFriendRequest(hostFromToken(c), friendsController.UserId(request.Target)); err != nil {
+		if err := friends.SendFriendRequest(friendsController.UserId(tokenChecker.AccessToken(c)), friendsController.UserId(request.Target)); err != nil {
 			switch err.Code {
 			case friendsController.SendFriendRequestErrorAlreadySent:
 				httpserver.Answer(c, err, http.StatusConflict, responses.CodeAlreadySend)
@@ -134,7 +130,7 @@ func RegisterRoutes(router *gin.Engine, authRepository authRepository.Repository
 			httpserver.AnswerWithBadRequest(c, err)
 			return
 		}
-		if err := controller.Unfriend(hostFromToken(c), friendsController.UserId(request.Target)); err != nil {
+		if err := friends.Unfriend(friendsController.UserId(tokenChecker.AccessToken(c)), friendsController.UserId(request.Target)); err != nil {
 			switch err.Code {
 			case friendsController.UnfriendErrorNotAFriend:
 				httpserver.Answer(c, err, http.StatusConflict, responses.CodeNotAFriend)

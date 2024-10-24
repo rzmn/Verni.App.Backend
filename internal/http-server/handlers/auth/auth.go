@@ -2,30 +2,21 @@ package auth
 
 import (
 	"net/http"
-	"verni/internal/auth/confirmation"
-	"verni/internal/auth/jwt"
 	authController "verni/internal/controllers/auth"
 	httpserver "verni/internal/http-server"
 	"verni/internal/http-server/middleware"
 	"verni/internal/http-server/responses"
-	authRepository "verni/internal/repositories/auth"
-	pushTokensRepository "verni/internal/repositories/pushNotifications"
 
 	"github.com/gin-gonic/gin"
 )
 
+type AuthController authController.Controller
+
 func RegisterRoutes(
 	router *gin.Engine,
-	authRepository authRepository.Repository,
-	pushTokensRepository pushTokensRepository.Repository,
-	jwtService jwt.Service,
-	emailConfirmation confirmation.Service,
+	tokenChecker middleware.AccessTokenChecker,
+	auth AuthController,
 ) {
-	ensureLoggedIn := middleware.EnsureLoggedIn(authRepository, jwtService)
-	hostFromToken := func(c *gin.Context) authController.UserId {
-		return authController.UserId(c.Request.Header.Get(middleware.LoggedInSubjectKey))
-	}
-	controller := authController.DefaultController(authRepository, pushTokensRepository, jwtService, emailConfirmation)
 	router.PUT("/auth/signup", func(c *gin.Context) {
 		type SignupRequest struct {
 			Credentials httpserver.Credentials `json:"credentials"`
@@ -35,7 +26,7 @@ func RegisterRoutes(
 			httpserver.AnswerWithBadRequest(c, err)
 			return
 		}
-		session, err := controller.Signup(request.Credentials.Email, request.Credentials.Password)
+		session, err := auth.Signup(request.Credentials.Email, request.Credentials.Password)
 		if err != nil {
 			switch err.Code {
 			case authController.SignupErrorAlreadyTaken:
@@ -58,7 +49,7 @@ func RegisterRoutes(
 			httpserver.AnswerWithBadRequest(c, err)
 			return
 		}
-		session, err := controller.Login(request.Credentials.Email, request.Credentials.Password)
+		session, err := auth.Login(request.Credentials.Email, request.Credentials.Password)
 		if err != nil {
 			switch err.Code {
 			case authController.LoginErrorWrongCredentials:
@@ -78,7 +69,7 @@ func RegisterRoutes(
 			httpserver.AnswerWithBadRequest(c, err)
 			return
 		}
-		session, err := controller.Refresh(request.RefreshToken)
+		session, err := auth.Refresh(request.RefreshToken)
 		if err != nil {
 			switch err.Code {
 			case authController.RefreshErrorTokenExpired:
@@ -91,7 +82,7 @@ func RegisterRoutes(
 		}
 		c.JSON(http.StatusOK, responses.Success(session))
 	})
-	router.PUT("/auth/updateEmail", ensureLoggedIn, func(c *gin.Context) {
+	router.PUT("/auth/updateEmail", tokenChecker.Handler, func(c *gin.Context) {
 		type UpdateEmailRequest struct {
 			Email string `json:"email"`
 		}
@@ -100,7 +91,7 @@ func RegisterRoutes(
 			httpserver.AnswerWithBadRequest(c, err)
 			return
 		}
-		session, err := controller.UpdateEmail(request.Email, authController.UserId(hostFromToken(c)))
+		session, err := auth.UpdateEmail(request.Email, authController.UserId(tokenChecker.AccessToken(c)))
 		if err != nil {
 			switch err.Code {
 			case authController.UpdateEmailErrorAlreadyTaken:
@@ -113,7 +104,7 @@ func RegisterRoutes(
 		}
 		c.JSON(http.StatusOK, responses.Success(session))
 	})
-	router.PUT("/auth/updatePassword", ensureLoggedIn, func(c *gin.Context) {
+	router.PUT("/auth/updatePassword", tokenChecker.Handler, func(c *gin.Context) {
 		type UpdatePasswordRequest struct {
 			OldPassword string `json:"old"`
 			NewPassword string `json:"new"`
@@ -123,7 +114,7 @@ func RegisterRoutes(
 			httpserver.AnswerWithBadRequest(c, err)
 			return
 		}
-		session, err := controller.UpdatePassword(request.OldPassword, request.NewPassword, authController.UserId(hostFromToken(c)))
+		session, err := auth.UpdatePassword(request.OldPassword, request.NewPassword, authController.UserId(tokenChecker.AccessToken(c)))
 		if err != nil {
 			switch err.Code {
 			case authController.UpdatePasswordErrorOldPasswordIsWrong:
@@ -134,8 +125,8 @@ func RegisterRoutes(
 		}
 		c.JSON(http.StatusOK, responses.Success(session))
 	})
-	router.DELETE("/auth/logout", ensureLoggedIn, func(c *gin.Context) {
-		if err := controller.Logout(authController.UserId(hostFromToken(c))); err != nil {
+	router.DELETE("/auth/logout", tokenChecker.Handler, func(c *gin.Context) {
+		if err := auth.Logout(authController.UserId(tokenChecker.AccessToken(c))); err != nil {
 			switch err.Code {
 			default:
 				httpserver.AnswerWithUnknownError(c, err)
@@ -143,35 +134,7 @@ func RegisterRoutes(
 		}
 		c.JSON(http.StatusOK, responses.OK())
 	})
-	router.PUT("/auth/confirmEmail", ensureLoggedIn, func(c *gin.Context) {
-		type ConfirmEmailRequest struct {
-			Code string `json:"code"`
-		}
-		var request ConfirmEmailRequest
-		if err := c.BindJSON(&request); err != nil {
-			httpserver.AnswerWithBadRequest(c, err)
-			return
-		}
-		if err := controller.ConfirmEmail(request.Code, authController.UserId(hostFromToken(c))); err != nil {
-			switch err.Code {
-			case authController.ConfirmEmailErrorWrongConfirmationCode:
-				httpserver.Answer(c, err, http.StatusConflict, responses.CodeIncorrectCredentials)
-			default:
-				httpserver.AnswerWithUnknownError(c, err)
-			}
-		}
-		c.JSON(http.StatusOK, responses.OK())
-	})
-	router.PUT("/auth/sendEmailConfirmationCode", ensureLoggedIn, func(c *gin.Context) {
-		if err := controller.SendEmailConfirmationCode(authController.UserId(hostFromToken(c))); err != nil {
-			switch err.Code {
-			default:
-				httpserver.AnswerWithUnknownError(c, err)
-			}
-		}
-		c.JSON(http.StatusOK, responses.OK())
-	})
-	router.PUT("/auth/registerForPushNotifications", ensureLoggedIn, func(c *gin.Context) {
+	router.PUT("/auth/registerForPushNotifications", tokenChecker.Handler, func(c *gin.Context) {
 		type RegisterForPushNotificationsRequest struct {
 			Token string `json:"token"`
 		}
@@ -180,7 +143,7 @@ func RegisterRoutes(
 			httpserver.AnswerWithBadRequest(c, err)
 			return
 		}
-		if err := controller.RegisterForPushNotifications(request.Token, authController.UserId(hostFromToken(c))); err != nil {
+		if err := auth.RegisterForPushNotifications(request.Token, authController.UserId(tokenChecker.AccessToken(c))); err != nil {
 			switch err.Code {
 			default:
 				httpserver.AnswerWithUnknownError(c, err)

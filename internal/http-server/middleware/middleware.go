@@ -14,44 +14,55 @@ import (
 	"verni/internal/http-server/responses"
 )
 
+type UserId string
+type AccessTokenChecker struct {
+	Handler     gin.HandlerFunc
+	AccessToken func(c *gin.Context) UserId
+}
+
 const (
-	LoggedInSubjectKey = "verni-subject"
+	accessTokenSubjectKey = "verni-subject"
 )
 
-func EnsureLoggedIn(repository authRepository.Repository, jwtService jwt.Service) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		const op = "handlers.friends.ensureLoggedInMiddleware"
-		log.Printf("%s: validating access token", op)
-		token := jwt.AccessToken(extractBearerToken(c))
-		if err := jwtService.ValidateAccessToken(token); err != nil {
-			log.Printf("%s: failed to validate token %v", op, err)
-			switch err.Code {
-			case jwt.CodeTokenExpired:
-				httpserver.Answer(c, err, http.StatusUnauthorized, responses.CodeTokenExpired)
-			case jwt.CodeTokenInvalid:
-				httpserver.Answer(c, err, http.StatusUnprocessableEntity, responses.CodeWrongAccessToken)
-			default:
-				httpserver.AnswerWithUnknownError(c, err)
+func JwsAccessTokenCheck(repository authRepository.Repository, jwtService jwt.Service) AccessTokenChecker {
+	return AccessTokenChecker{
+		Handler: func(c *gin.Context) {
+			const op = "handlers.friends.ensureLoggedInMiddleware"
+			log.Printf("%s: validating access token", op)
+			token := jwt.AccessToken(extractBearerToken(c))
+			if err := jwtService.ValidateAccessToken(token); err != nil {
+				log.Printf("%s: failed to validate token %v", op, err)
+				switch err.Code {
+				case jwt.CodeTokenExpired:
+					httpserver.Answer(c, err, http.StatusUnauthorized, responses.CodeTokenExpired)
+				case jwt.CodeTokenInvalid:
+					httpserver.Answer(c, err, http.StatusUnprocessableEntity, responses.CodeWrongAccessToken)
+				default:
+					httpserver.AnswerWithUnknownError(c, err)
+				}
+				return
 			}
-			return
-		}
-		subject, getSubjectError := jwtService.GetAccessTokenSubject(token)
-		if getSubjectError != nil {
-			httpserver.AnswerWithUnknownError(c, getSubjectError)
-			return
-		}
-		exists, err := repository.IsUserExists(authRepository.UserId(subject))
-		if err != nil {
-			httpserver.AnswerWithUnknownError(c, err)
-			return
-		}
-		if !exists {
-			httpserver.Answer(c, err, http.StatusUnprocessableEntity, responses.CodeWrongAccessToken)
-			return
-		}
-		log.Printf("%s: access token ok", op)
-		c.Request.Header.Set(LoggedInSubjectKey, string(subject))
-		c.Next()
+			subject, getSubjectError := jwtService.GetAccessTokenSubject(token)
+			if getSubjectError != nil {
+				httpserver.AnswerWithUnknownError(c, getSubjectError)
+				return
+			}
+			exists, err := repository.IsUserExists(authRepository.UserId(subject))
+			if err != nil {
+				httpserver.AnswerWithUnknownError(c, err)
+				return
+			}
+			if !exists {
+				httpserver.Answer(c, err, http.StatusUnprocessableEntity, responses.CodeWrongAccessToken)
+				return
+			}
+			log.Printf("%s: access token ok", op)
+			c.Request.Header.Set(accessTokenSubjectKey, string(subject))
+			c.Next()
+		},
+		AccessToken: func(c *gin.Context) UserId {
+			return UserId(c.Request.Header.Get(accessTokenSubjectKey))
+		},
 	}
 }
 

@@ -2,25 +2,24 @@ package profile
 
 import (
 	"net/http"
-	"verni/internal/auth/jwt"
 	profileController "verni/internal/controllers/profile"
 	httpserver "verni/internal/http-server"
 	"verni/internal/http-server/middleware"
 	"verni/internal/http-server/responses"
-	"verni/internal/storage"
 
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes(router *gin.Engine, db storage.Storage, jwtService jwt.Service) {
-	ensureLoggedIn := middleware.EnsureLoggedIn(db, jwtService)
-	hostFromToken := func(c *gin.Context) profileController.UserId {
-		return profileController.UserId(c.Request.Header.Get(middleware.LoggedInSubjectKey))
-	}
-	controller := profileController.DefaultController(db)
-	methodGroup := router.Group("/profile", ensureLoggedIn)
+type ProfileController profileController.Controller
+
+func RegisterRoutes(
+	router *gin.Engine,
+	tokenChecker middleware.AccessTokenChecker,
+	profile ProfileController,
+) {
+	methodGroup := router.Group("/profile", tokenChecker.Handler)
 	methodGroup.GET("/getInfo", func(c *gin.Context) {
-		info, err := controller.GetProfileInfo(hostFromToken(c))
+		info, err := profile.GetProfileInfo(profileController.UserId(tokenChecker.AccessToken(c)))
 		if err != nil {
 			switch err.Code {
 			case profileController.GetInfoErrorNotFound:
@@ -41,7 +40,7 @@ func RegisterRoutes(router *gin.Engine, db storage.Storage, jwtService jwt.Servi
 			httpserver.AnswerWithBadRequest(c, err)
 			return
 		}
-		aid, err := controller.UpdateAvatar(request.DataBase64, hostFromToken(c))
+		aid, err := profile.UpdateAvatar(request.DataBase64, profileController.UserId(tokenChecker.AccessToken(c)))
 		if err != nil {
 			switch err.Code {
 			default:
@@ -60,7 +59,7 @@ func RegisterRoutes(router *gin.Engine, db storage.Storage, jwtService jwt.Servi
 			httpserver.AnswerWithBadRequest(c, err)
 			return
 		}
-		if err := controller.UpdateDisplayName(request.DisplayName, hostFromToken(c)); err != nil {
+		if err := profile.UpdateDisplayName(request.DisplayName, profileController.UserId(tokenChecker.AccessToken(c))); err != nil {
 			switch err.Code {
 			case profileController.UpdateDisplayNameErrorNotFound:
 				httpserver.Answer(c, err, http.StatusConflict, responses.CodeNoSuchUser)

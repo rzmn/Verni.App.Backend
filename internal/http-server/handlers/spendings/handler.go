@@ -2,34 +2,24 @@ package spendings
 
 import (
 	"net/http"
-	"verni/internal/auth/jwt"
 	"verni/internal/common"
 	spendingsController "verni/internal/controllers/spendings"
 	httpserver "verni/internal/http-server"
-	"verni/internal/http-server/longpoll"
 	"verni/internal/http-server/middleware"
 	"verni/internal/http-server/responses"
-	"verni/internal/pushNotifications"
-	authRepository "verni/internal/repositories/auth"
 	spendingsRepository "verni/internal/repositories/spendings"
 
 	"github.com/gin-gonic/gin"
 )
 
+type SpendingController spendingsController.Controller
+
 func RegisterRoutes(
 	router *gin.Engine,
-	authRepository authRepository.Repository,
-	repository spendingsRepository.Repository,
-	jwtService jwt.Service,
-	pushNotifications pushNotifications.Service,
-	longpoll longpoll.Service,
+	tokenChecker middleware.AccessTokenChecker,
+	spendings SpendingController,
 ) {
-	ensureLoggedIn := middleware.EnsureLoggedIn(authRepository, jwtService)
-	hostFromToken := func(c *gin.Context) spendingsController.CounterpartyId {
-		return spendingsController.CounterpartyId(c.Request.Header.Get(middleware.LoggedInSubjectKey))
-	}
-	controller := spendingsController.DefaultController(repository, pushNotifications)
-	methodGroup := router.Group("/spendings", ensureLoggedIn)
+	methodGroup := router.Group("/spendings", tokenChecker.Handler)
 	methodGroup.POST("/addExpense", func(c *gin.Context) {
 		type AddExpenseRequest struct {
 			Expense httpserver.Expense `json:"expense"`
@@ -51,7 +41,7 @@ func RegisterRoutes(
 				}
 			}),
 		}
-		if err := controller.AddExpense(expense, hostFromToken(c)); err != nil {
+		if err := spendings.AddExpense(expense, spendingsController.CounterpartyId(tokenChecker.AccessToken(c))); err != nil {
 			switch err.Code {
 			case spendingsController.CreateDealErrorNoSuchUser:
 				httpserver.Answer(c, err, http.StatusConflict, responses.CodeNoSuchUser)
@@ -73,7 +63,7 @@ func RegisterRoutes(
 			httpserver.AnswerWithBadRequest(c, err)
 			return
 		}
-		_, err := controller.RemoveExpense(spendingsController.ExpenseId(request.ExpenseId), hostFromToken(c))
+		_, err := spendings.RemoveExpense(spendingsController.ExpenseId(request.ExpenseId), spendingsController.CounterpartyId(tokenChecker.AccessToken(c)))
 		if err != nil {
 			switch err.Code {
 			case spendingsController.DeleteDealErrorDealNotFound:
@@ -90,7 +80,7 @@ func RegisterRoutes(
 		c.JSON(http.StatusOK, responses.OK())
 	})
 	methodGroup.GET("/getBalance", func(c *gin.Context) {
-		balance, err := controller.GetBalance(hostFromToken(c))
+		balance, err := spendings.GetBalance(spendingsController.CounterpartyId(tokenChecker.AccessToken(c)))
 		if err != nil {
 			switch err.Code {
 			default:
@@ -110,7 +100,7 @@ func RegisterRoutes(
 			httpserver.AnswerWithBadRequest(c, err)
 			return
 		}
-		expenses, err := controller.GetExpensesWith(spendingsController.CounterpartyId(request.Counterparty), hostFromToken(c))
+		expenses, err := spendings.GetExpensesWith(spendingsController.CounterpartyId(request.Counterparty), spendingsController.CounterpartyId(tokenChecker.AccessToken(c)))
 		if err != nil {
 			switch err.Code {
 			default:
@@ -130,7 +120,7 @@ func RegisterRoutes(
 			httpserver.AnswerWithBadRequest(c, err)
 			return
 		}
-		expense, err := controller.GetExpense(spendingsController.ExpenseId(request.Id), hostFromToken(c))
+		expense, err := spendings.GetExpense(spendingsController.ExpenseId(request.Id), spendingsController.CounterpartyId(tokenChecker.AccessToken(c)))
 		if err != nil {
 			switch err.Code {
 			case spendingsController.GetDealErrorDealNotFound:

@@ -10,7 +10,7 @@ type AvatarId string
 type User struct {
 	Id          UserId
 	DisplayName string
-	AvatarId    *string
+	AvatarId    *AvatarId
 }
 
 type Repository interface {

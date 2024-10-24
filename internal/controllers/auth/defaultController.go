@@ -2,7 +2,6 @@ package auth
 
 import (
 	"log"
-	"verni/internal/auth/confirmation"
 	"verni/internal/auth/jwt"
 	"verni/internal/common"
 	"verni/internal/repositories/auth"
@@ -15,7 +14,6 @@ type defaultController struct {
 	authRepository       AuthRepository
 	pushTokensRepository PushTokensRepository
 	jwtService           jwt.Service
-	confirmation         confirmation.Service
 }
 
 func (c *defaultController) Signup(email string, password string) (Session, *common.CodeBasedError[SignupErrorCode]) {
@@ -267,57 +265,6 @@ func (c *defaultController) UpdatePassword(oldPassword string, newPassword strin
 		AccessToken:  string(accessToken),
 		RefreshToken: string(refreshToken),
 	}, nil
-}
-
-func (c *defaultController) SendEmailConfirmationCode(id UserId) *common.CodeBasedError[SendEmailConfirmationCodeErrorCode] {
-	const op = "auth.defaultController.SendEmailConfirmationCode"
-	log.Printf("%s: start[id=%s]", op, id)
-	account, err := c.authRepository.GetUserInfo(auth.UserId(id))
-	if err != nil {
-		log.Printf("%s: cannot get account info from db %v", op, err)
-		return common.NewErrorWithDescription(SendEmailConfirmationCodeErrorInternal, err.Error())
-	}
-	if account.EmailVerified {
-		log.Printf("%s: email is already verified", op)
-		return common.NewError(SendEmailConfirmationCodeErrorAlreadyConfirmed)
-	}
-	if err := c.confirmation.SendConfirmationCode(account.Email); err != nil {
-		switch err.Code {
-		case confirmation.SendConfirmationCodeErrorNotDelivered:
-			log.Printf("%s: confirmation message is not delivered, %v", op, err)
-			return common.NewErrorWithDescription(SendEmailConfirmationCodeErrorNotDelivered, err.Error())
-		default:
-			log.Printf("%s: confirmation message send failed %v", op, err)
-			return common.NewErrorWithDescription(SendEmailConfirmationCodeErrorInternal, err.Error())
-		}
-	}
-	log.Printf("%s: success[id=%s]", op, id)
-	return nil
-}
-
-func (c *defaultController) ConfirmEmail(code string, id UserId) *common.CodeBasedError[ConfirmEmailErrorCode] {
-	const op = "auth.defaultController.ConfirmEmail"
-	log.Printf("%s: start[id=%s]", op, id)
-	account, err := c.authRepository.GetUserInfo(auth.UserId(id))
-	if err != nil {
-		log.Printf("%s: cannot get account info from db err: %v", op, err)
-		return common.NewErrorWithDescription(ConfirmEmailErrorInternal, err.Error())
-	}
-	if account.EmailVerified {
-		log.Printf("%s: email already verified", op)
-		return nil
-	}
-	if err := c.confirmation.ConfirmEmail(account.Email, code); err != nil {
-		log.Printf("%s: confirmation failed err: %v", op, err)
-		switch err.Code {
-		case confirmation.ConfirmEmailErrorWrongConfirmationCode:
-			return common.NewErrorWithDescription(ConfirmEmailErrorWrongConfirmationCode, err.Error())
-		default:
-			return common.NewErrorWithDescription(ConfirmEmailErrorInternal, err.Error())
-		}
-	}
-	log.Printf("%s: success[id=%s]", op, id)
-	return nil
 }
 
 func (c *defaultController) RegisterForPushNotifications(pushToken string, id UserId) *common.CodeBasedError[RegisterForPushNotificationsErrorCode] {

@@ -17,6 +17,7 @@ type UserInfo struct {
 }
 type Repository interface {
 	CreateUser(uid UserId, email string, password string, refreshToken string) repositories.MutationWorkItem
+	MarkUserEmailValidated(uid UserId) repositories.MutationWorkItem
 	IsUserExists(uid UserId) (bool, error)
 
 	CheckCredentials(email string, password string) (bool, error)

@@ -201,6 +201,48 @@ func (c *postgresRepository) GetRefreshToken(uid UserId) (string, error) {
 	return token, nil
 }
 
+func (c *postgresRepository) MarkUserEmailValidated(uid UserId) repositories.MutationWorkItem {
+	const op = "repositories.auth.postgresRepository.MarkUserEmailValidated"
+	existed, err := c.GetUserInfo(uid)
+	return repositories.MutationWorkItem{
+		Perform: func() error {
+			if err != nil {
+				log.Printf("%s: failed to get current credentals err: %v", op, err)
+				return err
+			}
+			if existed.EmailVerified {
+				return nil
+			} else {
+				return c.markUserEmailValidated(uid, true)
+			}
+		},
+		Rollback: func() error {
+			if err != nil {
+				log.Printf("%s: failed to get current credentals err: %v", op, err)
+				return err
+			}
+			if existed.EmailVerified {
+				return nil
+			} else {
+				return c.markUserEmailValidated(uid, false)
+			}
+		},
+	}
+}
+
+func (c *postgresRepository) markUserEmailValidated(uid UserId, validated bool) error {
+	const op = "repositories.auth.postgresRepository.markUserEmailValidated"
+	log.Printf("%s: start[uid=%s validated=%t]", op, uid, validated)
+	query := `UPDATE credentials SET emailVerified = $2 WHERE id = $1;`
+	_, err := c.db.Exec(query, string(uid), validated)
+	if err != nil {
+		log.Printf("%s: failed to perform query err: %v", op, err)
+		return err
+	}
+	log.Printf("%s: success[uid=%s validated=%t]", op, uid, validated)
+	return nil
+}
+
 func (c *postgresRepository) createUser(uid UserId, email string, password string, refreshToken string) error {
 	const op = "repositories.auth.postgresRepository.createUser"
 	log.Printf("%s: start[uid=%s email=%s]", op, uid, email)

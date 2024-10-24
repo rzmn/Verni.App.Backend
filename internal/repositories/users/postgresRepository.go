@@ -20,7 +20,7 @@ func (c *postgresRepository) GetUsers(ids []UserId) ([]User, error) {
 	argsList := strings.Join(common.Map(ids, func(id UserId) string {
 		return fmt.Sprintf("'%s'", id)
 	}), ",")
-	query := fmt.Sprintf(`SELECT id, displayName FROM users WHERE id IN (%s);`, argsList)
+	query := fmt.Sprintf(`SELECT id, displayName, avatarId FROM users WHERE id IN (%s);`, argsList)
 	rows, err := c.db.Query(query)
 	if err != nil {
 		log.Printf("%s: failed to perform query err: %v", op, err)
@@ -31,13 +31,15 @@ func (c *postgresRepository) GetUsers(ids []UserId) ([]User, error) {
 	for rows.Next() {
 		var id string
 		var displayName string
-		if err := rows.Scan(&id, &displayName); err != nil {
+		var avatarId *string
+		if err := rows.Scan(&id, &displayName, &avatarId); err != nil {
 			log.Printf("%s: failed to perform scan err: %v", op, err)
 			return []User{}, err
 		}
 		users = append(users, User{
 			Id:          UserId(id),
 			DisplayName: displayName,
+			AvatarId:    (*AvatarId)(avatarId),
 		})
 	}
 	if err := rows.Err(); err != nil {
@@ -54,7 +56,8 @@ func (c *postgresRepository) SearchUsers(query string) ([]User, error) {
 	sqlQuery := fmt.Sprintf(`
 SELECT 
 	id, 
-	displayName 
+	displayName,
+	avatarId
 FROM 
 	users 
 WHERE 
@@ -72,13 +75,15 @@ ORDER BY
 	for rows.Next() {
 		var id string
 		var displayName string
-		if err := rows.Scan(&id, &displayName); err != nil {
+		var avatarId *string
+		if err := rows.Scan(&id, &displayName, &avatarId); err != nil {
 			log.Printf("%s: failed to perform scan err: %v", op, err)
 			return []User{}, err
 		}
 		users = append(users, User{
 			Id:          UserId(id),
 			DisplayName: displayName,
+			AvatarId:    (*AvatarId)(avatarId),
 		})
 	}
 	if err := rows.Err(); err != nil {

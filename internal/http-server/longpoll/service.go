@@ -1,7 +1,7 @@
 package longpoll
 
 import (
-	"verni/internal/auth/jwt"
+	"verni/internal/http-server/middleware"
 	authRepository "verni/internal/repositories/auth"
 
 	"github.com/gin-gonic/gin"
@@ -17,10 +17,9 @@ type Service interface {
 	RegisterRoutes()
 }
 
-func DefaultService(e *gin.Engine, authRepository AuthRepository, jwtService jwt.Service) Service {
+func DefaultService(e *gin.Engine, tokenChecker middleware.AccessTokenChecker) Service {
 	return &defaultService{
-		engine:         e,
-		authRepository: authRepository,
-		jwtService:     jwtService,
+		engine:       e,
+		tokenChecker: tokenChecker,
 	}
 }

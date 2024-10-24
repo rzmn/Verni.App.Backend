@@ -1,4 +1,4 @@
-package confirmation
+package verification
 
 type SendConfirmationCodeErrorCode int
 
