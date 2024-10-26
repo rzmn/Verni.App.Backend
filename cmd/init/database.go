@@ -110,7 +110,7 @@ func tables() []table {
 			create: func(db db.DB) error {
 				_, err := db.Exec(`
 				CREATE TABLE deals(
-					id text NOT NULL, 
+					id text NOT NULL PRIMARY KEY, 
 					timestamp int NOT NULL, 
 					details text NOT NULL, 
 					cost int NOT NULL, 
@@ -128,7 +128,7 @@ func tables() []table {
 			create: func(db db.DB) error {
 				_, err := db.Exec(`
 				CREATE TABLE images(
-					id text NOT NULL, 
+					id text NOT NULL PRIMARY KEY, 
 					base64 text NOT NULL
 				);`)
 				return err
@@ -143,7 +143,7 @@ func tables() []table {
 			create: func(db db.DB) error {
 				_, err := db.Exec(`
 				CREATE TABLE pushTokens(
-					id text NOT NULL, 
+					id text NOT NULL PRIMARY KEY, 
 					token text NOT NULL
 				);`)
 				return err
@@ -158,7 +158,7 @@ func tables() []table {
 			create: func(db db.DB) error {
 				_, err := db.Exec(`
 				CREATE TABLE emailVerification(
-					email text NOT NULL, 
+					email text NOT NULL PRIMARY KEY, 
 					code text
 				);`)
 				return err
