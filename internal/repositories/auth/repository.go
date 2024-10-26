@@ -3,8 +3,6 @@ package auth
 import (
 	"verni/internal/db"
 	"verni/internal/repositories"
-
-	_ "github.com/lib/pq"
 )
 
 type UserId string

@@ -3,8 +3,6 @@ package spendings
 import (
 	"verni/internal/db"
 	"verni/internal/repositories"
-
-	_ "github.com/lib/pq"
 )
 
 type ExpenseId string

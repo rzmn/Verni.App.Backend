@@ -89,7 +89,7 @@ func main() {
 	json.Unmarshal([]byte(configData), &config)
 	log.Printf("initializing with config %v", config)
 
-	db := func() db.DB {
+	database := func() db.DB {
 		switch config.Storage.Type {
 		case "postgres":
 			data, err := json.Marshal(config.Storage.Config)
@@ -110,15 +110,15 @@ func main() {
 			return nil
 		}
 	}()
-	defer db.Close()
+	defer database.Close()
 	repositories := Repositories{
-		auth:         authRepository.PostgresRepository(db),
-		friends:      friendsRepository.PostgresRepository(db),
-		images:       imagesRepository.PostgresRepository(db),
-		pushRegistry: pushRegistryRepository.PostgresRepository(db),
-		spendings:    spendingsRepository.PostgresRepository(db),
-		users:        usersRepository.PostgresRepository(db),
-		verification: verificationRepository.PostgresRepository(db),
+		auth:         authRepository.PostgresRepository(database),
+		friends:      friendsRepository.PostgresRepository(database),
+		images:       imagesRepository.PostgresRepository(database),
+		pushRegistry: pushRegistryRepository.PostgresRepository(database),
+		spendings:    spendingsRepository.PostgresRepository(database),
+		users:        usersRepository.PostgresRepository(database),
+		verification: verificationRepository.PostgresRepository(database),
 	}
 	services := Services{
 		push: func() pushNotifications.Service {
