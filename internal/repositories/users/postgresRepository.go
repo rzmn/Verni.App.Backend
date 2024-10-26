@@ -14,6 +14,68 @@ type postgresRepository struct {
 	db db.DB
 }
 
+func (c *postgresRepository) StoreUser(user User) repositories.MutationWorkItem {
+	const op = "repositories.users.postgresRepository.StoreUser"
+	getUsersResult, err := c.GetUsers([]UserId{user.Id})
+	var currentUser *User
+	if err != nil {
+		if len(getUsersResult) > 0 {
+			currentUser = &getUsersResult[0]
+		} else {
+			currentUser = nil
+		}
+	}
+	return repositories.MutationWorkItem{
+		Perform: func() error {
+			if err != nil {
+				log.Printf("%s: failed get initial user err: %v", op, err)
+				return err
+			}
+			return c.storeUser(user)
+		},
+		Rollback: func() error {
+			if err != nil {
+				log.Printf("%s: failed get initial user err: %v", op, err)
+				return err
+			}
+			if currentUser == nil {
+				return c.removeUser(user.Id)
+			} else {
+				return c.storeUser(*currentUser)
+			}
+		},
+	}
+}
+
+func (c *postgresRepository) storeUser(user User) error {
+	const op = "repositories.users.postgresRepository.storeUser"
+	log.Printf("%s: start[id=%s]", op, user.Id)
+	query := `
+INSERT INTO users(id, displayName, avatarId) VALUES ($1, $2, $3) 
+ON CONFLICT (id) DO UPDATE SET displayName = $2, avatarId = $3;
+`
+	_, err := c.db.Exec(query, user.Id, user.DisplayName, user.AvatarId)
+	if err != nil {
+		log.Printf("%s: failed to perform query err: %v", op, err)
+		return err
+	}
+	log.Printf("%s: success[id=%s]", op, user.Id)
+	return nil
+}
+
+func (c *postgresRepository) removeUser(userId UserId) error {
+	const op = "repositories.users.postgresRepository.removeUser"
+	log.Printf("%s: start[id=%s]", op, userId)
+	query := `DELETE FROM users WHERE id = $1;`
+	_, err := c.db.Exec(query, string(userId))
+	if err != nil {
+		log.Printf("%s: failed to perform query err: %v", op, err)
+		return err
+	}
+	log.Printf("%s: success[id=%s]", op, userId)
+	return nil
+}
+
 func (c *postgresRepository) GetUsers(ids []UserId) ([]User, error) {
 	const op = "repositories.users.postgresRepository.GetUsers"
 	log.Printf("%s: start", op)
@@ -176,7 +238,7 @@ func (c *postgresRepository) updateAvatarId(avatarId *AvatarId, id UserId) error
 	log.Printf("%s: start[avatarId=%v id=%s]", op, avatarId, id)
 	if avatarId == nil {
 		query := `UPDATE users SET avatarId = NULL WHERE id = $1;`
-		_, err := c.db.Exec(query, string(id), string(*avatarId))
+		_, err := c.db.Exec(query, string(id))
 		if err != nil {
 			log.Printf("%s: failed to perform query err: %v", op, err)
 			return err

@@ -14,6 +14,7 @@ type User struct {
 }
 
 type Repository interface {
+	StoreUser(user User) repositories.MutationWorkItem
 	GetUsers(ids []UserId) ([]User, error)
 	SearchUsers(query string) ([]User, error)
 	UpdateDisplayName(name string, id UserId) repositories.MutationWorkItem
