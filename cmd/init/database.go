@@ -63,7 +63,8 @@ func tables() []table {
 				_, err := db.Exec(`
 				CREATE TABLE users(
 					id text NOT NULL PRIMARY KEY, 
-					displayName text NOT NULL
+					displayName text NOT NULL,
+					avatarId text
 				);`)
 				return err
 			},

@@ -1,6 +1,7 @@
 package users
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"log"
@@ -15,34 +16,12 @@ type postgresRepository struct {
 }
 
 func (c *postgresRepository) StoreUser(user User) repositories.MutationWorkItem {
-	const op = "repositories.users.postgresRepository.StoreUser"
-	getUsersResult, err := c.GetUsers([]UserId{user.Id})
-	var currentUser *User
-	if err != nil {
-		if len(getUsersResult) > 0 {
-			currentUser = &getUsersResult[0]
-		} else {
-			currentUser = nil
-		}
-	}
 	return repositories.MutationWorkItem{
 		Perform: func() error {
-			if err != nil {
-				log.Printf("%s: failed get initial user err: %v", op, err)
-				return err
-			}
 			return c.storeUser(user)
 		},
 		Rollback: func() error {
-			if err != nil {
-				log.Printf("%s: failed get initial user err: %v", op, err)
-				return err
-			}
-			if currentUser == nil {
-				return c.removeUser(user.Id)
-			} else {
-				return c.storeUser(*currentUser)
-			}
+			return c.removeUser(user.Id)
 		},
 	}
 }
@@ -50,14 +29,21 @@ func (c *postgresRepository) StoreUser(user User) repositories.MutationWorkItem 
 func (c *postgresRepository) storeUser(user User) error {
 	const op = "repositories.users.postgresRepository.storeUser"
 	log.Printf("%s: start[id=%s]", op, user.Id)
-	query := `
-INSERT INTO users(id, displayName, avatarId) VALUES ($1, $2, $3) 
-ON CONFLICT (id) DO UPDATE SET displayName = $2, avatarId = $3;
-`
-	_, err := c.db.Exec(query, user.Id, user.DisplayName, user.AvatarId)
-	if err != nil {
-		log.Printf("%s: failed to perform query err: %v", op, err)
-		return err
+
+	if user.AvatarId == nil {
+		query := `INSERT INTO users(id, displayName, avatarId) VALUES ($1, $2, NULL);`
+		_, err := c.db.Exec(query, user.Id, user.DisplayName)
+		if err != nil {
+			log.Printf("%s: failed to perform query err: %v", op, err)
+			return err
+		}
+	} else {
+		query := `INSERT INTO users(id, displayName, avatarId) VALUES ($1, $2, $3);`
+		_, err := c.db.Exec(query, user.Id, user.DisplayName, *user.AvatarId)
+		if err != nil {
+			log.Printf("%s: failed to perform query err: %v", op, err)
+			return err
+		}
 	}
 	log.Printf("%s: success[id=%s]", op, user.Id)
 	return nil
@@ -79,10 +65,16 @@ func (c *postgresRepository) removeUser(userId UserId) error {
 func (c *postgresRepository) GetUsers(ids []UserId) ([]User, error) {
 	const op = "repositories.users.postgresRepository.GetUsers"
 	log.Printf("%s: start", op)
-	argsList := strings.Join(common.Map(ids, func(id UserId) string {
-		return fmt.Sprintf("'%s'", id)
-	}), ",")
-	query := fmt.Sprintf(`SELECT id, displayName, avatarId FROM users WHERE id IN (%s);`, argsList)
+	if len(ids) == 0 {
+		log.Printf("%s: success", op)
+		return []User{}, nil
+	}
+	query := fmt.Sprintf(
+		`SELECT id, displayName, avatarId FROM users WHERE id IN (%s);`,
+		strings.Join(common.Map(ids, func(id UserId) string {
+			return fmt.Sprintf("'%s'", id)
+		}), ","),
+	)
 	rows, err := c.db.Query(query)
 	if err != nil {
 		log.Printf("%s: failed to perform query err: %v", op, err)
@@ -93,15 +85,22 @@ func (c *postgresRepository) GetUsers(ids []UserId) ([]User, error) {
 	for rows.Next() {
 		var id string
 		var displayName string
-		var avatarId *string
-		if err := rows.Scan(&id, &displayName, &avatarId); err != nil {
+		var sqlAvatarId sql.NullString
+		log.Printf("[debug] scan")
+		if err := rows.Scan(&id, &displayName, &sqlAvatarId); err != nil {
 			log.Printf("%s: failed to perform scan err: %v", op, err)
 			return []User{}, err
+		}
+		var avatarId *AvatarId
+		if sqlAvatarId.Valid {
+			avatarId = (*AvatarId)(&sqlAvatarId.String)
+		} else {
+			avatarId = nil
 		}
 		users = append(users, User{
 			Id:          UserId(id),
 			DisplayName: displayName,
-			AvatarId:    (*AvatarId)(avatarId),
+			AvatarId:    avatarId,
 		})
 	}
 	if err := rows.Err(); err != nil {
