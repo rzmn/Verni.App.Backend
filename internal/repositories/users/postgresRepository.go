@@ -86,7 +86,6 @@ func (c *postgresRepository) GetUsers(ids []UserId) ([]User, error) {
 		var id string
 		var displayName string
 		var sqlAvatarId sql.NullString
-		log.Printf("[debug] scan")
 		if err := rows.Scan(&id, &displayName, &sqlAvatarId); err != nil {
 			log.Printf("%s: failed to perform scan err: %v", op, err)
 			return []User{}, err
