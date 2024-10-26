@@ -1,7 +1,12 @@
 package pushNotifications_test
 
 import (
+	"encoding/json"
+	"io"
+	"log"
+	"os"
 	"testing"
+	"verni/internal/common"
 	"verni/internal/db"
 	"verni/internal/repositories/pushNotifications"
 
@@ -9,29 +14,40 @@ import (
 )
 
 var (
-	_s *pushNotifications.Repository
+	database db.DB
 )
 
-func getRepository(t *testing.T) pushNotifications.Repository {
-	if _s != nil {
-		return *_s
+func TestMain(m *testing.M) {
+	database = func() db.DB {
+		configFile, err := os.Open(common.AbsolutePath("./config/test/postgres_storage.json"))
+		if err != nil {
+			log.Fatalf("failed to open config file: %s", err)
+		}
+		defer configFile.Close()
+		configData, err := io.ReadAll(configFile)
+		if err != nil {
+			log.Fatalf("failed to read config file: %s", err)
+		}
+		var config db.PostgresConfig
+		json.Unmarshal([]byte(configData), &config)
+		db, err := db.Postgres(config)
+		if err != nil {
+			log.Fatalf("failed to init db err: %v", err)
+		}
+		return db
+	}()
+	code := m.Run()
+
+	os.Exit(code)
+}
+
+func init() {
+	root, present := os.LookupEnv("VERNI_PROJECT_ROOT")
+	if present {
+		common.RegisterRelativePathRoot(root)
+	} else {
+		log.Fatalf("project root not found")
 	}
-	db, err := db.Postgres(db.PostgresConfig{
-		Host:     "localhost",
-		Port:     5432,
-		User:     "tester",
-		Password: "test_password",
-		DbName:   "mydb",
-	})
-	if err != nil {
-		t.Fatalf("failed to init repository err: %v", err)
-	}
-	repository := pushNotifications.PostgresRepository(db)
-	if err != nil {
-		t.Fatalf("failed to init repository err: %v", err)
-	}
-	_s = &repository
-	return repository
 }
 
 func randomUid() pushNotifications.UserId {
@@ -39,21 +55,81 @@ func randomUid() pushNotifications.UserId {
 }
 
 func TestStorePushToken(t *testing.T) {
-	s := getRepository(t)
+	repository := pushNotifications.PostgresRepository(database)
+
+	// initially token should be nil
+
 	uid := randomUid()
-	token := uuid.New().String()
-	transaction := s.StorePushToken(uid, token)
-	if err := transaction.Perform(); err != nil {
-		t.Fatalf("unexpected err: %v", err)
-	}
-	tokenFromDb, err := s.GetPushToken(uid)
+	shouldBeEmpty, err := repository.GetPushToken(uid)
 	if err != nil {
-		t.Fatalf("unexpected err: %v", err)
+		t.Fatalf("failed to get `shouldBeEmpty` err: %v", err)
 	}
-	if tokenFromDb == nil {
-		t.Fatalf("unexpected nil")
+	if shouldBeEmpty != nil {
+		t.Fatalf("`shouldBeEmpty` unexpected value: %s", *shouldBeEmpty)
 	}
-	if *tokenFromDb != token {
-		t.Fatalf("should be equal")
+
+	// test store token when there is no token set previously
+
+	token := uuid.New().String()
+	storeTransaction := repository.StorePushToken(uid, token)
+	if err := storeTransaction.Perform(); err != nil {
+		t.Fatalf("failed to perform `storeTransaction` err: %v", err)
+	}
+	shouldBeEqualToToken, err := repository.GetPushToken(uid)
+	if err != nil {
+		t.Fatalf("failed to get `shouldBeEqualToToken` err: %v", err)
+	}
+	if shouldBeEqualToToken == nil {
+		t.Fatalf("`shouldBeEqualToToken` is nil")
+	}
+	if *shouldBeEqualToToken != token {
+		t.Fatalf("`shouldBeEqualToToken` should be equal to %s, found %s", token, *shouldBeEqualToToken)
+	}
+
+	// test store token when there is some token set previously
+
+	newToken := uuid.New().String()
+	updateTransaction := repository.StorePushToken(uid, newToken)
+	if err := updateTransaction.Perform(); err != nil {
+		t.Fatalf("failed to perform `updateTransaction` err: %v", err)
+	}
+	shouldBeEqualToNewToken, err := repository.GetPushToken(uid)
+	if err != nil {
+		t.Fatalf("failed to get `shouldBeEqualToNewToken` err: %v", err)
+	}
+	if shouldBeEqualToNewToken == nil {
+		t.Fatalf("`shouldBeEqualToNewToken` is nil")
+	}
+	if *shouldBeEqualToNewToken != newToken {
+		t.Fatalf("`shouldBeEqualToNewToken` should be equal to %s, found %s", token, *shouldBeEqualToNewToken)
+	}
+
+	// test rollback store token when there is some token set previously
+
+	if err := updateTransaction.Rollback(); err != nil {
+		t.Fatalf("failed to rollback `updateTransaction` err: %v", err)
+	}
+	shouldBeEqualToToken, err = repository.GetPushToken(uid)
+	if err != nil {
+		t.Fatalf("[after rollback] failed to get `shouldBeEqualToToken` err: %v", err)
+	}
+	if shouldBeEqualToToken == nil {
+		t.Fatalf("[after rollback] `shouldBeEqualToToken` is nil")
+	}
+	if *shouldBeEqualToToken != token {
+		t.Fatalf("[after rollback] `shouldBeEqualToToken` should be equal to %s, found %s", token, *shouldBeEqualToToken)
+	}
+
+	// test rollback store token when there is no token set previously
+
+	if err := storeTransaction.Rollback(); err != nil {
+		t.Fatalf("failed to rollback `storeTransaction` err: %v", err)
+	}
+	shouldBeEmpty, err = repository.GetPushToken(uid)
+	if err != nil {
+		t.Fatalf("[after rollback] failed to get `shouldBeEmpty` err: %v", err)
+	}
+	if shouldBeEmpty != nil {
+		t.Fatalf("[after rollback] `shouldBeEmpty` unexpected value: %s", *shouldBeEmpty)
 	}
 }
