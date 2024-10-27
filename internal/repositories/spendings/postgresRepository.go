@@ -208,7 +208,8 @@ FROM
   JOIN spendings s2 ON s1.dealId = s2.dealId
   JOIN deals d ON s1.dealId = d.id
 WHERE
-  s1.counterparty = $1 AND s2.counterparty = $2;
+  s1.counterparty = $1 AND s2.counterparty = $2
+ORDER BY d.timestamp;
 `
 	rows, err := c.db.Query(query, string(counterparty1), string(counterparty2))
 	if err != nil {
