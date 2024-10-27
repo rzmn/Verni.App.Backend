@@ -1,7 +1,12 @@
 package friends_test
 
 import (
+	"encoding/json"
+	"io"
+	"log"
+	"os"
 	"testing"
+	"verni/internal/common"
 	"verni/internal/db"
 	"verni/internal/repositories/friends"
 
@@ -9,29 +14,40 @@ import (
 )
 
 var (
-	_s *friends.Repository
+	database db.DB
 )
 
-func getRepository(t *testing.T) friends.Repository {
-	if _s != nil {
-		return *_s
+func TestMain(m *testing.M) {
+	database = func() db.DB {
+		configFile, err := os.Open(common.AbsolutePath("./config/test/postgres_storage.json"))
+		if err != nil {
+			log.Fatalf("failed to open config file: %s", err)
+		}
+		defer configFile.Close()
+		configData, err := io.ReadAll(configFile)
+		if err != nil {
+			log.Fatalf("failed to read config file: %s", err)
+		}
+		var config db.PostgresConfig
+		json.Unmarshal([]byte(configData), &config)
+		db, err := db.Postgres(config)
+		if err != nil {
+			log.Fatalf("failed to init db err: %v", err)
+		}
+		return db
+	}()
+	code := m.Run()
+
+	os.Exit(code)
+}
+
+func init() {
+	root, present := os.LookupEnv("VERNI_PROJECT_ROOT")
+	if present {
+		common.RegisterRelativePathRoot(root)
+	} else {
+		log.Fatalf("project root not found")
 	}
-	db, err := db.Postgres(db.PostgresConfig{
-		Host:     "localhost",
-		Port:     5432,
-		User:     "tester",
-		Password: "test_password",
-		DbName:   "mydb",
-	})
-	if err != nil {
-		t.Fatalf("failed to init repository err: %v", err)
-	}
-	repository := friends.PostgresRepository(db)
-	if err != nil {
-		t.Fatalf("failed to init repository err: %v", err)
-	}
-	_s = &repository
-	return repository
 }
 
 func randomUid() friends.UserId {
@@ -39,7 +55,7 @@ func randomUid() friends.UserId {
 }
 
 func TestStoreAndRemoveFriendRequest(t *testing.T) {
-	s := getRepository(t)
+	s := friends.PostgresRepository(database)
 	sender := randomUid()
 	target := randomUid()
 
@@ -75,7 +91,7 @@ func TestStoreAndRemoveFriendRequest(t *testing.T) {
 }
 
 func TestHasFriendRequestEmpty(t *testing.T) {
-	s := getRepository(t)
+	s := friends.PostgresRepository(database)
 	sender := randomUid()
 	target := randomUid()
 	exists, err := s.HasFriendRequest(sender, target)
@@ -88,7 +104,7 @@ func TestHasFriendRequestEmpty(t *testing.T) {
 }
 
 func TestGetSubscribers(t *testing.T) {
-	s := getRepository(t)
+	s := friends.PostgresRepository(database)
 	sender := randomUid()
 	target := randomUid()
 
@@ -113,7 +129,7 @@ func TestGetSubscribers(t *testing.T) {
 }
 
 func TestGetSubscribersEmpty(t *testing.T) {
-	s := getRepository(t)
+	s := friends.PostgresRepository(database)
 	uid := randomUid()
 	subscribers, err := s.GetSubscribers(uid)
 	if err != nil {
@@ -125,7 +141,7 @@ func TestGetSubscribersEmpty(t *testing.T) {
 }
 
 func TestGetSubsriptions(t *testing.T) {
-	s := getRepository(t)
+	s := friends.PostgresRepository(database)
 	sender := randomUid()
 	target := randomUid()
 
@@ -150,7 +166,7 @@ func TestGetSubsriptions(t *testing.T) {
 }
 
 func TestGetSubscriptionsEmpty(t *testing.T) {
-	s := getRepository(t)
+	s := friends.PostgresRepository(database)
 	uid := randomUid()
 	subscriptions, err := s.GetSubscriptions(uid)
 	if err != nil {
@@ -162,7 +178,7 @@ func TestGetSubscriptionsEmpty(t *testing.T) {
 }
 
 func TestGetFriends(t *testing.T) {
-	s := getRepository(t)
+	s := friends.PostgresRepository(database)
 	sender := randomUid()
 	target := randomUid()
 	storeTransaction := s.StoreFriendRequest(sender, target)
@@ -222,7 +238,7 @@ func TestGetFriends(t *testing.T) {
 }
 
 func TestGetFriendsEmpty(t *testing.T) {
-	s := getRepository(t)
+	s := friends.PostgresRepository(database)
 	uid := randomUid()
 	friends, err := s.GetFriends(uid)
 	if err != nil {
