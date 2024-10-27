@@ -60,6 +60,16 @@ func randomEid() spendings.ExpenseId {
 	return spendings.ExpenseId(uuid.New().String())
 }
 
+func expensesAreEqual(lhs spendings.Expense, rhs spendings.Expense) bool {
+	sort.Slice(lhs.Shares, func(i, j int) bool {
+		return lhs.Shares[i].Counterparty < lhs.Shares[j].Counterparty
+	})
+	sort.Slice(rhs.Shares, func(i, j int) bool {
+		return rhs.Shares[i].Counterparty < rhs.Shares[j].Counterparty
+	})
+	return reflect.DeepEqual(lhs, rhs)
+}
+
 func TestGetExpensesEmpty(t *testing.T) {
 	repository := spendings.PostgresRepository(database)
 	expenseId := randomEid()
@@ -93,16 +103,6 @@ func TestExpensesAndCounterparties(t *testing.T) {
 	cost1 := spendings.Cost(456)
 	cost2 := spendings.Cost(888)
 	currency := spendings.Currency(uuid.New().String())
-
-	expensesAreEqual := func(lhs spendings.Expense, rhs spendings.Expense) bool {
-		sort.Slice(lhs.Shares, func(i, j int) bool {
-			return lhs.Shares[i].Counterparty < lhs.Shares[j].Counterparty
-		})
-		sort.Slice(rhs.Shares, func(i, j int) bool {
-			return rhs.Shares[i].Counterparty < rhs.Shares[j].Counterparty
-		})
-		return reflect.DeepEqual(lhs, rhs)
-	}
 
 	// adding first expense (created by first counterparty)
 	// both first and second user are participants of that expense
@@ -271,7 +271,7 @@ func TestExpensesAndCounterparties(t *testing.T) {
 }
 
 func TestAddAndRemoveExpense(t *testing.T) {
-	s := spendings.PostgresRepository(database)
+	repository := spendings.PostgresRepository(database)
 	counterparty1 := randomUid()
 	counterparty2 := randomUid()
 	cost := spendings.Cost(456)
@@ -293,34 +293,63 @@ func TestAddAndRemoveExpense(t *testing.T) {
 			},
 		},
 	}
-	insertTransaction := s.AddExpense(expense)
-	_, err := insertTransaction.Perform()
+	insertTransaction := repository.AddExpense(expense)
+	expenseId, err := insertTransaction.Perform()
 	if err != nil {
-		t.Fatalf("unexpected err: %v", err)
+		t.Fatalf("failed to perform `insertTransaction` err: %v", err)
 	}
-	expenses, err := s.GetExpensesBetween(counterparty1, counterparty2)
+	expenses, err := repository.GetExpensesBetween(counterparty1, counterparty2)
 	if err != nil {
-		t.Fatalf("unexpected err: %v", err)
+		t.Fatalf("failed to get `expenses` err: %v", err)
 	}
 	if len(expenses) != 1 {
-		t.Fatalf("expenses len should be 1, found: %v", expenses)
+		t.Fatalf("`expenses` len should be 1, found: %v", expenses)
 	}
-	expenseFromDb, err := s.GetExpense(expenses[0].Id)
+	if expenses[0].Id != expenseId {
+		t.Fatalf("`expenseId` should be equal to %s, found: %s", expenseId, expenses[0].Id)
+	}
+	shouldBeEqualToExpense, err := repository.GetExpense(expenseId)
 	if err != nil {
-		t.Fatalf("unexpected err: %v", err)
+		t.Fatalf("failed to get `shouldBeEqualToExpense` err: %v", err)
 	}
-	if expenseFromDb == nil {
-		t.Fatalf("deal should exists: %v", err)
+	if shouldBeEqualToExpense == nil {
+		t.Fatalf("`shouldBeEqualToExpense` is nil, expected %v", expense)
 	}
-	deleteTransaction := s.RemoveExpense(expenses[0].Id)
+	if !expensesAreEqual(shouldBeEqualToExpense.Expense, expense) {
+		t.Fatalf("`shouldBeEqualToExpense` should be equal to %v, found %v", expense, shouldBeEqualToExpense.Expense)
+	}
+	deleteTransaction := repository.RemoveExpense(expenseId)
 	if err := deleteTransaction.Perform(); err != nil {
-		t.Fatalf("unexpected err: %v", err)
+		t.Fatalf("failed to perform `deleteTransaction` err: %v", err)
 	}
-	expenseFromDb, err = s.GetExpense(expenses[0].Id)
+	shouldBeEmpty, err := repository.GetExpense(expenseId)
 	if err != nil {
-		t.Fatalf("unexpected err: %v", err)
+		t.Fatalf("failed to get `shouldBeEmpty` err: %v", err)
 	}
-	if expenseFromDb != nil {
-		t.Fatalf("deal should not exists: %v", err)
+	if shouldBeEmpty != nil {
+		t.Fatalf("`shouldBeEmpty` should be empty, found %v", *shouldBeEmpty)
+	}
+	if err := deleteTransaction.Rollback(); err != nil {
+		t.Fatalf("failed to rollback `deleteTransaction` err: %v", err)
+	}
+	shouldBeEqualToExpense, err = repository.GetExpense(expenseId)
+	if err != nil {
+		t.Fatalf("[after rollback] failed to get `shouldBeEqualToExpense` err: %v", err)
+	}
+	if shouldBeEqualToExpense == nil {
+		t.Fatalf("[after rollback] `shouldBeEqualToExpense` is nil, expected %v", expense)
+	}
+	if !expensesAreEqual(shouldBeEqualToExpense.Expense, expense) {
+		t.Fatalf("[after rollback] `shouldBeEqualToExpense` should be equal to %v, found %v", expense, shouldBeEqualToExpense.Expense)
+	}
+	if err := insertTransaction.Rollback(); err != nil {
+		t.Fatalf("failed to rollback `insertTransaction` err: %v", err)
+	}
+	shouldBeEmpty, err = repository.GetExpense(expenseId)
+	if err != nil {
+		t.Fatalf("[after second rollback] failed to get `shouldBeEmpty` err: %v", err)
+	}
+	if shouldBeEmpty != nil {
+		t.Fatalf("[after second rollback] `shouldBeEmpty` should be empty, found %v", *shouldBeEmpty)
 	}
 }
