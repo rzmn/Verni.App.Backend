@@ -25,7 +25,6 @@ type Repository interface {
 	UpdatePassword(uid UserId, newPassword string) repositories.MutationWorkItem
 	UpdateEmail(uid UserId, newEmail string) repositories.MutationWorkItem
 
-	GetRefreshToken(uid UserId) (string, error)
 	GetUserInfo(uid UserId) (UserInfo, error)
 }
 

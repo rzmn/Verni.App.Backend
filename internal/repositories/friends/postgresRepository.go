@@ -180,6 +180,24 @@ FROM
 
 func (c *postgresRepository) HasFriendRequest(sender UserId, target UserId) (bool, error) {
 	const op = "repositories.friends.postgresRepository.HasFriendRequest"
+	hasRequest, err := c.hasFriendRequest(sender, target)
+	if err != nil {
+		log.Printf("%s: failed to call hasFriendRequest from sender to target err: %v", op, err)
+		return false, err
+	}
+	if !hasRequest {
+		return false, nil
+	}
+	hasRequestFromTarget, err := c.hasFriendRequest(target, sender)
+	if err != nil {
+		log.Printf("%s: failed to call hasFriendRequest from target to sender err: %v", op, err)
+		return false, err
+	}
+	return !hasRequestFromTarget, nil
+}
+
+func (c *postgresRepository) hasFriendRequest(sender UserId, target UserId) (bool, error) {
+	const op = "repositories.friends.postgresRepository.hasFriendRequest"
 	log.Printf("%s: start[sender=%s target=%s]", op, sender, target)
 	query := `SELECT EXISTS(SELECT 1 FROM friendRequests WHERE sender = $1 AND target = $2);`
 	row := c.db.QueryRow(query, string(sender), string(target))
@@ -217,12 +235,30 @@ func (c *postgresRepository) storeFriendRequest(sender UserId, target UserId) er
 }
 
 func (c *postgresRepository) RemoveFriendRequest(sender UserId, target UserId) repositories.MutationWorkItem {
+	const op = "repositories.friends.postgresRepository.RemoveFriendRequest"
+	has, err := c.HasFriendRequest(sender, target)
 	return repositories.MutationWorkItem{
 		Perform: func() error {
-			return c.removeFriendRequest(sender, target)
+			if err != nil {
+				log.Printf("%s: failed to check is friendship exists err: %v", op, err)
+				return err
+			}
+			if has {
+				return c.removeFriendRequest(sender, target)
+			} else {
+				return nil
+			}
 		},
 		Rollback: func() error {
-			return c.storeFriendRequest(sender, target)
+			if err != nil {
+				log.Printf("%s: failed to check is friendship exists err: %v", op, err)
+				return err
+			}
+			if has {
+				return c.storeFriendRequest(sender, target)
+			} else {
+				return nil
+			}
 		},
 	}
 }

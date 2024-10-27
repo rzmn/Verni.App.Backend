@@ -22,8 +22,8 @@ type Repository interface {
 	GetSubscribers(userId UserId) ([]UserId, error)
 	GetSubscriptions(userId UserId) ([]UserId, error)
 	GetStatuses(sender UserId, ids []UserId) (map[UserId]FriendStatus, error)
-
 	HasFriendRequest(sender UserId, target UserId) (bool, error)
+
 	StoreFriendRequest(sender UserId, target UserId) repositories.MutationWorkItem
 	RemoveFriendRequest(sender UserId, target UserId) repositories.MutationWorkItem
 }

@@ -123,12 +123,12 @@ func (c *defaultController) Refresh(refreshToken string) (Session, *common.CodeB
 		log.Printf("%s: cannot get refresh token subject err: %v", op, err)
 		return Session{}, common.NewErrorWithDescription(RefreshErrorInternal, err.Error())
 	}
-	tokenFromDb, errGetFromDb := c.authRepository.GetRefreshToken(auth.UserId(uid))
+	user, errGetFromDb := c.authRepository.GetUserInfo(auth.UserId(uid))
 	if errGetFromDb != nil {
-		log.Printf("%s: cannot get existed refresh token from db err: %v", op, err)
-		return Session{}, common.NewErrorWithDescription(RefreshErrorInternal, err.Error())
+		log.Printf("%s: cannot get user data from db err: %v", op, errGetFromDb)
+		return Session{}, common.NewErrorWithDescription(RefreshErrorInternal, errGetFromDb.Error())
 	}
-	if tokenFromDb != refreshToken {
+	if user.RefreshToken != refreshToken {
 		log.Printf("%s: existed refresh token does not match with provided token", op)
 		return Session{}, common.NewError(RefreshErrorTokenIsWrong)
 	}
