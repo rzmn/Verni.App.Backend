@@ -56,6 +56,10 @@ func (c *postgresRepository) uploadImageBase64(id ImageId, base64 string) error 
 func (c *postgresRepository) GetImagesBase64(ids []ImageId) ([]Image, error) {
 	const op = "repositories.images.postgresRepository.GetImagesBase64"
 	log.Printf("%s: start", op)
+	if len(ids) == 0 {
+		log.Printf("%s: success", op)
+		return []Image{}, nil
+	}
 	argsList := strings.Join(common.Map(ids, func(id ImageId) string {
 		return fmt.Sprintf("'%s'", id)
 	}), ",")
