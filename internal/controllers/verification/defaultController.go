@@ -9,13 +9,13 @@ import (
 	"verni/internal/services/emailSender"
 )
 
-type yandexController struct {
+type defaultController struct {
 	verification VerificationRepository
 	auth         AuthRepository
 	emailService emailSender.Service
 }
 
-func (s *yandexController) SendConfirmationCode(uid UserId) *common.CodeBasedError[SendConfirmationCodeErrorCode] {
+func (s *defaultController) SendConfirmationCode(uid UserId) *common.CodeBasedError[SendConfirmationCodeErrorCode] {
 	const op = "confirmation.EmailConfirmation.SendConfirmationCode"
 	log.Printf("%s: start[uid=%s]", op, uid)
 	user, err := s.auth.GetUserInfo(auth.UserId(uid))
@@ -44,7 +44,7 @@ func (s *yandexController) SendConfirmationCode(uid UserId) *common.CodeBasedErr
 	return nil
 }
 
-func (s *yandexController) ConfirmEmail(uid UserId, code string) *common.CodeBasedError[ConfirmEmailErrorCode] {
+func (s *defaultController) ConfirmEmail(uid UserId, code string) *common.CodeBasedError[ConfirmEmailErrorCode] {
 	const op = "confirmation.EmailConfirmation.ConfirmEmail"
 	log.Printf("%s: start[uid=%s]", op, uid)
 	user, err := s.auth.GetUserInfo(auth.UserId(uid))

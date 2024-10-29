@@ -1,4 +1,4 @@
-package mock_test
+package verification_mock
 
 import "verni/internal/repositories"
 

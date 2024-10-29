@@ -16,12 +16,12 @@ type Controller interface {
 type VerificationRepository verificationRepository.Repository
 type AuthRepository authRepository.Repository
 
-func YandexController(
+func DefaultController(
 	verification VerificationRepository,
 	auth AuthRepository,
 	emailService emailSender.Service,
 ) Controller {
-	return &yandexController{
+	return &defaultController{
 		verification: verification,
 		auth:         auth,
 		emailService: emailService,

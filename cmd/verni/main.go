@@ -207,7 +207,7 @@ func main() {
 		users: usersController.DefaultController(
 			repositories.users,
 		),
-		verification: verification.YandexController(
+		verification: verification.DefaultController(
 			repositories.verification,
 			repositories.auth,
 			services.emailSender,

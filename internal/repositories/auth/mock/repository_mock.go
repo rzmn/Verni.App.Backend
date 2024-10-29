@@ -1,4 +1,4 @@
-package repository_mock
+package auth_mock
 
 import (
 	"verni/internal/repositories"
