@@ -4,18 +4,15 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
-	"net/smtp"
 	"verni/internal/common"
 	"verni/internal/repositories/auth"
+	"verni/internal/services/emailSender"
 )
 
 type yandexController struct {
 	verification VerificationRepository
 	auth         AuthRepository
-	sender       string
-	password     string
-	host         string
-	port         string
+	emailService emailSender.Service
 }
 
 func (s *yandexController) SendConfirmationCode(uid UserId) *common.CodeBasedError[SendConfirmationCodeErrorCode] {
@@ -33,18 +30,12 @@ func (s *yandexController) SendConfirmationCode(uid UserId) *common.CodeBasedErr
 		log.Printf("%s: store tokens failed %v", op, err)
 		return common.NewErrorWithDescription(SendConfirmationCodeErrorInternal, err.Error())
 	}
-	to := []string{
+	if err := s.emailService.Send(
+		"Subject: Confirm your Verni email\r\n"+
+			"\r\n"+
+			fmt.Sprintf("Email Verification code: %s.\r\n", code),
 		email,
-	}
-	message := []byte(fmt.Sprintf("From: Verni <%s>\r\n", s.sender) +
-		fmt.Sprintf("To: %s\r\n", email) +
-		"Subject: Confirm your Verni email\r\n" +
-		"\r\n" +
-		fmt.Sprintf("Email Verification code: %s.\r\n", code),
-	)
-	auth := smtp.PlainAuth("", s.sender, s.password, s.host)
-	err = smtp.SendMail(s.host+":"+s.port, auth, s.sender, to, message)
-	if err != nil {
+	); err != nil {
 		log.Printf("%s: send failed: %v", op, err)
 		transaction.Rollback()
 		return common.NewErrorWithDescription(SendConfirmationCodeErrorNotDelivered, err.Error())

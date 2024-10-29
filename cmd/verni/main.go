@@ -25,6 +25,7 @@ import (
 	spendingsRepository "verni/internal/repositories/spendings"
 	usersRepository "verni/internal/repositories/users"
 	verificationRepository "verni/internal/repositories/verification"
+	"verni/internal/services/emailSender"
 	"verni/internal/services/jwt"
 	"verni/internal/services/pushNotifications"
 
@@ -50,8 +51,9 @@ type Repositories struct {
 }
 
 type Services struct {
-	push pushNotifications.Service
-	jwt  jwt.Service
+	push        pushNotifications.Service
+	jwt         jwt.Service
+	emailSender emailSender.Service
 }
 
 type Controllers struct {
@@ -163,6 +165,22 @@ func main() {
 				return nil
 			}
 		}(),
+		emailSender: func() emailSender.Service {
+			switch config.EmailSender.Type {
+			case "yandex":
+				data, err := json.Marshal(config.EmailSender.Config)
+				if err != nil {
+					log.Fatalf("failed to serialize yandex email sender config err: %v", err)
+				}
+				var yandexConfig emailSender.YandexConfig
+				json.Unmarshal(data, &yandexConfig)
+				log.Printf("creating yandex email sender with config %v", yandexConfig)
+				return emailSender.YandexService(yandexConfig)
+			default:
+				log.Fatalf("unknown email sender type %s", config.EmailSender.Type)
+				return nil
+			}
+		}(),
 	}
 	controllers := Controllers{
 		auth: authController.DefaultController(
@@ -189,26 +207,11 @@ func main() {
 		users: usersController.DefaultController(
 			repositories.users,
 		),
-		verification: func() verification.Controller {
-			switch config.EmailSender.Type {
-			case "yandex":
-				data, err := json.Marshal(config.EmailSender.Config)
-				if err != nil {
-					log.Fatalf("failed to serialize yandex email sender config err: %v", err)
-				}
-				var yandexConfig verification.YandexConfig
-				json.Unmarshal(data, &yandexConfig)
-				log.Printf("creating yandex email sender with config %v", yandexConfig)
-				return verification.YandexController(
-					yandexConfig,
-					repositories.verification,
-					repositories.auth,
-				)
-			default:
-				log.Fatalf("unknown email sender type %s", config.EmailSender.Type)
-				return nil
-			}
-		}(),
+		verification: verification.YandexController(
+			repositories.verification,
+			repositories.auth,
+			services.emailSender,
+		),
 	}
 	server := func() http.Server {
 		switch config.Server.Type {
