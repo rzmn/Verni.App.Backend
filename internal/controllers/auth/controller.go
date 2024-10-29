@@ -1,8 +1,8 @@
 package auth
 
 import (
-	"verni/internal/auth/jwt"
 	"verni/internal/common"
+	"verni/internal/services/jwt"
 
 	authRepository "verni/internal/repositories/auth"
 	pushNotificationsRepository "verni/internal/repositories/pushNotifications"

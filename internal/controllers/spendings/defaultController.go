@@ -4,8 +4,8 @@ import (
 	"log"
 	"verni/internal/common"
 	httpserver "verni/internal/http-server"
-	"verni/internal/pushNotifications"
 	"verni/internal/repositories/spendings"
+	"verni/internal/services/pushNotifications"
 )
 
 type defaultController struct {

@@ -2,10 +2,10 @@ package auth
 
 import (
 	"log"
-	"verni/internal/auth/jwt"
 	"verni/internal/common"
 	"verni/internal/repositories/auth"
 	"verni/internal/repositories/pushNotifications"
+	"verni/internal/services/jwt"
 
 	"github.com/google/uuid"
 )

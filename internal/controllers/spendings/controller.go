@@ -2,8 +2,8 @@ package spendings
 
 import (
 	"verni/internal/common"
-	"verni/internal/pushNotifications"
 	spendingsRepository "verni/internal/repositories/spendings"
+	"verni/internal/services/pushNotifications"
 )
 
 type CounterpartyId spendingsRepository.CounterpartyId

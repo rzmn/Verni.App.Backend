@@ -8,7 +8,6 @@ import (
 	"os"
 	"time"
 
-	"verni/internal/auth/jwt"
 	"verni/internal/controllers/verification"
 	"verni/internal/db"
 	"verni/internal/http-server/handlers/auth"
@@ -19,7 +18,6 @@ import (
 	"verni/internal/http-server/handlers/users"
 	"verni/internal/http-server/longpoll"
 	"verni/internal/http-server/middleware"
-	"verni/internal/pushNotifications"
 	authRepository "verni/internal/repositories/auth"
 	friendsRepository "verni/internal/repositories/friends"
 	imagesRepository "verni/internal/repositories/images"
@@ -27,6 +25,8 @@ import (
 	spendingsRepository "verni/internal/repositories/spendings"
 	usersRepository "verni/internal/repositories/users"
 	verificationRepository "verni/internal/repositories/verification"
+	"verni/internal/services/jwt"
+	"verni/internal/services/pushNotifications"
 
 	authController "verni/internal/controllers/auth"
 	avatarsController "verni/internal/controllers/avatars"

@@ -7,9 +7,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"verni/internal/auth/jwt"
 	httpserver "verni/internal/http-server"
 	authRepository "verni/internal/repositories/auth"
+	"verni/internal/services/jwt"
 
 	"verni/internal/http-server/responses"
 )
