@@ -169,7 +169,15 @@ func (c *postgresRepository) UpdateEmail(uid UserId, newEmail string) repositori
 				log.Printf("%s: failed to get current credentals err: %v", op, err)
 				return err
 			}
-			return c.updateEmail(uid, existed.Email)
+			if err := c.updateEmail(uid, existed.Email); err != nil {
+				return err
+			}
+			if existed.EmailVerified {
+				if err := c.markUserEmailValidated(uid, true); err != nil {
+					return err
+				}
+			}
+			return nil
 		},
 	}
 }
@@ -177,7 +185,7 @@ func (c *postgresRepository) UpdateEmail(uid UserId, newEmail string) repositori
 func (c *postgresRepository) updateEmail(uid UserId, newEmail string) error {
 	const op = "repositories.auth.postgresRepository.updateEmail"
 	log.Printf("%s: start[uid=%s]", op, uid)
-	query := `UPDATE credentials SET email = $2 WHERE id = $1;`
+	query := `UPDATE credentials SET email = $2, emailVerified = False WHERE id = $1;`
 	_, err := c.db.Exec(query, string(uid), newEmail)
 	if err != nil {
 		log.Printf("%s: failed to perform query err: %v", op, err)
