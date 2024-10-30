@@ -26,6 +26,7 @@ import (
 	usersRepository "verni/internal/repositories/users"
 	verificationRepository "verni/internal/repositories/verification"
 	"verni/internal/services/emailSender"
+	"verni/internal/services/formatValidation"
 	"verni/internal/services/jwt"
 	"verni/internal/services/pushNotifications"
 
@@ -51,9 +52,10 @@ type Repositories struct {
 }
 
 type Services struct {
-	push        pushNotifications.Service
-	jwt         jwt.Service
-	emailSender emailSender.Service
+	push                    pushNotifications.Service
+	jwt                     jwt.Service
+	emailSender             emailSender.Service
+	formatValidationService formatValidation.Service
 }
 
 type Controllers struct {
@@ -181,12 +183,16 @@ func main() {
 				return nil
 			}
 		}(),
+		formatValidationService: func() formatValidation.Service {
+			return formatValidation.DefaultService()
+		}(),
 	}
 	controllers := Controllers{
 		auth: authController.DefaultController(
 			repositories.auth,
 			repositories.pushRegistry,
 			services.jwt,
+			services.formatValidationService,
 		),
 		avatars: avatarsController.DefaultController(
 			repositories.images,

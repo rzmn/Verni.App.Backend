@@ -2,6 +2,7 @@ package auth
 
 import (
 	"verni/internal/common"
+	"verni/internal/services/formatValidation"
 	"verni/internal/services/jwt"
 
 	authRepository "verni/internal/repositories/auth"
@@ -34,10 +35,12 @@ func DefaultController(
 	authRepository AuthRepository,
 	pushTokensRepository PushTokensRepository,
 	jwtService jwt.Service,
+	formatValidationService formatValidation.Service,
 ) Controller {
 	return &defaultController{
-		authRepository:       authRepository,
-		pushTokensRepository: pushTokensRepository,
-		jwtService:           jwtService,
+		authRepository:          authRepository,
+		pushTokensRepository:    pushTokensRepository,
+		jwtService:              jwtService,
+		formatValidationService: formatValidationService,
 	}
 }

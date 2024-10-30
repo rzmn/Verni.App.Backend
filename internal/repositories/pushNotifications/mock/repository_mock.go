@@ -2,7 +2,7 @@ package pushNotifications_mock
 
 import (
 	"verni/internal/repositories"
-	"verni/internal/services/pushNotifications"
+	"verni/internal/repositories/pushNotifications"
 )
 
 type StorePushTokenCall struct {

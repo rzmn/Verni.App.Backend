@@ -5,25 +5,27 @@ import (
 	"verni/internal/common"
 	"verni/internal/repositories/auth"
 	"verni/internal/repositories/pushNotifications"
+	"verni/internal/services/formatValidation"
 	"verni/internal/services/jwt"
 
 	"github.com/google/uuid"
 )
 
 type defaultController struct {
-	authRepository       AuthRepository
-	pushTokensRepository PushTokensRepository
-	jwtService           jwt.Service
+	authRepository          AuthRepository
+	pushTokensRepository    PushTokensRepository
+	jwtService              jwt.Service
+	formatValidationService formatValidation.Service
 }
 
 func (c *defaultController) Signup(email string, password string) (Session, *common.CodeBasedError[SignupErrorCode]) {
 	const op = "auth.defaultController.Signup"
 	log.Printf("%s: start", op)
-	if err := validateEmailFormat(email); err != nil {
+	if err := c.formatValidationService.ValidateEmailFormat(email); err != nil {
 		log.Printf("%s: wrong email format err: %v", op, err)
 		return Session{}, common.NewErrorWithDescription(SignupErrorWrongFormat, err.Error())
 	}
-	if err := validatePasswordFormat(password); err != nil {
+	if err := c.formatValidationService.ValidatePasswordFormat(password); err != nil {
 		log.Printf("%s: wrong password format err: %v", op, err)
 		return Session{}, common.NewErrorWithDescription(SignupErrorWrongFormat, err.Error())
 	}
@@ -175,7 +177,7 @@ func (c *defaultController) Logout(id UserId) *common.CodeBasedError[LogoutError
 func (c *defaultController) UpdateEmail(email string, id UserId) (Session, *common.CodeBasedError[UpdateEmailErrorCode]) {
 	const op = "auth.defaultController.UpdateEmail"
 	log.Printf("%s: start[id=%s]", op, id)
-	if err := validateEmailFormat(email); err != nil {
+	if err := c.formatValidationService.ValidateEmailFormat(email); err != nil {
 		log.Printf("%s: wrong email format err: %v", op, err)
 		return Session{}, common.NewErrorWithDescription(UpdateEmailErrorWrongFormat, err.Error())
 	}
@@ -220,6 +222,10 @@ func (c *defaultController) UpdateEmail(email string, id UserId) (Session, *comm
 func (c *defaultController) UpdatePassword(oldPassword string, newPassword string, id UserId) (Session, *common.CodeBasedError[UpdatePasswordErrorCode]) {
 	const op = "auth.defaultController.UpdatePassword"
 	log.Printf("%s: start[id=%s]", op, id)
+	if err := c.formatValidationService.ValidatePasswordFormat(newPassword); err != nil {
+		log.Printf("%s: wrong password format err: %v", op, err)
+		return Session{}, common.NewErrorWithDescription(UpdatePasswordErrorWrongFormat, err.Error())
+	}
 	account, err := c.authRepository.GetUserInfo(auth.UserId(id))
 	if err != nil {
 		log.Printf("%s: cannot get credentials for id in db err: %v", op, err)
@@ -233,10 +239,6 @@ func (c *defaultController) UpdatePassword(oldPassword string, newPassword strin
 	if !passed {
 		log.Printf("%s: old password is wrong", op)
 		return Session{}, common.NewError(UpdatePasswordErrorOldPasswordIsWrong)
-	}
-	if err := validatePasswordFormat(newPassword); err != nil {
-		log.Printf("%s: wrong password format err: %v", op, err)
-		return Session{}, common.NewErrorWithDescription(UpdatePasswordErrorWrongFormat, err.Error())
 	}
 	accessToken, jwtErr := c.jwtService.IssueAccessToken(jwt.Subject(id))
 	if jwtErr != nil {
