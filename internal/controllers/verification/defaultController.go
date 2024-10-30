@@ -60,7 +60,7 @@ func (s *defaultController) ConfirmEmail(uid UserId, code string) *common.CodeBa
 	}
 	if codeFromDb == nil {
 		log.Printf("%s: code has not been sent", op)
-		return common.NewErrorWithDescription(ConfirmEmailErrorInternal, "code has not been sent")
+		return common.NewErrorWithDescription(ConfirmEmailErrorCodeHasNotBeenSent, "code has not been sent")
 	}
 	if *codeFromDb != code {
 		log.Printf("%s: verification code is wrong", op)
