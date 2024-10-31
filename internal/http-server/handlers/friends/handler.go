@@ -68,7 +68,7 @@ func RegisterRoutes(
 		}
 		if err := friends.RollbackFriendRequest(friendsController.UserId(tokenChecker.AccessToken(c)), friendsController.UserId(request.Sender)); err != nil {
 			switch err.Code {
-			case friendsController.RejectFriendRequestErrorNoSuchRequest:
+			case friendsController.RollbackFriendRequestErrorNoSuchRequest:
 				httpserver.Answer(c, err, http.StatusConflict, responses.CodeNoSuchRequest)
 			default:
 				httpserver.AnswerWithUnknownError(c, err)
@@ -88,7 +88,7 @@ func RegisterRoutes(
 		}
 		if err := friends.RollbackFriendRequest(friendsController.UserId(tokenChecker.AccessToken(c)), friendsController.UserId(request.Target)); err != nil {
 			switch err.Code {
-			case friendsController.RejectFriendRequestErrorAlreadyFriends:
+			case friendsController.RollbackFriendRequestErrorAlreadyFriends:
 				httpserver.Answer(c, err, http.StatusConflict, responses.CodeAlreadyFriends)
 			default:
 				httpserver.AnswerWithUnknownError(c, err)

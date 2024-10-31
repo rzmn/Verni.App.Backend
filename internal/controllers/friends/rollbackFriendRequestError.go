@@ -4,18 +4,18 @@ type RollbackFriendRequestErrorCode int
 
 const (
 	_ RollbackFriendRequestErrorCode = iota
-	RejectFriendRequestErrorNoSuchRequest
-	RejectFriendRequestErrorAlreadyFriends
-	RejectFriendRequestErrorInternal
+	RollbackFriendRequestErrorNoSuchRequest
+	RollbackFriendRequestErrorAlreadyFriends
+	RollbackFriendRequestErrorInternal
 )
 
 func (c RollbackFriendRequestErrorCode) Message() string {
 	switch c {
-	case RejectFriendRequestErrorNoSuchRequest:
+	case RollbackFriendRequestErrorNoSuchRequest:
 		return "no such request"
-	case RejectFriendRequestErrorAlreadyFriends:
+	case RollbackFriendRequestErrorAlreadyFriends:
 		return "already friends"
-	case RejectFriendRequestErrorInternal:
+	case RollbackFriendRequestErrorInternal:
 		return "internal error"
 	default:
 		return "unknown error"

@@ -23,15 +23,6 @@ func (s *defaultController) AcceptFriendRequest(sender UserId, target UserId) *c
 		log.Printf("%s: does not have a friend request", op)
 		return common.NewError(AcceptFriendRequestErrorNoSuchRequest)
 	}
-	alreadyFriends, err := s.repository.HasFriendRequest(friends.UserId(target), friends.UserId(sender))
-	if err != nil {
-		log.Printf("%s: cannot check friendship existence in db err: %v", op, err)
-		return common.NewErrorWithDescription(AcceptFriendRequestErrorInternal, err.Error())
-	}
-	if alreadyFriends {
-		log.Printf("%s: does not have a friend request", op)
-		return common.NewError(AcceptFriendRequestErrorAlreadyFriends)
-	}
 	transaction := s.repository.StoreFriendRequest(friends.UserId(target), friends.UserId(sender))
 	if err := transaction.Perform(); err != nil {
 		log.Printf("%s: cannot store friendship to db err: %v", op, err)
@@ -88,25 +79,16 @@ func (s *defaultController) RollbackFriendRequest(sender UserId, target UserId) 
 	hasRequest, err := s.repository.HasFriendRequest(friends.UserId(sender), friends.UserId(target))
 	if err != nil {
 		log.Printf("%s: cannot check has friend request in db err: %v", op, err)
-		return common.NewErrorWithDescription(RejectFriendRequestErrorInternal, err.Error())
+		return common.NewErrorWithDescription(RollbackFriendRequestErrorInternal, err.Error())
 	}
 	if !hasRequest {
 		log.Printf("%s: no friend request from %s to %s", op, sender, target)
-		return common.NewError(RejectFriendRequestErrorNoSuchRequest)
-	}
-	alreadyFriends, err := s.repository.HasFriendRequest(friends.UserId(target), friends.UserId(sender))
-	if err != nil {
-		log.Printf("%s: cannot check friendship existence in db err: %v", op, err)
-		return common.NewErrorWithDescription(RejectFriendRequestErrorInternal, err.Error())
-	}
-	if alreadyFriends {
-		log.Printf("%s: does not have a friend request", op)
-		return common.NewError(RejectFriendRequestErrorAlreadyFriends)
+		return common.NewError(RollbackFriendRequestErrorNoSuchRequest)
 	}
 	transaction := s.repository.RemoveFriendRequest(friends.UserId(sender), friends.UserId(target))
 	if err := transaction.Perform(); err != nil {
 		log.Printf("%s: cannot remove friend request from %s to %s from db err: %v", op, sender, target, err)
-		return common.NewErrorWithDescription(RejectFriendRequestErrorInternal, err.Error())
+		return common.NewErrorWithDescription(RollbackFriendRequestErrorInternal, err.Error())
 	}
 	log.Printf("%s: success[sender=%s target=%s]", op, sender, target)
 	return nil
@@ -115,23 +97,28 @@ func (s *defaultController) RollbackFriendRequest(sender UserId, target UserId) 
 func (s *defaultController) SendFriendRequest(sender UserId, target UserId) *common.CodeBasedError[SendFriendRequestErrorCode] {
 	const op = "friends.defaultController.SendFriendRequest"
 	log.Printf("%s: start[sender=%s target=%s]", op, sender, target)
-	hasRequest, err := s.repository.HasFriendRequest(friends.UserId(sender), friends.UserId(target))
+	statuses, err := s.repository.GetStatuses(friends.UserId(sender), []friends.UserId{friends.UserId(target)})
 	if err != nil {
-		log.Printf("%s: cannot check has friend request from %s to %s in db err: %v", op, sender, target, err)
+		log.Printf("%s: cannot check target status of %s in db err: %v", op, target, err)
 		return common.NewErrorWithDescription(SendFriendRequestErrorInternal, err.Error())
 	}
-	if hasRequest {
-		log.Printf("%s: already have friend request from %s to %s", op, sender, target)
-		return common.NewError(SendFriendRequestErrorAlreadySent)
+	targetStatus, ok := statuses[friends.UserId(target)]
+	if !ok {
+		log.Printf("%s: no status found for %s in db", op, target)
+		return common.NewError(SendFriendRequestErrorIncorrectUserStatus)
 	}
-	hasIncomingRequest, err := s.repository.HasFriendRequest(friends.UserId(target), friends.UserId(sender))
-	if err != nil {
-		log.Printf("%s: cannot check has friend request from %s to %s in db err: %v", op, target, sender, err)
-		return common.NewErrorWithDescription(SendFriendRequestErrorInternal, err.Error())
-	}
-	if hasIncomingRequest {
-		log.Printf("%s: already have friend request from %s to %s", op, target, sender)
-		return common.NewError(SendFriendRequestErrorHaveIncomingRequest)
+	if targetStatus != friends.FriendStatusNo {
+		switch targetStatus {
+		case friends.FriendStatusSubscriber:
+			log.Printf("%s: already have friend request from %s to %s", op, target, sender)
+			return common.NewError(SendFriendRequestErrorHaveIncomingRequest)
+		case friends.FriendStatusSubscription:
+			log.Printf("%s: already have friend request from %s to %s", op, sender, target)
+			return common.NewError(SendFriendRequestErrorAlreadySent)
+		case friends.FriendStatusMe:
+			log.Printf("%s: incorrect friend status %s: %d", op, target, targetStatus)
+			return common.NewError(SendFriendRequestErrorIncorrectUserStatus)
+		}
 	}
 	transaction := s.repository.StoreFriendRequest(friends.UserId(sender), friends.UserId(target))
 	if err := transaction.Perform(); err != nil {
@@ -145,18 +132,18 @@ func (s *defaultController) SendFriendRequest(sender UserId, target UserId) *com
 func (s *defaultController) Unfriend(sender UserId, target UserId) *common.CodeBasedError[UnfriendErrorCode] {
 	const op = "friends.defaultController.Unfriend"
 	log.Printf("%s: start[sender=%s target=%s]", op, sender, target)
-	hasRequest, err := s.repository.HasFriendRequest(friends.UserId(sender), friends.UserId(target))
+	statuses, err := s.repository.GetStatuses(friends.UserId(sender), []friends.UserId{friends.UserId(target)})
 	if err != nil {
-		log.Printf("%s: cannot check has friend request from %s to %s in db err: %v", op, sender, target, err)
+		log.Printf("%s: cannot check target status of %s in db err: %v", op, target, err)
 		return common.NewErrorWithDescription(UnfriendErrorInternal, err.Error())
 	}
-	hasIncomingRequest, err := s.repository.HasFriendRequest(friends.UserId(target), friends.UserId(sender))
-	if err != nil {
-		log.Printf("%s: cannot check has friend request from %s to %s in db err: %v", op, target, sender, err)
-		return common.NewErrorWithDescription(UnfriendErrorInternal, err.Error())
+	targetStatus, ok := statuses[friends.UserId(target)]
+	if !ok {
+		log.Printf("%s: no status found for %s in db", op, target)
+		return common.NewError(UnfriendErrorNotAFriend)
 	}
-	if !hasRequest || !hasIncomingRequest {
-		log.Printf("%s: no friendship between %s and %s", op, target, sender)
+	if targetStatus != friends.FriendStatusFriend {
+		log.Printf("%s: status of %s is %d, expected %d", op, target, targetStatus, friends.FriendStatusFriend)
 		return common.NewError(UnfriendErrorNotAFriend)
 	}
 	transaction := s.repository.RemoveFriendRequest(friends.UserId(sender), friends.UserId(target))
