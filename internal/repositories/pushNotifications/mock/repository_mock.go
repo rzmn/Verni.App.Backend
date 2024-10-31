@@ -5,15 +5,7 @@ import (
 	"verni/internal/repositories/pushNotifications"
 )
 
-type StorePushTokenCall struct {
-	Uid   pushNotifications.UserId
-	Token string
-}
-
 type RepositoryMock struct {
-	StorePushTokenCalls []StorePushTokenCall
-	GetPushTokenCalls   []pushNotifications.UserId
-
 	StorePushTokenImpl func(uid pushNotifications.UserId, token string) repositories.MutationWorkItem
 	GetPushTokenImpl   func(uid pushNotifications.UserId) (*string, error)
 }

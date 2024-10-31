@@ -6,43 +6,7 @@ import (
 	"verni/internal/repositories/auth"
 )
 
-type CreateUserCall struct {
-	Uid          auth.UserId
-	Email        string
-	Password     string
-	RefreshToken string
-}
-type CheckCredentialsCall struct {
-	Email    string
-	Password string
-}
-
-type UpdateRefreshTokenCall struct {
-	Uid   auth.UserId
-	Token string
-}
-
-type UpdatePasswordCall struct {
-	Uid         auth.UserId
-	NewPassword string
-}
-
-type UpdateEmailCall struct {
-	Uid   auth.UserId
-	Email string
-}
-
 type RepositoryMock struct {
-	CreateUserCalls             []CreateUserCall
-	MarkUserEmailValidatedCalls []auth.UserId
-	IsUserExistsCalls           []auth.UserId
-	CheckCredentialsCalls       []CheckCredentialsCall
-	GetUserIdByEmailCalls       []string
-	UpdateRefreshTokenCalls     []UpdateRefreshTokenCall
-	UpdatePasswordCalls         []UpdatePasswordCall
-	UpdateEmailCalls            []UpdateEmailCall
-	GetUserInfoCalls            []auth.UserId
-
 	CreateUserImpl             func(uid auth.UserId, email string, password string, refreshToken string) repositories.MutationWorkItem
 	MarkUserEmailValidatedImpl func(uid auth.UserId) repositories.MutationWorkItem
 	IsUserExistsImpl           func(uid auth.UserId) (bool, error)
