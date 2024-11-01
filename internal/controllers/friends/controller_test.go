@@ -12,7 +12,7 @@ import (
 )
 
 func TestAcceptRequestFailedToCheckIfRequestExists(t *testing.T) {
-	repository := friends_mock.MockRepository{
+	repository := friends_mock.RepositoryMock{
 		HasFriendRequestImpl: func(sender friendsRepository.UserId, target friendsRepository.UserId) (bool, error) {
 			return false, errors.New("some error")
 		},
@@ -28,7 +28,7 @@ func TestAcceptRequestFailedToCheckIfRequestExists(t *testing.T) {
 }
 
 func TestAcceptRequestFailedNoSuchRequest(t *testing.T) {
-	repository := friends_mock.MockRepository{
+	repository := friends_mock.RepositoryMock{
 		HasFriendRequestImpl: func(sender friendsRepository.UserId, target friendsRepository.UserId) (bool, error) {
 			return false, nil
 		},
@@ -44,7 +44,7 @@ func TestAcceptRequestFailedNoSuchRequest(t *testing.T) {
 }
 
 func TestAcceptRequestFailedToAccept(t *testing.T) {
-	repository := friends_mock.MockRepository{
+	repository := friends_mock.RepositoryMock{
 		HasFriendRequestImpl: func(sender friendsRepository.UserId, target friendsRepository.UserId) (bool, error) {
 			return true, nil
 		},
@@ -68,7 +68,7 @@ func TestAcceptRequestFailedToAccept(t *testing.T) {
 
 func TestAcceptRequestOk(t *testing.T) {
 	storeCalls := 0
-	repository := friends_mock.MockRepository{
+	repository := friends_mock.RepositoryMock{
 		HasFriendRequestImpl: func(sender friendsRepository.UserId, target friendsRepository.UserId) (bool, error) {
 			return true, nil
 		},
@@ -106,7 +106,7 @@ func testGetFriendsGetOnlyRequestedStatus(t *testing.T, statuses []friends.Frien
 	getSubscribersCalls := 0
 	getSubscriptionsCalls := 0
 	getFriendsCalls := 0
-	repository := friends_mock.MockRepository{
+	repository := friends_mock.RepositoryMock{
 		GetSubscribersImpl: func(userId friendsRepository.UserId) ([]friendsRepository.UserId, error) {
 			if getSubscribersCalls >= 1 {
 				t.Fatalf("get subscribers should be called at most once")
@@ -170,7 +170,7 @@ func testGetFriendsGetOnlyRequestedStatus(t *testing.T, statuses []friends.Frien
 }
 
 func TestGetFriendsGetFailedEachStatus(t *testing.T) {
-	repository := friends_mock.MockRepository{
+	repository := friends_mock.RepositoryMock{
 		GetSubscribersImpl: func(userId friendsRepository.UserId) ([]friendsRepository.UserId, error) {
 			return []friendsRepository.UserId{}, errors.New("some error")
 		},
@@ -198,7 +198,7 @@ func testGetFriendsGetFailed(t *testing.T, controller friends.Controller, status
 }
 
 func TestRollbackFailedToCheckIfRequestExists(t *testing.T) {
-	repository := friends_mock.MockRepository{
+	repository := friends_mock.RepositoryMock{
 		HasFriendRequestImpl: func(sender friendsRepository.UserId, target friendsRepository.UserId) (bool, error) {
 			return false, errors.New("some error")
 		},
@@ -214,7 +214,7 @@ func TestRollbackFailedToCheckIfRequestExists(t *testing.T) {
 }
 
 func TestRollbackFailedNoSuchRequest(t *testing.T) {
-	repository := friends_mock.MockRepository{
+	repository := friends_mock.RepositoryMock{
 		HasFriendRequestImpl: func(sender friendsRepository.UserId, target friendsRepository.UserId) (bool, error) {
 			return false, nil
 		},
@@ -230,7 +230,7 @@ func TestRollbackFailedNoSuchRequest(t *testing.T) {
 }
 
 func TestRollbackFailedToRemove(t *testing.T) {
-	repository := friends_mock.MockRepository{
+	repository := friends_mock.RepositoryMock{
 		HasFriendRequestImpl: func(sender friendsRepository.UserId, target friendsRepository.UserId) (bool, error) {
 			return true, nil
 		},
@@ -254,7 +254,7 @@ func TestRollbackFailedToRemove(t *testing.T) {
 
 func TestRollbackOk(t *testing.T) {
 	storeCalls := 0
-	repository := friends_mock.MockRepository{
+	repository := friends_mock.RepositoryMock{
 		HasFriendRequestImpl: func(sender friendsRepository.UserId, target friendsRepository.UserId) (bool, error) {
 			return true, nil
 		},
@@ -278,7 +278,7 @@ func TestRollbackOk(t *testing.T) {
 }
 
 func TestSendRequestFailedToCheckStatus(t *testing.T) {
-	repository := friends_mock.MockRepository{
+	repository := friends_mock.RepositoryMock{
 		GetStatusesImpl: func(sender friendsRepository.UserId, ids []friendsRepository.UserId) (map[friendsRepository.UserId]friendsRepository.FriendStatus, error) {
 			return map[friendsRepository.UserId]friendsRepository.FriendStatus{}, errors.New("some error")
 		},
@@ -294,7 +294,7 @@ func TestSendRequestFailedToCheckStatus(t *testing.T) {
 }
 
 func TestSendRequestFailedUnknownStatus(t *testing.T) {
-	repository := friends_mock.MockRepository{
+	repository := friends_mock.RepositoryMock{
 		GetStatusesImpl: func(sender friendsRepository.UserId, ids []friendsRepository.UserId) (map[friendsRepository.UserId]friendsRepository.FriendStatus, error) {
 			return map[friendsRepository.UserId]friendsRepository.FriendStatus{}, nil
 		},
@@ -311,7 +311,7 @@ func TestSendRequestFailedUnknownStatus(t *testing.T) {
 
 func TestSendRequestFailedTargetIsMe(t *testing.T) {
 	target := friends.UserId(uuid.New().String())
-	repository := friends_mock.MockRepository{
+	repository := friends_mock.RepositoryMock{
 		GetStatusesImpl: func(sender friendsRepository.UserId, ids []friendsRepository.UserId) (map[friendsRepository.UserId]friendsRepository.FriendStatus, error) {
 			return map[friendsRepository.UserId]friendsRepository.FriendStatus{
 				friendsRepository.UserId(target): friendsRepository.FriendStatusMe,
@@ -330,7 +330,7 @@ func TestSendRequestFailedTargetIsMe(t *testing.T) {
 
 func TestSendRequestAlreadySent(t *testing.T) {
 	target := friends.UserId(uuid.New().String())
-	repository := friends_mock.MockRepository{
+	repository := friends_mock.RepositoryMock{
 		GetStatusesImpl: func(sender friendsRepository.UserId, ids []friendsRepository.UserId) (map[friendsRepository.UserId]friendsRepository.FriendStatus, error) {
 			return map[friendsRepository.UserId]friendsRepository.FriendStatus{
 				friendsRepository.UserId(target): friendsRepository.FriendStatusSubscription,
@@ -349,7 +349,7 @@ func TestSendRequestAlreadySent(t *testing.T) {
 
 func TestSendRequestHaveIncoming(t *testing.T) {
 	target := friends.UserId(uuid.New().String())
-	repository := friends_mock.MockRepository{
+	repository := friends_mock.RepositoryMock{
 		GetStatusesImpl: func(sender friendsRepository.UserId, ids []friendsRepository.UserId) (map[friendsRepository.UserId]friendsRepository.FriendStatus, error) {
 			return map[friendsRepository.UserId]friendsRepository.FriendStatus{
 				friendsRepository.UserId(target): friendsRepository.FriendStatusSubscriber,
@@ -368,7 +368,7 @@ func TestSendRequestHaveIncoming(t *testing.T) {
 
 func TestSendRequestFailedToStoreRequest(t *testing.T) {
 	target := friends.UserId(uuid.New().String())
-	repository := friends_mock.MockRepository{
+	repository := friends_mock.RepositoryMock{
 		GetStatusesImpl: func(sender friendsRepository.UserId, ids []friendsRepository.UserId) (map[friendsRepository.UserId]friendsRepository.FriendStatus, error) {
 			return map[friendsRepository.UserId]friendsRepository.FriendStatus{
 				friendsRepository.UserId(target): friendsRepository.FriendStatusNo,
@@ -395,7 +395,7 @@ func TestSendRequestFailedToStoreRequest(t *testing.T) {
 func TestSendRequestOk(t *testing.T) {
 	storeCalls := 0
 	target := friends.UserId(uuid.New().String())
-	repository := friends_mock.MockRepository{
+	repository := friends_mock.RepositoryMock{
 		GetStatusesImpl: func(sender friendsRepository.UserId, ids []friendsRepository.UserId) (map[friendsRepository.UserId]friendsRepository.FriendStatus, error) {
 			return map[friendsRepository.UserId]friendsRepository.FriendStatus{
 				friendsRepository.UserId(target): friendsRepository.FriendStatusNo,
@@ -421,7 +421,7 @@ func TestSendRequestOk(t *testing.T) {
 }
 
 func TestUnfriendFailedToCheckStatus(t *testing.T) {
-	repository := friends_mock.MockRepository{
+	repository := friends_mock.RepositoryMock{
 		GetStatusesImpl: func(sender friendsRepository.UserId, ids []friendsRepository.UserId) (map[friendsRepository.UserId]friendsRepository.FriendStatus, error) {
 			return map[friendsRepository.UserId]friendsRepository.FriendStatus{}, errors.New("some error")
 		},
@@ -437,7 +437,7 @@ func TestUnfriendFailedToCheckStatus(t *testing.T) {
 }
 
 func TestUnfriendUnknownStatus(t *testing.T) {
-	repository := friends_mock.MockRepository{
+	repository := friends_mock.RepositoryMock{
 		GetStatusesImpl: func(sender friendsRepository.UserId, ids []friendsRepository.UserId) (map[friendsRepository.UserId]friendsRepository.FriendStatus, error) {
 			return map[friendsRepository.UserId]friendsRepository.FriendStatus{}, nil
 		},
@@ -461,7 +461,7 @@ func TestUnfriendNotAFriend(t *testing.T) {
 
 func testUnfriendNotAFriend(t *testing.T, status friendsRepository.FriendStatus) {
 	target := friends.UserId(uuid.New().String())
-	repository := friends_mock.MockRepository{
+	repository := friends_mock.RepositoryMock{
 		GetStatusesImpl: func(sender friendsRepository.UserId, ids []friendsRepository.UserId) (map[friendsRepository.UserId]friendsRepository.FriendStatus, error) {
 			return map[friendsRepository.UserId]friendsRepository.FriendStatus{
 				friendsRepository.UserId(target): status,
@@ -480,7 +480,7 @@ func testUnfriendNotAFriend(t *testing.T, status friendsRepository.FriendStatus)
 
 func TestUnfriendFailedToRemove(t *testing.T) {
 	target := friends.UserId(uuid.New().String())
-	repository := friends_mock.MockRepository{
+	repository := friends_mock.RepositoryMock{
 		GetStatusesImpl: func(sender friendsRepository.UserId, ids []friendsRepository.UserId) (map[friendsRepository.UserId]friendsRepository.FriendStatus, error) {
 			return map[friendsRepository.UserId]friendsRepository.FriendStatus{
 				friendsRepository.UserId(target): friendsRepository.FriendStatusFriend,
@@ -507,7 +507,7 @@ func TestUnfriendFailedToRemove(t *testing.T) {
 func TestUnfriendOk(t *testing.T) {
 	removeCalls := 0
 	target := friends.UserId(uuid.New().String())
-	repository := friends_mock.MockRepository{
+	repository := friends_mock.RepositoryMock{
 		GetStatusesImpl: func(sender friendsRepository.UserId, ids []friendsRepository.UserId) (map[friendsRepository.UserId]friendsRepository.FriendStatus, error) {
 			return map[friendsRepository.UserId]friendsRepository.FriendStatus{
 				friendsRepository.UserId(target): friendsRepository.FriendStatusFriend,

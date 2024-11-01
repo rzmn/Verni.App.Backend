@@ -6,13 +6,15 @@ import (
 	"verni/internal/common"
 	"verni/internal/repositories/auth"
 	"verni/internal/repositories/users"
+	"verni/internal/services/formatValidation"
 )
 
 type defaultController struct {
-	auth    AuthRepository
-	images  ImagesRepository
-	users   UsersRepository
-	friends FriendsRepository
+	auth             AuthRepository
+	images           ImagesRepository
+	users            UsersRepository
+	friends          FriendsRepository
+	formatValidation formatValidation.Service
 }
 
 func (c *defaultController) GetProfileInfo(id UserId) (ProfileInfo, *common.CodeBasedError[GetInfoErrorCode]) {
@@ -48,7 +50,7 @@ func (c *defaultController) GetProfileInfo(id UserId) (ProfileInfo, *common.Code
 func (c *defaultController) UpdateDisplayName(name string, id UserId) *common.CodeBasedError[UpdateDisplayNameErrorCode] {
 	const op = "profile.defaultController.UpdateDisplayName"
 	log.Printf("%s: start[id=%s name=%s]", op, id, name)
-	if err := validateDisplayNameFormat(name); err != nil {
+	if err := c.formatValidation.ValidateDisplayNameFormat(name); err != nil {
 		log.Printf("%s: invalid display name format err: %v", op, err)
 		return common.NewError(UpdateDisplayNameErrorWrongFormat)
 	}

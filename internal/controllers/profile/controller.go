@@ -6,6 +6,7 @@ import (
 	friendsRepository "verni/internal/repositories/friends"
 	imagesRepository "verni/internal/repositories/images"
 	usersRepository "verni/internal/repositories/users"
+	"verni/internal/services/formatValidation"
 )
 
 type UserId string
@@ -35,11 +36,13 @@ func DefaultController(
 	images ImagesRepository,
 	users UsersRepository,
 	friends FriendsRepository,
+	formatValidation formatValidation.Service,
 ) Controller {
 	return &defaultController{
-		auth:    auth,
-		images:  images,
-		users:   users,
-		friends: friends,
+		auth:             auth,
+		images:           images,
+		users:            users,
+		friends:          friends,
+		formatValidation: formatValidation,
 	}
 }

@@ -205,6 +205,7 @@ func main() {
 			repositories.images,
 			repositories.users,
 			repositories.friends,
+			services.formatValidationService,
 		),
 		spendings: spendingsController.DefaultController(
 			repositories.spendings,
