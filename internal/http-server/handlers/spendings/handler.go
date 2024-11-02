@@ -45,8 +45,8 @@ func RegisterRoutes(
 			switch err.Code {
 			case spendingsController.CreateDealErrorNoSuchUser:
 				httpserver.Answer(c, err, http.StatusConflict, responses.CodeNoSuchUser)
-			case spendingsController.CreateDealErrorNotAFriend:
-				httpserver.Answer(c, err, http.StatusConflict, responses.CodeNotAFriend)
+			case spendingsController.CreateDealErrorNotYourExpense:
+				httpserver.Answer(c, err, http.StatusConflict, responses.CodeIsNotYourDeal)
 			default:
 				httpserver.AnswerWithUnknownError(c, err)
 			}
@@ -70,7 +70,7 @@ func RegisterRoutes(
 				httpserver.Answer(c, err, http.StatusConflict, responses.CodeDealNotFound)
 			case spendingsController.DeleteDealErrorNotAFriend:
 				httpserver.Answer(c, err, http.StatusConflict, responses.CodeNotAFriend)
-			case spendingsController.DeleteDealErrorNotYourDeal:
+			case spendingsController.DeleteDealErrorNotYourExpense:
 				httpserver.Answer(c, err, http.StatusConflict, responses.CodeIsNotYourDeal)
 			default:
 				httpserver.AnswerWithUnknownError(c, err)

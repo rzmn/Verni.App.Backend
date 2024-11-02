@@ -5,7 +5,7 @@ type CreateDealErrorCode int
 const (
 	_ CreateDealErrorCode = iota
 	CreateDealErrorNoSuchUser
-	CreateDealErrorNotAFriend
+	CreateDealErrorNotYourExpense
 	CreateDealErrorInternal
 )
 
@@ -13,8 +13,8 @@ func (c CreateDealErrorCode) Message() string {
 	switch c {
 	case CreateDealErrorNoSuchUser:
 		return "no such user"
-	case CreateDealErrorNotAFriend:
-		return "not a friend"
+	case CreateDealErrorNotYourExpense:
+		return "not your expense"
 	case CreateDealErrorInternal:
 		return "internal error"
 	default:

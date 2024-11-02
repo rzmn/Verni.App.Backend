@@ -6,7 +6,7 @@ const (
 	_ DeleteDealErrorCode = iota
 	DeleteDealErrorDealNotFound
 	DeleteDealErrorNotAFriend
-	DeleteDealErrorNotYourDeal
+	DeleteDealErrorNotYourExpense
 	DeleteDealErrorInternal
 )
 
@@ -16,8 +16,8 @@ func (c DeleteDealErrorCode) Message() string {
 		return "deal not found"
 	case DeleteDealErrorNotAFriend:
 		return "not a friend"
-	case DeleteDealErrorNotYourDeal:
-		return "not your deal"
+	case DeleteDealErrorNotYourExpense:
+		return "not your expense"
 	case DeleteDealErrorInternal:
 		return "internal error"
 	default:

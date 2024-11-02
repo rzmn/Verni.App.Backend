@@ -16,6 +16,17 @@ type defaultController struct {
 func (s *defaultController) AddExpense(expense Expense, actor CounterpartyId) *common.CodeBasedError[CreateDealErrorCode] {
 	const op = "spendings.defaultController.AddExpense"
 	log.Printf("%s: start[actor=%s]", op, actor)
+	var isYourExpense bool
+	for i := 0; i < len(expense.Shares); i++ {
+		if expense.Shares[i].Counterparty == spendings.CounterpartyId(actor) {
+			isYourExpense = true
+			break
+		}
+	}
+	if !isYourExpense {
+		log.Printf("%s: user %s is not found in expense %v shares", op, actor, expense)
+		return common.NewError(CreateDealErrorNotYourExpense)
+	}
 	transaction := s.repository.AddExpense(spendings.Expense(expense))
 	expenseId, err := transaction.Perform()
 	if err != nil {
@@ -69,7 +80,7 @@ func (s *defaultController) RemoveExpense(expenseId ExpenseId, actor Counterpart
 	}
 	if !isYourExpense {
 		log.Printf("%s: user %s is not found in expense %s shares", op, actor, expenseId)
-		return IdentifiableExpense{}, common.NewError(DeleteDealErrorNotYourDeal)
+		return IdentifiableExpense{}, common.NewError(DeleteDealErrorNotYourExpense)
 	}
 	transaction := s.repository.RemoveExpense(spendings.ExpenseId(expenseId))
 	if err := transaction.Perform(); err != nil {
@@ -91,6 +102,17 @@ func (s *defaultController) GetExpense(expenseId ExpenseId, actor CounterpartyId
 	if expense == nil {
 		log.Printf("%s: expense %s is not found in db", op, expenseId)
 		return IdentifiableExpense{}, common.NewError(GetDealErrorDealNotFound)
+	}
+	var isYourExpense bool
+	for i := 0; i < len(expense.Shares); i++ {
+		if expense.Shares[i].Counterparty == spendings.CounterpartyId(actor) {
+			isYourExpense = true
+			break
+		}
+	}
+	if !isYourExpense {
+		log.Printf("%s: user %s is not found in expense %s shares", op, actor, expenseId)
+		return IdentifiableExpense{}, common.NewError(GetDealErrorNotYourDeal)
 	}
 	log.Printf("%s: success[expenseId=%s actor=%s]", op, expenseId, actor)
 	return IdentifiableExpense(*expense), nil
