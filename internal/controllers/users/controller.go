@@ -8,7 +8,8 @@ import (
 
 type UserId string
 type AvatarId string
-type Repository usersRepository.Repository
+type UsersRepository usersRepository.Repository
+type FriendsRepository friendsRepository.Repository
 type FriendStatus friendsRepository.FriendStatus
 
 type User struct {
@@ -20,11 +21,11 @@ type User struct {
 
 type Controller interface {
 	Get(ids []UserId, sender UserId) ([]User, *common.CodeBasedError[GetUsersErrorCode])
-	Search(query string, sender UserId) ([]User, *common.CodeBasedError[SearchUsersErrorCode])
 }
 
-func DefaultController(repository Repository) Controller {
+func DefaultController(users UsersRepository, friends FriendsRepository) Controller {
 	return &defaultController{
-		repository: repository,
+		users:   users,
+		friends: friends,
 	}
 }

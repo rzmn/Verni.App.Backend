@@ -213,6 +213,7 @@ func main() {
 		),
 		users: usersController.DefaultController(
 			repositories.users,
+			repositories.friends,
 		),
 		verification: verification.DefaultController(
 			repositories.verification,

@@ -40,25 +40,6 @@ func RegisterRoutes(
 		}
 		c.JSON(http.StatusOK, responses.Success(common.Map(users, mapUser)))
 	})
-	methodGroup.GET("/search", func(c *gin.Context) {
-		type SearchUsersRequest struct {
-			Query string `json:"query"`
-		}
-		var request SearchUsersRequest
-		if err := c.BindJSON(&request); err != nil {
-			httpserver.AnswerWithBadRequest(c, err)
-			return
-		}
-		users, err := users.Search(request.Query, usersController.UserId(tokenChecker.AccessToken(c)))
-		if err != nil {
-			switch err.Code {
-			default:
-				httpserver.AnswerWithUnknownError(c, err)
-			}
-			return
-		}
-		c.JSON(http.StatusOK, responses.Success(responses.Success(common.Map(users, mapUser))))
-	})
 }
 
 func mapUser(user usersController.User) httpserver.User {

@@ -1,41 +1,49 @@
 package users
 
 import (
+	"fmt"
 	"log"
 	"verni/internal/common"
+	"verni/internal/repositories/friends"
 	"verni/internal/repositories/users"
 )
 
 type defaultController struct {
-	repository Repository
+	users   UsersRepository
+	friends FriendsRepository
 }
 
 func (c *defaultController) Get(ids []UserId, sender UserId) ([]User, *common.CodeBasedError[GetUsersErrorCode]) {
 	const op = "users.defaultController.Get"
 	log.Printf("%s: start[sender=%s, ids=%v]", op, sender, ids)
-	usersFromRepository, err := c.repository.GetUsers(common.Map(ids, func(id UserId) users.UserId {
+	usersFromRepository, err := c.users.GetUsers(common.Map(ids, func(id UserId) users.UserId {
 		return users.UserId(id)
 	}))
 	if err != nil {
-		log.Printf("%s: cannot read from db err: %v", op, err)
+		log.Printf("%s: cannot get users from db err: %v", op, err)
 		return []User{}, common.NewErrorWithDescription(GetUsersErrorInternal, err.Error())
 	}
-	log.Printf("%s: success[sender=%s, ids=%v]", op, sender, ids)
-	return common.Map(usersFromRepository, mapUser), nil
-}
-
-func (c *defaultController) Search(query string, sender UserId) ([]User, *common.CodeBasedError[SearchUsersErrorCode]) {
-	const op = "users.defaultController.Search"
-	log.Printf("%s: start[sender=%s, query=%v]", op, sender, query)
-	users, err := c.repository.SearchUsers(query)
+	userStatuses, err := c.friends.GetStatuses(friends.UserId(sender), common.Map(ids, func(id UserId) friends.UserId {
+		return friends.UserId(id)
+	}))
 	if err != nil {
-		log.Printf("%s: cannot read from db err: %v", op, err)
-		return []User{}, common.NewErrorWithDescription(SearchUsersErrorInternal, err.Error())
+		log.Printf("%s: cannot get friend statuses from db err: %v", op, err)
+		return []User{}, common.NewErrorWithDescription(GetUsersErrorInternal, err.Error())
 	}
-	log.Printf("%s: success[sender=%s, query=%v]", op, sender, query)
-	return common.Map(users, mapUser), nil
-}
-
-func mapUser(users.User) User {
-	return User{}
+	result := []User{}
+	for _, user := range usersFromRepository {
+		status, ok := userStatuses[friends.UserId(user.Id)]
+		if !ok {
+			log.Printf("%s: cannot get friend status of user %s", op, user.Id)
+			return []User{}, common.NewErrorWithDescription(GetUsersUserNotFound, fmt.Sprintf("user id: %s", user.Id))
+		}
+		result = append(result, User{
+			Id:           UserId(user.Id),
+			DisplayName:  user.DisplayName,
+			AvatarId:     (*AvatarId)(user.AvatarId),
+			FriendStatus: FriendStatus(status),
+		})
+	}
+	log.Printf("%s: success[sender=%s, ids=%v]", op, sender, ids)
+	return result, nil
 }
