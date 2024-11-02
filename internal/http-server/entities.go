@@ -39,7 +39,7 @@ type Credentials struct {
 }
 
 type ExpenseAttachment struct {
-	ImageId *ImageId
+	ImageId *ImageId `json:"imageId"`
 }
 
 type Session struct {
