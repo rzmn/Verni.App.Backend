@@ -43,10 +43,10 @@ func RegisterRoutes(
 		}
 		if err := spendings.AddExpense(expense, spendingsController.CounterpartyId(tokenChecker.AccessToken(c))); err != nil {
 			switch err.Code {
-			case spendingsController.CreateDealErrorNoSuchUser:
+			case spendingsController.AddExpenseErrorNoSuchUser:
 				httpserver.Answer(c, err, http.StatusConflict, responses.CodeNoSuchUser)
-			case spendingsController.CreateDealErrorNotYourExpense:
-				httpserver.Answer(c, err, http.StatusConflict, responses.CodeIsNotYourDeal)
+			case spendingsController.AddExpenseErrorNotYourExpense:
+				httpserver.Answer(c, err, http.StatusConflict, responses.CodeIsNotYourExpense)
 			default:
 				httpserver.AnswerWithUnknownError(c, err)
 			}
@@ -66,12 +66,12 @@ func RegisterRoutes(
 		_, err := spendings.RemoveExpense(spendingsController.ExpenseId(request.ExpenseId), spendingsController.CounterpartyId(tokenChecker.AccessToken(c)))
 		if err != nil {
 			switch err.Code {
-			case spendingsController.DeleteDealErrorDealNotFound:
-				httpserver.Answer(c, err, http.StatusConflict, responses.CodeDealNotFound)
-			case spendingsController.DeleteDealErrorNotAFriend:
+			case spendingsController.RemoveExpenseErrorExpenseNotFound:
+				httpserver.Answer(c, err, http.StatusConflict, responses.CodeExpenseNotFound)
+			case spendingsController.RemoveExpenseErrorNotAFriend:
 				httpserver.Answer(c, err, http.StatusConflict, responses.CodeNotAFriend)
-			case spendingsController.DeleteDealErrorNotYourExpense:
-				httpserver.Answer(c, err, http.StatusConflict, responses.CodeIsNotYourDeal)
+			case spendingsController.RemoveExpenseErrorNotYourExpense:
+				httpserver.Answer(c, err, http.StatusConflict, responses.CodeIsNotYourExpense)
 			default:
 				httpserver.AnswerWithUnknownError(c, err)
 			}
@@ -123,10 +123,10 @@ func RegisterRoutes(
 		expense, err := spendings.GetExpense(spendingsController.ExpenseId(request.Id), spendingsController.CounterpartyId(tokenChecker.AccessToken(c)))
 		if err != nil {
 			switch err.Code {
-			case spendingsController.GetDealErrorDealNotFound:
-				httpserver.Answer(c, err, http.StatusConflict, responses.CodeDealNotFound)
-			case spendingsController.GetDealErrorNotYourDeal:
-				httpserver.Answer(c, err, http.StatusConflict, responses.CodeIsNotYourDeal)
+			case spendingsController.GetExpenseErrorExpenseNotFound:
+				httpserver.Answer(c, err, http.StatusConflict, responses.CodeExpenseNotFound)
+			case spendingsController.GetExpenseErrorNotYourExpense:
+				httpserver.Answer(c, err, http.StatusConflict, responses.CodeIsNotYourExpense)
 			default:
 				httpserver.AnswerWithUnknownError(c, err)
 			}

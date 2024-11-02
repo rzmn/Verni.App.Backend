@@ -68,8 +68,8 @@ const (
 	CodeAlreadyFriends
 	CodeNotAFriend
 	CodeBadRequest
-	CodeDealNotFound
-	CodeIsNotYourDeal
+	CodeExpenseNotFound
+	CodeIsNotYourExpense
 	CodeNotDelivered
 	CodeAlreadyConfirmed
 	CodeLongpollNoEvents
@@ -101,12 +101,12 @@ func (c Code) Message() string {
 		return "alerady friends"
 	case CodeBadRequest:
 		return "bad request"
-	case CodeDealNotFound:
-		return "deal not found"
+	case CodeExpenseNotFound:
+		return "expense not found"
 	case CodeNotAFriend:
 		return "should be friends"
-	case CodeIsNotYourDeal:
-		return "not your deal"
+	case CodeIsNotYourExpense:
+		return "not your expense"
 	default:
 		return "unknown error"
 	}

@@ -33,7 +33,7 @@ func TestAddExpenseFailedNotYourExpense(t *testing.T) {
 	if err == nil {
 		t.Fatalf("`AddExpense` should be failed, found nil err")
 	}
-	if err.Code != spendings.CreateDealErrorNotYourExpense {
+	if err.Code != spendings.AddExpenseErrorNotYourExpense {
 		t.Fatalf("`AddExpense` should be failed with `not your expese`, found err %v", err)
 	}
 }
@@ -68,7 +68,7 @@ func TestAddExpenseFailedToAddInRepository(t *testing.T) {
 	if err == nil {
 		t.Fatalf("`AddExpense` should be failed, found nil err")
 	}
-	if err.Code != spendings.CreateDealErrorInternal {
+	if err.Code != spendings.AddExpenseErrorInternal {
 		t.Fatalf("`AddExpense` should be failed with `internal`, found err %v", err)
 	}
 }
@@ -125,7 +125,7 @@ func TestRemoveExpenseFailedToGetById(t *testing.T) {
 	if err == nil {
 		t.Fatalf("`RemoveExpense` should be failed, found nil err")
 	}
-	if err.Code != spendings.DeleteDealErrorInternal {
+	if err.Code != spendings.RemoveExpenseErrorInternal {
 		t.Fatalf("`RemoveExpense` should be failed with `internal`, found err %v", err)
 	}
 }
@@ -142,7 +142,7 @@ func TestRemoveExpenseFailedNotFound(t *testing.T) {
 	if err == nil {
 		t.Fatalf("`RemoveExpense` should be failed, found nil err")
 	}
-	if err.Code != spendings.DeleteDealErrorDealNotFound {
+	if err.Code != spendings.RemoveExpenseErrorExpenseNotFound {
 		t.Fatalf("`RemoveExpense` should be failed with `not found`, found err %v", err)
 	}
 }
@@ -171,7 +171,7 @@ func TestRemoveExpenseFailedNotYourExpense(t *testing.T) {
 	if err == nil {
 		t.Fatalf("`RemoveExpense` should be failed, found nil err")
 	}
-	if err.Code != spendings.DeleteDealErrorNotYourExpense {
+	if err.Code != spendings.RemoveExpenseErrorNotYourExpense {
 		t.Fatalf("`RemoveExpense` should be failed with `not your expense`, found err %v", err)
 	}
 }
@@ -209,7 +209,7 @@ func TestRemoveExpenseRemoveFailed(t *testing.T) {
 	if err == nil {
 		t.Fatalf("`RemoveExpense` should be failed, found nil err")
 	}
-	if err.Code != spendings.DeleteDealErrorInternal {
+	if err.Code != spendings.RemoveExpenseErrorInternal {
 		t.Fatalf("`RemoveExpense` should be failed with `internal`, found err %v", err)
 	}
 }
@@ -266,7 +266,7 @@ func TestGetExpenseFailedToGetFromRepository(t *testing.T) {
 	if err == nil {
 		t.Fatalf("`GetExpense` should be failed, found nil err")
 	}
-	if err.Code != spendings.GetDealErrorInternal {
+	if err.Code != spendings.GetExpenseErrorInternal {
 		t.Fatalf("`GetExpense` should be failed with `internal`, found err %v", err)
 	}
 }
@@ -283,7 +283,7 @@ func TestGetExpenseFailedNotFound(t *testing.T) {
 	if err == nil {
 		t.Fatalf("`GetExpense` should be failed, found nil err")
 	}
-	if err.Code != spendings.GetDealErrorDealNotFound {
+	if err.Code != spendings.GetExpenseErrorExpenseNotFound {
 		t.Fatalf("`GetExpense` should be failed with `not found`, found err %v", err)
 	}
 }
@@ -312,7 +312,7 @@ func TestGetExpenseNotYourExpense(t *testing.T) {
 	if err == nil {
 		t.Fatalf("`GetExpense` should be failed, found nil err")
 	}
-	if err.Code != spendings.GetDealErrorNotYourDeal {
+	if err.Code != spendings.GetExpenseErrorNotYourExpense {
 		t.Fatalf("`GetExpense` should be failed with `not your expense`, found err %v", err)
 	}
 }
@@ -362,7 +362,7 @@ func TestGetExpensesWithFailedToGetFromRepository(t *testing.T) {
 	if err == nil {
 		t.Fatalf("`GetExpensesWith` should be failed, found nil err")
 	}
-	if err.Code != spendings.GetDealsErrorInternal {
+	if err.Code != spendings.GetExpensesErrorInternal {
 		t.Fatalf("`GetExpensesWith` should be failed with `internal`, found err %v", err)
 	}
 }
@@ -398,7 +398,7 @@ func TestGetBalanceWithFailedToGetFromRepository(t *testing.T) {
 	if err == nil {
 		t.Fatalf("`GetBalance` should be failed, found nil err")
 	}
-	if err.Code != spendings.GetCounterpartiesErrorInternal {
+	if err.Code != spendings.GetBalanceErrorInternal {
 		t.Fatalf("`GetBalance` should be failed with `internal`, found err %v", err)
 	}
 }

@@ -252,7 +252,7 @@ ORDER BY d.timestamp;
 }
 
 func (c *postgresRepository) GetBalance(counterparty CounterpartyId) ([]Balance, error) {
-	const op = "repositories.spendings.postgresRepository.GetCounterparties"
+	const op = "repositories.spendings.postgresRepository.GetBalance"
 	log.Printf("%s: start[counterparty=%s]", op, counterparty)
 	query := `
 SELECT

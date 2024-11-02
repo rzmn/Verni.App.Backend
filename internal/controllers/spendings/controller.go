@@ -14,11 +14,11 @@ type Balance spendingsRepository.Balance
 type Repository spendingsRepository.Repository
 
 type Controller interface {
-	AddExpense(expense Expense, actor CounterpartyId) *common.CodeBasedError[CreateDealErrorCode]
-	RemoveExpense(expenseId ExpenseId, actor CounterpartyId) (IdentifiableExpense, *common.CodeBasedError[DeleteDealErrorCode])
-	GetExpense(expenseId ExpenseId, actor CounterpartyId) (IdentifiableExpense, *common.CodeBasedError[GetDealErrorCode])
-	GetExpensesWith(counterparty CounterpartyId, actor CounterpartyId) ([]IdentifiableExpense, *common.CodeBasedError[GetDealsErrorCode])
-	GetBalance(actor CounterpartyId) ([]Balance, *common.CodeBasedError[GetCounterpartiesErrorCode])
+	AddExpense(expense Expense, actor CounterpartyId) *common.CodeBasedError[AddExpenseErrorCode]
+	RemoveExpense(expenseId ExpenseId, actor CounterpartyId) (IdentifiableExpense, *common.CodeBasedError[RemoveExpenseErrorCode])
+	GetExpense(expenseId ExpenseId, actor CounterpartyId) (IdentifiableExpense, *common.CodeBasedError[GetExpenseErrorCode])
+	GetExpensesWith(counterparty CounterpartyId, actor CounterpartyId) ([]IdentifiableExpense, *common.CodeBasedError[GetExpensesErrorCode])
+	GetBalance(actor CounterpartyId) ([]Balance, *common.CodeBasedError[GetBalanceErrorCode])
 }
 
 func DefaultController(repository Repository, pushNotifications pushNotifications.Service) Controller {
