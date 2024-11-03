@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"time"
@@ -29,6 +28,7 @@ import (
 	"verni/internal/services/formatValidation"
 	"verni/internal/services/jwt"
 	"verni/internal/services/logging"
+	"verni/internal/services/pathProvider"
 	"verni/internal/services/pushNotifications"
 
 	authController "verni/internal/controllers/auth"
@@ -71,14 +71,15 @@ type Controllers struct {
 
 func main() {
 	logger := logging.DefaultService()
-	configFile, err := os.Open("./config/prod/verni.json")
+	pathProvider := pathProvider.VerniEnvService(logger)
+	configFile, err := os.Open(pathProvider.AbsolutePath("./config/prod/verni.json"))
 	if err != nil {
-		log.Fatalf("failed to open config file: %s", err)
+		logger.Fatalf("failed to open config file: %s", err)
 	}
 	defer configFile.Close()
 	configData, err := io.ReadAll(configFile)
 	if err != nil {
-		log.Fatalf("failed to read config file: %s", err)
+		logger.Fatalf("failed to read config file: %s", err)
 	}
 	type Module struct {
 		Type   string                 `json:"type"`
@@ -100,19 +101,19 @@ func main() {
 		case "postgres":
 			data, err := json.Marshal(config.Storage.Config)
 			if err != nil {
-				log.Fatalf("failed to serialize ydb config err: %v", err)
+				logger.Fatalf("failed to serialize ydb config err: %v", err)
 			}
 			var postgresConfig db.PostgresConfig
 			json.Unmarshal(data, &postgresConfig)
 			logger.Log("creating postgres with config %v", postgresConfig)
 			db, err := db.Postgres(postgresConfig, logger)
 			if err != nil {
-				log.Fatalf("failed to initialize postgres err: %v", err)
+				logger.Fatalf("failed to initialize postgres err: %v", err)
 			}
 			logger.Log("initialized postgres")
 			return db
 		default:
-			log.Fatalf("unknown storage type %s", config.Storage.Type)
+			logger.Fatalf("unknown storage type %s", config.Storage.Type)
 			return nil
 		}
 	}()
@@ -132,19 +133,19 @@ func main() {
 			case "apns":
 				data, err := json.Marshal(config.PushNotifications.Config)
 				if err != nil {
-					log.Fatalf("failed to serialize apple apns config err: %v", err)
+					logger.Fatalf("failed to serialize apple apns config err: %v", err)
 				}
 				var apnsConfig pushNotifications.ApnsConfig
 				json.Unmarshal(data, &apnsConfig)
 				logger.Log("creating apple apns service with config %v", apnsConfig)
-				service, err := pushNotifications.ApnsService(apnsConfig, logger, repositories.pushRegistry)
+				service, err := pushNotifications.ApnsService(apnsConfig, logger, pathProvider, repositories.pushRegistry)
 				if err != nil {
-					log.Fatalf("failed to initialize apple apns service err: %v", err)
+					logger.Fatalf("failed to initialize apple apns service err: %v", err)
 				}
 				logger.Log("initialized apple apns service")
 				return service
 			default:
-				log.Fatalf("unknown apns type %s", config.PushNotifications.Type)
+				logger.Fatalf("unknown apns type %s", config.PushNotifications.Type)
 				return nil
 			}
 		}(),
@@ -153,7 +154,7 @@ func main() {
 			case "default":
 				data, err := json.Marshal(config.Jwt.Config)
 				if err != nil {
-					log.Fatalf("failed to serialize jwt config err: %v", err)
+					logger.Fatalf("failed to serialize jwt config err: %v", err)
 				}
 				var defaultConfig jwt.DefaultConfig
 				json.Unmarshal(data, &defaultConfig)
@@ -166,7 +167,7 @@ func main() {
 					},
 				)
 			default:
-				log.Fatalf("unknown jwt service type %s", config.Jwt.Type)
+				logger.Fatalf("unknown jwt service type %s", config.Jwt.Type)
 				return nil
 			}
 		}(),
@@ -175,14 +176,14 @@ func main() {
 			case "yandex":
 				data, err := json.Marshal(config.EmailSender.Config)
 				if err != nil {
-					log.Fatalf("failed to serialize yandex email sender config err: %v", err)
+					logger.Fatalf("failed to serialize yandex email sender config err: %v", err)
 				}
 				var yandexConfig emailSender.YandexConfig
 				json.Unmarshal(data, &yandexConfig)
 				logger.Log("creating yandex email sender with config %v", yandexConfig)
 				return emailSender.YandexService(yandexConfig, logger)
 			default:
-				log.Fatalf("unknown email sender type %s", config.EmailSender.Type)
+				logger.Fatalf("unknown email sender type %s", config.EmailSender.Type)
 				return nil
 			}
 		}(),
@@ -242,7 +243,7 @@ func main() {
 			}
 			data, err := json.Marshal(config.Server.Config)
 			if err != nil {
-				log.Fatalf("failed to serialize default server config err: %v", err)
+				logger.Fatalf("failed to serialize default server config err: %v", err)
 			}
 			var ginConfig GinConfig
 			json.Unmarshal(data, &ginConfig)
@@ -273,7 +274,7 @@ func main() {
 				WriteTimeout: time.Second * time.Duration(ginConfig.IdleTimeoutSec),
 			}
 		default:
-			log.Fatalf("unknown server type %s", config.Server.Type)
+			logger.Fatalf("unknown server type %s", config.Server.Type)
 			return http.Server{}
 		}
 	}()

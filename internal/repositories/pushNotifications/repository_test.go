@@ -3,13 +3,12 @@ package pushNotifications_test
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"os"
 	"testing"
-	"verni/internal/common"
 	"verni/internal/db"
 	"verni/internal/repositories/pushNotifications"
 	"verni/internal/services/logging"
+	"verni/internal/services/pathProvider"
 
 	"github.com/google/uuid"
 )
@@ -20,14 +19,9 @@ var (
 
 func TestMain(m *testing.M) {
 	logger := logging.TestService()
-	root, present := os.LookupEnv("VERNI_PROJECT_ROOT")
-	if present {
-		common.RegisterRelativePathRoot(root)
-	} else {
-		logger.Fatalf("project root not found")
-	}
+	pathProvider := pathProvider.VerniEnvService(logger)
 	database = func() db.DB {
-		configFile, err := os.Open(common.AbsolutePath("./config/test/postgres_storage.json"))
+		configFile, err := os.Open(pathProvider.AbsolutePath("./config/test/postgres_storage.json"))
 		if err != nil {
 			logger.Fatalf("failed to open config file: %s", err)
 		}
@@ -47,15 +41,6 @@ func TestMain(m *testing.M) {
 	code := m.Run()
 
 	os.Exit(code)
-}
-
-func init() {
-	root, present := os.LookupEnv("VERNI_PROJECT_ROOT")
-	if present {
-		common.RegisterRelativePathRoot(root)
-	} else {
-		log.Fatalf("project root not found")
-	}
 }
 
 func randomUid() pushNotifications.UserId {
