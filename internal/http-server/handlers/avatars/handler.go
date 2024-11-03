@@ -6,14 +6,12 @@ import (
 	avatarsController "verni/internal/controllers/avatars"
 	httpserver "verni/internal/http-server"
 	"verni/internal/http-server/responses"
-	imagesRepository "verni/internal/repositories/images"
 
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes(router *gin.Engine, imagesRepository imagesRepository.Repository) {
+func RegisterRoutes(router *gin.Engine, controller avatarsController.Controller) {
 	router.GET("/avatars/get", func(c *gin.Context) {
-		controller := avatarsController.DefaultController(imagesRepository)
 		type GetAvatarsRequest struct {
 			Ids []httpserver.ImageId `json:"ids"`
 		}

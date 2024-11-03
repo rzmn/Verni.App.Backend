@@ -7,6 +7,7 @@ import (
 	"verni/internal/repositories"
 	friendsRepository "verni/internal/repositories/friends"
 	friends_mock "verni/internal/repositories/friends/mock"
+	"verni/internal/services/logging"
 
 	"github.com/google/uuid"
 )
@@ -17,7 +18,7 @@ func TestAcceptRequestFailedToCheckIfRequestExists(t *testing.T) {
 			return false, errors.New("some error")
 		},
 	}
-	controller := friends.DefaultController(&repository)
+	controller := friends.DefaultController(&repository, logging.TestService())
 	err := controller.AcceptFriendRequest(friends.UserId(uuid.New().String()), friends.UserId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`AcceptFriendRequest` should fail, found nil err")
@@ -33,7 +34,7 @@ func TestAcceptRequestFailedNoSuchRequest(t *testing.T) {
 			return false, nil
 		},
 	}
-	controller := friends.DefaultController(&repository)
+	controller := friends.DefaultController(&repository, logging.TestService())
 	err := controller.AcceptFriendRequest(friends.UserId(uuid.New().String()), friends.UserId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`AcceptFriendRequest` should fail, found nil err")
@@ -56,7 +57,7 @@ func TestAcceptRequestFailedToAccept(t *testing.T) {
 			}
 		},
 	}
-	controller := friends.DefaultController(&repository)
+	controller := friends.DefaultController(&repository, logging.TestService())
 	err := controller.AcceptFriendRequest(friends.UserId(uuid.New().String()), friends.UserId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`AcceptFriendRequest` should fail, found nil err")
@@ -81,7 +82,7 @@ func TestAcceptRequestOk(t *testing.T) {
 			}
 		},
 	}
-	controller := friends.DefaultController(&repository)
+	controller := friends.DefaultController(&repository, logging.TestService())
 	err := controller.AcceptFriendRequest(friends.UserId(uuid.New().String()), friends.UserId(uuid.New().String()))
 	if err != nil {
 		t.Fatalf("`AcceptFriendRequest` should not fail, found err %v", err)
@@ -150,7 +151,7 @@ func testGetFriendsGetOnlyRequestedStatus(t *testing.T, statuses []friends.Frien
 			return []friendsRepository.UserId{}, errors.New("some error")
 		},
 	}
-	controller := friends.DefaultController(&repository)
+	controller := friends.DefaultController(&repository, logging.TestService())
 	friendsMap, err := controller.GetFriends(statuses, friends.UserId(uuid.New().String()))
 	if err != nil {
 		t.Fatalf("`GetFriends` should not be failed, found err: %v", err)
@@ -181,7 +182,7 @@ func TestGetFriendsGetFailedEachStatus(t *testing.T) {
 			return []friendsRepository.UserId{}, errors.New("some error")
 		},
 	}
-	controller := friends.DefaultController(&repository)
+	controller := friends.DefaultController(&repository, logging.TestService())
 	testGetFriendsGetFailed(t, controller, friends.FriendStatusSubscriber)
 	testGetFriendsGetFailed(t, controller, friends.FriendStatusSubscription)
 	testGetFriendsGetFailed(t, controller, friends.FriendStatusFriends)
@@ -203,7 +204,7 @@ func TestRollbackFailedToCheckIfRequestExists(t *testing.T) {
 			return false, errors.New("some error")
 		},
 	}
-	controller := friends.DefaultController(&repository)
+	controller := friends.DefaultController(&repository, logging.TestService())
 	err := controller.RollbackFriendRequest(friends.UserId(uuid.New().String()), friends.UserId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`RollbackFriendRequest` should fail, found nil err")
@@ -219,7 +220,7 @@ func TestRollbackFailedNoSuchRequest(t *testing.T) {
 			return false, nil
 		},
 	}
-	controller := friends.DefaultController(&repository)
+	controller := friends.DefaultController(&repository, logging.TestService())
 	err := controller.RollbackFriendRequest(friends.UserId(uuid.New().String()), friends.UserId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`RollbackFriendRequest` should fail, found nil err")
@@ -242,7 +243,7 @@ func TestRollbackFailedToRemove(t *testing.T) {
 			}
 		},
 	}
-	controller := friends.DefaultController(&repository)
+	controller := friends.DefaultController(&repository, logging.TestService())
 	err := controller.RollbackFriendRequest(friends.UserId(uuid.New().String()), friends.UserId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`RollbackFriendRequest` should fail, found nil err")
@@ -267,7 +268,7 @@ func TestRollbackOk(t *testing.T) {
 			}
 		},
 	}
-	controller := friends.DefaultController(&repository)
+	controller := friends.DefaultController(&repository, logging.TestService())
 	err := controller.RollbackFriendRequest(friends.UserId(uuid.New().String()), friends.UserId(uuid.New().String()))
 	if err != nil {
 		t.Fatalf("`RollbackFriendRequest` should not fail, found err %v", err)
@@ -283,7 +284,7 @@ func TestSendRequestFailedToCheckStatus(t *testing.T) {
 			return map[friendsRepository.UserId]friendsRepository.FriendStatus{}, errors.New("some error")
 		},
 	}
-	controller := friends.DefaultController(&repository)
+	controller := friends.DefaultController(&repository, logging.TestService())
 	err := controller.SendFriendRequest(friends.UserId(uuid.New().String()), friends.UserId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`SendFriendRequest` should fail, found nil err")
@@ -299,7 +300,7 @@ func TestSendRequestFailedUnknownStatus(t *testing.T) {
 			return map[friendsRepository.UserId]friendsRepository.FriendStatus{}, nil
 		},
 	}
-	controller := friends.DefaultController(&repository)
+	controller := friends.DefaultController(&repository, logging.TestService())
 	err := controller.SendFriendRequest(friends.UserId(uuid.New().String()), friends.UserId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`SendFriendRequest` should fail, found nil err")
@@ -318,7 +319,7 @@ func TestSendRequestFailedTargetIsMe(t *testing.T) {
 			}, nil
 		},
 	}
-	controller := friends.DefaultController(&repository)
+	controller := friends.DefaultController(&repository, logging.TestService())
 	err := controller.SendFriendRequest(friends.UserId(uuid.New().String()), target)
 	if err == nil {
 		t.Fatalf("`SendFriendRequest` should fail, found nil err")
@@ -337,7 +338,7 @@ func TestSendRequestAlreadySent(t *testing.T) {
 			}, nil
 		},
 	}
-	controller := friends.DefaultController(&repository)
+	controller := friends.DefaultController(&repository, logging.TestService())
 	err := controller.SendFriendRequest(friends.UserId(uuid.New().String()), target)
 	if err == nil {
 		t.Fatalf("`SendFriendRequest` should fail, found nil err")
@@ -356,7 +357,7 @@ func TestSendRequestHaveIncoming(t *testing.T) {
 			}, nil
 		},
 	}
-	controller := friends.DefaultController(&repository)
+	controller := friends.DefaultController(&repository, logging.TestService())
 	err := controller.SendFriendRequest(friends.UserId(uuid.New().String()), target)
 	if err == nil {
 		t.Fatalf("`SendFriendRequest` should fail, found nil err")
@@ -382,7 +383,7 @@ func TestSendRequestFailedToStoreRequest(t *testing.T) {
 			}
 		},
 	}
-	controller := friends.DefaultController(&repository)
+	controller := friends.DefaultController(&repository, logging.TestService())
 	err := controller.SendFriendRequest(friends.UserId(uuid.New().String()), target)
 	if err == nil {
 		t.Fatalf("`SendFriendRequest` should fail, found nil err")
@@ -410,7 +411,7 @@ func TestSendRequestOk(t *testing.T) {
 			}
 		},
 	}
-	controller := friends.DefaultController(&repository)
+	controller := friends.DefaultController(&repository, logging.TestService())
 	err := controller.SendFriendRequest(friends.UserId(uuid.New().String()), target)
 	if err != nil {
 		t.Fatalf("`SendFriendRequest` should not fail, found err %v", err)
@@ -426,7 +427,7 @@ func TestUnfriendFailedToCheckStatus(t *testing.T) {
 			return map[friendsRepository.UserId]friendsRepository.FriendStatus{}, errors.New("some error")
 		},
 	}
-	controller := friends.DefaultController(&repository)
+	controller := friends.DefaultController(&repository, logging.TestService())
 	err := controller.Unfriend(friends.UserId(uuid.New().String()), friends.UserId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`Unfriend` should fail, found nil err")
@@ -442,7 +443,7 @@ func TestUnfriendUnknownStatus(t *testing.T) {
 			return map[friendsRepository.UserId]friendsRepository.FriendStatus{}, nil
 		},
 	}
-	controller := friends.DefaultController(&repository)
+	controller := friends.DefaultController(&repository, logging.TestService())
 	err := controller.Unfriend(friends.UserId(uuid.New().String()), friends.UserId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`Unfriend` should fail, found nil err")
@@ -468,7 +469,7 @@ func testUnfriendNotAFriend(t *testing.T, status friendsRepository.FriendStatus)
 			}, nil
 		},
 	}
-	controller := friends.DefaultController(&repository)
+	controller := friends.DefaultController(&repository, logging.TestService())
 	err := controller.Unfriend(friends.UserId(uuid.New().String()), target)
 	if err == nil {
 		t.Fatalf("`Unfriend` should fail, found nil err")
@@ -494,7 +495,7 @@ func TestUnfriendFailedToRemove(t *testing.T) {
 			}
 		},
 	}
-	controller := friends.DefaultController(&repository)
+	controller := friends.DefaultController(&repository, logging.TestService())
 	err := controller.Unfriend(friends.UserId(uuid.New().String()), target)
 	if err == nil {
 		t.Fatalf("`Unfriend` should fail, found nil err")
@@ -522,7 +523,7 @@ func TestUnfriendOk(t *testing.T) {
 			}
 		},
 	}
-	controller := friends.DefaultController(&repository)
+	controller := friends.DefaultController(&repository, logging.TestService())
 	err := controller.Unfriend(friends.UserId(uuid.New().String()), target)
 	if err != nil {
 		t.Fatalf("`Unfriend` should not fail, found err %v", err)

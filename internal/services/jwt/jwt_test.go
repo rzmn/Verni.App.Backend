@@ -3,6 +3,7 @@ package jwt
 import (
 	"testing"
 	"time"
+	"verni/internal/services/logging"
 
 	"github.com/google/uuid"
 )
@@ -19,6 +20,7 @@ func createConfig() DefaultConfig {
 func TestIssuedRefreshTokenIsValid(t *testing.T) {
 	service := DefaultService(
 		createConfig(),
+		logging.TestService(),
 		func() time.Time {
 			return time.Now()
 		},
@@ -36,6 +38,7 @@ func TestIssuedRefreshTokenIsValid(t *testing.T) {
 func TestIssuedRefreshTokenIsNotAnAccessToken(t *testing.T) {
 	service := DefaultService(
 		createConfig(),
+		logging.TestService(),
 		func() time.Time {
 			return time.Now()
 		},
@@ -56,6 +59,7 @@ func TestIssuedRefreshTokenIsNotAnAccessToken(t *testing.T) {
 func TestIssuedRefreshTokenSubjectInaccessibleAsAnAccessToken(t *testing.T) {
 	service := DefaultService(
 		createConfig(),
+		logging.TestService(),
 		func() time.Time {
 			return time.Now()
 		},
@@ -76,6 +80,7 @@ func TestIssuedRefreshTokenSubjectInaccessibleAsAnAccessToken(t *testing.T) {
 func TestIssuedRefreshTokenSubject(t *testing.T) {
 	service := DefaultService(
 		createConfig(),
+		logging.TestService(),
 		func() time.Time {
 			return time.Now()
 		},
@@ -97,6 +102,7 @@ func TestIssuedRefreshTokenSubject(t *testing.T) {
 func TestExpiredRefreshToken(t *testing.T) {
 	service := DefaultService(
 		createConfig(),
+		logging.TestService(),
 		func() time.Time {
 			return time.Now().Add(-(time.Hour*time.Duration(createConfig().RefreshTokenLifetimeHours) + time.Hour))
 		},
@@ -117,6 +123,7 @@ func TestExpiredRefreshToken(t *testing.T) {
 func TestRefreshTokenValidOnTheLastMinute(t *testing.T) {
 	service := DefaultService(
 		createConfig(),
+		logging.TestService(),
 		func() time.Time {
 			return time.Now().Add(-(time.Hour*time.Duration(createConfig().RefreshTokenLifetimeHours) - time.Minute))
 		},
@@ -134,6 +141,7 @@ func TestRefreshTokenValidOnTheLastMinute(t *testing.T) {
 func TestIssuedAccessTokenIsValid(t *testing.T) {
 	service := DefaultService(
 		createConfig(),
+		logging.TestService(),
 		func() time.Time {
 			return time.Now()
 		},
@@ -151,6 +159,7 @@ func TestIssuedAccessTokenIsValid(t *testing.T) {
 func TestIssuedAccessTokenIsNotARefreshToken(t *testing.T) {
 	service := DefaultService(
 		createConfig(),
+		logging.TestService(),
 		func() time.Time {
 			return time.Now()
 		},
@@ -171,6 +180,7 @@ func TestIssuedAccessTokenIsNotARefreshToken(t *testing.T) {
 func TestIssuedAccessTokenSubjectInaccessibleAsAnRefreshToken(t *testing.T) {
 	service := DefaultService(
 		createConfig(),
+		logging.TestService(),
 		func() time.Time {
 			return time.Now()
 		},
@@ -191,6 +201,7 @@ func TestIssuedAccessTokenSubjectInaccessibleAsAnRefreshToken(t *testing.T) {
 func TestIssuedAccessTokenSubject(t *testing.T) {
 	service := DefaultService(
 		createConfig(),
+		logging.TestService(),
 		func() time.Time {
 			return time.Now()
 		},
@@ -212,6 +223,7 @@ func TestIssuedAccessTokenSubject(t *testing.T) {
 func TestExpiredAccessToken(t *testing.T) {
 	service := DefaultService(
 		createConfig(),
+		logging.TestService(),
 		func() time.Time {
 			return time.Now().Add(-(time.Hour + time.Hour))
 		},
@@ -232,6 +244,7 @@ func TestExpiredAccessToken(t *testing.T) {
 func TestAccessTokenValidOnTheLastMinute(t *testing.T) {
 	service := DefaultService(
 		createConfig(),
+		logging.TestService(),
 		func() time.Time {
 			return time.Now().Add(-(time.Hour - time.Minute))
 		},

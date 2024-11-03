@@ -7,9 +7,11 @@ import (
 	"os"
 	"verni/internal/common"
 	"verni/internal/db"
+	"verni/internal/services/logging"
 )
 
 func main() {
+	logger := logging.DefaultService()
 	root, present := os.LookupEnv("VERNI_PROJECT_ROOT")
 	if present {
 		common.RegisterRelativePathRoot(root)
@@ -32,7 +34,7 @@ func main() {
 	}
 	var config Config
 	json.Unmarshal([]byte(configData), &config)
-	log.Printf("initializing with config %v", config)
+	logger.Log("initializing with config %v", config)
 	database := func() db.DB {
 		switch config.Storage.Type {
 		case "postgres":
@@ -42,12 +44,12 @@ func main() {
 			}
 			var postgresConfig db.PostgresConfig
 			json.Unmarshal(data, &postgresConfig)
-			log.Printf("creating postgres with config %v", postgresConfig)
-			db, err := db.Postgres(postgresConfig)
+			logger.Log("creating postgres with config %v", postgresConfig)
+			db, err := db.Postgres(postgresConfig, logger)
 			if err != nil {
 				log.Fatalf("failed to initialize postgres err: %v", err)
 			}
-			log.Printf("initialized postgres")
+			logger.Log("initialized postgres")
 			return db
 		default:
 			log.Fatalf("unknown storage type %s", config.Storage.Type)
@@ -56,5 +58,5 @@ func main() {
 	}()
 	defer database.Close()
 
-	createDatabaseActions(database).setup()
+	createDatabaseActions(database, logger).setup()
 }

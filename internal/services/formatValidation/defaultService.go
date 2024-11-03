@@ -5,9 +5,12 @@ import (
 	"net/mail"
 	"regexp"
 	"strings"
+	"verni/internal/services/logging"
 )
 
-type defaultService struct{}
+type defaultService struct {
+	logger logging.Service
+}
 
 func (s *defaultService) ValidateEmailFormat(email string) error {
 	_, err := mail.ParseAddress(email)

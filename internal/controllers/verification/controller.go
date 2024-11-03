@@ -5,6 +5,7 @@ import (
 	authRepository "verni/internal/repositories/auth"
 	verificationRepository "verni/internal/repositories/verification"
 	"verni/internal/services/emailSender"
+	"verni/internal/services/logging"
 )
 
 type UserId string
@@ -20,10 +21,12 @@ func DefaultController(
 	verification VerificationRepository,
 	auth AuthRepository,
 	emailService emailSender.Service,
+	logger logging.Service,
 ) Controller {
 	return &defaultController{
 		verification: verification,
 		auth:         auth,
 		emailService: emailService,
+		logger:       logger,
 	}
 }

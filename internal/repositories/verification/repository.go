@@ -3,6 +3,7 @@ package verification
 import (
 	"verni/internal/db"
 	"verni/internal/repositories"
+	"verni/internal/services/logging"
 )
 
 type Repository interface {
@@ -11,8 +12,9 @@ type Repository interface {
 	RemoveEmailVerificationCode(email string) repositories.MutationWorkItem
 }
 
-func PostgresRepository(db db.DB) Repository {
+func PostgresRepository(db db.DB, logger logging.Service) Repository {
 	return &postgresRepository{
-		db: db,
+		db:     db,
+		logger: logger,
 	}
 }

@@ -12,6 +12,7 @@ import (
 	formatValidation_mock "verni/internal/services/formatValidation/mock"
 	"verni/internal/services/jwt"
 	jwt_mock "verni/internal/services/jwt/mock"
+	"verni/internal/services/logging"
 
 	"github.com/google/uuid"
 )
@@ -33,6 +34,7 @@ func TestSignupInvalidEmailFormat(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.Signup(uuid.New().String(), uuid.New().String())
 	if err == nil {
@@ -60,6 +62,7 @@ func TestSignupInvalidPasswordFormat(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.Signup(uuid.New().String(), uuid.New().String())
 	if err == nil {
@@ -91,6 +94,7 @@ func TestSignupFailedToCheckIfEmailIsTaken(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.Signup(uuid.New().String(), uuid.New().String())
 	if err == nil {
@@ -123,6 +127,7 @@ func TestSignupFailedEmailIsTaken(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.Signup(uuid.New().String(), uuid.New().String())
 	if err == nil {
@@ -161,6 +166,7 @@ func TestSignupIssueAccessTokenFailed(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.Signup(uuid.New().String(), uuid.New().String())
 	if err == nil {
@@ -199,6 +205,7 @@ func TestSignupIssueRefreshTokenFailed(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.Signup(uuid.New().String(), uuid.New().String())
 	if err == nil {
@@ -244,6 +251,7 @@ func TestSignupCreateUserFailed(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.Signup(uuid.New().String(), uuid.New().String())
 	if err == nil {
@@ -291,6 +299,7 @@ func TestSignupOk(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.Signup(uuid.New().String(), uuid.New().String())
 	if err != nil {
@@ -315,6 +324,7 @@ func TestLoginUnableToCheckCredentials(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.Login(uuid.New().String(), uuid.New().String())
 	if err == nil {
@@ -339,6 +349,7 @@ func TestLoginWrongCredentials(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.Login(uuid.New().String(), uuid.New().String())
 	if err == nil {
@@ -366,6 +377,7 @@ func TestLoginGetUserFailed(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.Login(uuid.New().String(), uuid.New().String())
 	if err == nil {
@@ -393,6 +405,7 @@ func TestLoginGetUserNotFound(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.Login(uuid.New().String(), uuid.New().String())
 	if err == nil {
@@ -428,6 +441,7 @@ func TestLoginIssueAccessTokenFailed(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.Login(uuid.New().String(), uuid.New().String())
 	if err == nil {
@@ -463,6 +477,7 @@ func TestLoginIssueRefreshTokenFailed(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.Login(uuid.New().String(), uuid.New().String())
 	if err == nil {
@@ -505,6 +520,7 @@ func TestLoginUpdateTokenFailed(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.Login(uuid.New().String(), uuid.New().String())
 	if err == nil {
@@ -549,6 +565,7 @@ func TestLoginOk(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.Login(uuid.New().String(), uuid.New().String())
 	if err != nil {
@@ -573,6 +590,7 @@ func TestRefreshTokenExpired(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.Refresh(uuid.New().String())
 	if err == nil {
@@ -597,6 +615,7 @@ func TestRefreshTokenWrong(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.Refresh(uuid.New().String())
 	if err == nil {
@@ -621,6 +640,7 @@ func TestRefreshUnableToValidateToken(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.Refresh(uuid.New().String())
 	if err == nil {
@@ -648,6 +668,7 @@ func TestRefreshUnableToGetSubject(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.Refresh(uuid.New().String())
 	if err == nil {
@@ -679,6 +700,7 @@ func TestRefreshUnableToGetCurrentToken(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.Refresh(uuid.New().String())
 	if err == nil {
@@ -713,6 +735,7 @@ func TestRefreshTokensDidNotMatch(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.Refresh(uuid.New().String())
 	if err == nil {
@@ -753,6 +776,7 @@ func TestRefreshIssueAccessTokenFailed(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.Refresh(currentToken)
 	if err == nil {
@@ -793,6 +817,7 @@ func TestRefreshIssueRefreshTokenFailed(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.Refresh(currentToken)
 	if err == nil {
@@ -840,6 +865,7 @@ func TestRefreshUpdateRefreshTokenFailed(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.Refresh(currentToken)
 	if err == nil {
@@ -889,6 +915,7 @@ func TestRefreshOk(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.Refresh(currentToken)
 	if err != nil {
@@ -913,6 +940,7 @@ func TestLogoutIssueNewRefreshTokenFailed(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	err := controller.Logout(auth.UserId(uuid.New().String()))
 	if err == nil {
@@ -945,6 +973,7 @@ func TestLogoutUpdateRefreshTokenFailed(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	err := controller.Logout(auth.UserId(uuid.New().String()))
 	if err == nil {
@@ -979,6 +1008,7 @@ func TestLogoutOk(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	err := controller.Logout(auth.UserId(uuid.New().String()))
 	if err != nil {
@@ -1003,6 +1033,7 @@ func TestUpdateEmailWrongFormat(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.UpdateEmail(uuid.New().String(), auth.UserId(uuid.New().String()))
 	if err == nil {
@@ -1031,6 +1062,7 @@ func TestUpdateEmailGetUserFailed(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.UpdateEmail(uuid.New().String(), auth.UserId(uuid.New().String()))
 	if err == nil {
@@ -1060,6 +1092,7 @@ func TestUpdateEmailAlreadyTaken(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.UpdateEmail(uuid.New().String(), auth.UserId(uuid.New().String()))
 	if err == nil {
@@ -1095,6 +1128,7 @@ func TestUpdateEmailIssueAccessTokenFailed(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.UpdateEmail(uuid.New().String(), auth.UserId(uuid.New().String()))
 	if err == nil {
@@ -1130,6 +1164,7 @@ func TestUpdateEmailIssueRefreshTokenFailed(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.UpdateEmail(uuid.New().String(), auth.UserId(uuid.New().String()))
 	if err == nil {
@@ -1172,6 +1207,7 @@ func TestUpdateEmailEmailUpdateFailed(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.UpdateEmail(uuid.New().String(), auth.UserId(uuid.New().String()))
 	if err == nil {
@@ -1228,6 +1264,7 @@ func TestUpdateEmailTokenUpdateFailed(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.UpdateEmail(uuid.New().String(), auth.UserId(uuid.New().String()))
 	if err == nil {
@@ -1287,6 +1324,7 @@ func TestUpdateEmailOk(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.UpdateEmail(uuid.New().String(), auth.UserId(uuid.New().String()))
 	if err != nil {
@@ -1314,6 +1352,7 @@ func TestUpdatePasswordNewPasswordHasWrongFormat(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.UpdatePassword(uuid.New().String(), uuid.New().String(), auth.UserId(uuid.New().String()))
 	if err == nil {
@@ -1342,6 +1381,7 @@ func TestUpdatePasswordGetUserFailed(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.UpdatePassword(uuid.New().String(), uuid.New().String(), auth.UserId(uuid.New().String()))
 	if err == nil {
@@ -1373,6 +1413,7 @@ func TestUpdatePasswordCredentialsCheckFailed(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.UpdatePassword(uuid.New().String(), uuid.New().String(), auth.UserId(uuid.New().String()))
 	if err == nil {
@@ -1404,6 +1445,7 @@ func TestUpdatePasswordOldPasswordIsWrong(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.UpdatePassword(uuid.New().String(), uuid.New().String(), auth.UserId(uuid.New().String()))
 	if err == nil {
@@ -1442,6 +1484,7 @@ func TestUpdatePasswordIssueAccessTokenFailed(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.UpdatePassword(uuid.New().String(), uuid.New().String(), auth.UserId(uuid.New().String()))
 	if err == nil {
@@ -1480,6 +1523,7 @@ func TestUpdatePasswordIssueRefreshTokenFailed(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.UpdatePassword(uuid.New().String(), uuid.New().String(), auth.UserId(uuid.New().String()))
 	if err == nil {
@@ -1525,6 +1569,7 @@ func TestUpdatePasswordPasswordUpdateFailed(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.UpdatePassword(uuid.New().String(), uuid.New().String(), auth.UserId(uuid.New().String()))
 	if err == nil {
@@ -1584,6 +1629,7 @@ func TestUpdatePasswordTokenUpdateFailed(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.UpdatePassword(uuid.New().String(), uuid.New().String(), auth.UserId(uuid.New().String()))
 	if err == nil {
@@ -1646,6 +1692,7 @@ func TestUpdatePasswordOk(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	_, err := controller.UpdatePassword(uuid.New().String(), uuid.New().String(), auth.UserId(uuid.New().String()))
 	if err != nil {
@@ -1677,6 +1724,7 @@ func TestRegisterForPushNotificationsFailedToStoreToken(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	err := controller.RegisterForPushNotifications(uuid.New().String(), auth.UserId(uuid.New().String()))
 	if err == nil {
@@ -1707,6 +1755,7 @@ func TestRegisterForPushNotificationsOk(t *testing.T) {
 		&pushTokensRepositoryMock,
 		&jwtServiceMock,
 		&formatValidatorMock,
+		logging.TestService(),
 	)
 	err := controller.RegisterForPushNotifications(uuid.New().String(), auth.UserId(uuid.New().String()))
 	if err != nil {

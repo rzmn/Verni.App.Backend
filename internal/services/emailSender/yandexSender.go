@@ -2,8 +2,8 @@ package emailSender
 
 import (
 	"fmt"
-	"log"
 	"net/smtp"
+	"verni/internal/services/logging"
 )
 
 type yandexService struct {
@@ -11,11 +11,12 @@ type yandexService struct {
 	password string
 	host     string
 	port     string
+	logger   logging.Service
 }
 
 func (s *yandexService) Send(subject string, email string) error {
 	const op = "emailSender.yandexService.Send"
-	log.Printf("%s: start", op)
+	s.logger.Log("%s: start", op)
 	to := []string{
 		email,
 	}
@@ -27,9 +28,9 @@ func (s *yandexService) Send(subject string, email string) error {
 	)
 	err := smtp.SendMail(s.host+":"+s.port, auth, s.sender, to, []byte(message))
 	if err != nil {
-		log.Printf("%s: send failed: %v", op, err)
+		s.logger.Log("%s: send failed: %v", op, err)
 		return err
 	}
-	log.Printf("%s: success", op)
+	s.logger.Log("%s: success", op)
 	return nil
 }

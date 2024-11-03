@@ -3,13 +3,13 @@ package friends_test
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"os"
 	"testing"
 	"verni/internal/common"
 	"verni/internal/db"
 	"verni/internal/repositories"
 	"verni/internal/repositories/friends"
+	"verni/internal/services/logging"
 
 	"github.com/google/uuid"
 )
@@ -19,21 +19,28 @@ var (
 )
 
 func TestMain(m *testing.M) {
+	logger := logging.TestService()
+	root, present := os.LookupEnv("VERNI_PROJECT_ROOT")
+	if present {
+		common.RegisterRelativePathRoot(root)
+	} else {
+		logger.Fatalf("project root not found")
+	}
 	database = func() db.DB {
 		configFile, err := os.Open(common.AbsolutePath("./config/test/postgres_storage.json"))
 		if err != nil {
-			log.Fatalf("failed to open config file: %s", err)
+			logger.Fatalf("failed to open config file: %s", err)
 		}
 		defer configFile.Close()
 		configData, err := io.ReadAll(configFile)
 		if err != nil {
-			log.Fatalf("failed to read config file: %s", err)
+			logger.Fatalf("failed to read config file: %s", err)
 		}
 		var config db.PostgresConfig
 		json.Unmarshal([]byte(configData), &config)
-		db, err := db.Postgres(config)
+		db, err := db.Postgres(config, logger)
 		if err != nil {
-			log.Fatalf("failed to init db err: %v", err)
+			logger.Fatalf("failed to init db err: %v", err)
 		}
 		return db
 	}()
@@ -42,21 +49,12 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func init() {
-	root, present := os.LookupEnv("VERNI_PROJECT_ROOT")
-	if present {
-		common.RegisterRelativePathRoot(root)
-	} else {
-		log.Fatalf("project root not found")
-	}
-}
-
 func randomUid() friends.UserId {
 	return friends.UserId(uuid.New().String())
 }
 
 func TestSubscribtion(t *testing.T) {
-	repository := friends.PostgresRepository(database)
+	repository := friends.PostgresRepository(database, logging.TestService())
 	subscriber := randomUid()
 	subscription := randomUid()
 
@@ -182,7 +180,7 @@ func TestSubscribtion(t *testing.T) {
 }
 
 func TestStoreAndRemoveFriendRequest(t *testing.T) {
-	repository := friends.PostgresRepository(database)
+	repository := friends.PostgresRepository(database, logging.TestService())
 	subscriber := randomUid()
 	subscription := randomUid()
 
@@ -309,7 +307,7 @@ func TestStoreAndRemoveFriendRequest(t *testing.T) {
 }
 
 func TestFriendship(t *testing.T) {
-	repository := friends.PostgresRepository(database)
+	repository := friends.PostgresRepository(database, logging.TestService())
 	subscriber := randomUid()
 	subscription := randomUid()
 
@@ -442,7 +440,7 @@ func TestFriendship(t *testing.T) {
 }
 
 func TestHasFriendRequestEmpty(t *testing.T) {
-	repository := friends.PostgresRepository(database)
+	repository := friends.PostgresRepository(database, logging.TestService())
 	subscriber := randomUid()
 	subscription := randomUid()
 
@@ -456,7 +454,7 @@ func TestHasFriendRequestEmpty(t *testing.T) {
 }
 
 func TestGetSubscribersEmpty(t *testing.T) {
-	repository := friends.PostgresRepository(database)
+	repository := friends.PostgresRepository(database, logging.TestService())
 	uid := randomUid()
 	subscribers, err := repository.GetSubscribers(uid)
 	if err != nil {
@@ -468,7 +466,7 @@ func TestGetSubscribersEmpty(t *testing.T) {
 }
 
 func TestGetSubsriptionsEmpty(t *testing.T) {
-	repository := friends.PostgresRepository(database)
+	repository := friends.PostgresRepository(database, logging.TestService())
 	uid := randomUid()
 	subscriptions, err := repository.GetSubscriptions(uid)
 	if err != nil {
@@ -480,7 +478,7 @@ func TestGetSubsriptionsEmpty(t *testing.T) {
 }
 
 func TestGetFriendsEmpty(t *testing.T) {
-	repository := friends.PostgresRepository(database)
+	repository := friends.PostgresRepository(database, logging.TestService())
 	uid := randomUid()
 	friends, err := repository.GetFriends(uid)
 	if err != nil {

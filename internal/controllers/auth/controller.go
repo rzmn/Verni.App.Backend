@@ -4,6 +4,7 @@ import (
 	"verni/internal/common"
 	"verni/internal/services/formatValidation"
 	"verni/internal/services/jwt"
+	"verni/internal/services/logging"
 
 	authRepository "verni/internal/repositories/auth"
 	pushNotificationsRepository "verni/internal/repositories/pushNotifications"
@@ -36,11 +37,13 @@ func DefaultController(
 	pushTokensRepository PushTokensRepository,
 	jwtService jwt.Service,
 	formatValidationService formatValidation.Service,
+	logger logging.Service,
 ) Controller {
 	return &defaultController{
 		authRepository:          authRepository,
 		pushTokensRepository:    pushTokensRepository,
 		jwtService:              jwtService,
 		formatValidationService: formatValidationService,
+		logger:                  logger,
 	}
 }

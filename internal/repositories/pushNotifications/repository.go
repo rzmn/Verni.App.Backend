@@ -3,6 +3,7 @@ package pushNotifications
 import (
 	"verni/internal/db"
 	"verni/internal/repositories"
+	"verni/internal/services/logging"
 )
 
 type UserId string
@@ -12,8 +13,9 @@ type Repository interface {
 	GetPushToken(uid UserId) (*string, error)
 }
 
-func PostgresRepository(db db.DB) Repository {
+func PostgresRepository(db db.DB, logger logging.Service) Repository {
 	return &postgresRepository{
-		db: db,
+		db:     db,
+		logger: logger,
 	}
 }

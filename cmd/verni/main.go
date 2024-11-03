@@ -28,6 +28,7 @@ import (
 	"verni/internal/services/emailSender"
 	"verni/internal/services/formatValidation"
 	"verni/internal/services/jwt"
+	"verni/internal/services/logging"
 	"verni/internal/services/pushNotifications"
 
 	authController "verni/internal/controllers/auth"
@@ -69,6 +70,7 @@ type Controllers struct {
 }
 
 func main() {
+	logger := logging.DefaultService()
 	configFile, err := os.Open("./config/prod/verni.json")
 	if err != nil {
 		log.Fatalf("failed to open config file: %s", err)
@@ -91,7 +93,7 @@ func main() {
 	}
 	var config Config
 	json.Unmarshal([]byte(configData), &config)
-	log.Printf("initializing with config %v", config)
+	logger.Log("initializing with config %v", config)
 
 	database := func() db.DB {
 		switch config.Storage.Type {
@@ -102,12 +104,12 @@ func main() {
 			}
 			var postgresConfig db.PostgresConfig
 			json.Unmarshal(data, &postgresConfig)
-			log.Printf("creating postgres with config %v", postgresConfig)
-			db, err := db.Postgres(postgresConfig)
+			logger.Log("creating postgres with config %v", postgresConfig)
+			db, err := db.Postgres(postgresConfig, logger)
 			if err != nil {
 				log.Fatalf("failed to initialize postgres err: %v", err)
 			}
-			log.Printf("initialized postgres")
+			logger.Log("initialized postgres")
 			return db
 		default:
 			log.Fatalf("unknown storage type %s", config.Storage.Type)
@@ -116,13 +118,13 @@ func main() {
 	}()
 	defer database.Close()
 	repositories := Repositories{
-		auth:         authRepository.PostgresRepository(database),
-		friends:      friendsRepository.PostgresRepository(database),
-		images:       imagesRepository.PostgresRepository(database),
-		pushRegistry: pushRegistryRepository.PostgresRepository(database),
-		spendings:    spendingsRepository.PostgresRepository(database),
-		users:        usersRepository.PostgresRepository(database),
-		verification: verificationRepository.PostgresRepository(database),
+		auth:         authRepository.PostgresRepository(database, logger),
+		friends:      friendsRepository.PostgresRepository(database, logger),
+		images:       imagesRepository.PostgresRepository(database, logger),
+		pushRegistry: pushRegistryRepository.PostgresRepository(database, logger),
+		spendings:    spendingsRepository.PostgresRepository(database, logger),
+		users:        usersRepository.PostgresRepository(database, logger),
+		verification: verificationRepository.PostgresRepository(database, logger),
 	}
 	services := Services{
 		push: func() pushNotifications.Service {
@@ -134,12 +136,12 @@ func main() {
 				}
 				var apnsConfig pushNotifications.ApnsConfig
 				json.Unmarshal(data, &apnsConfig)
-				log.Printf("creating apple apns service with config %v", apnsConfig)
-				service, err := pushNotifications.ApnsService(apnsConfig, repositories.pushRegistry)
+				logger.Log("creating apple apns service with config %v", apnsConfig)
+				service, err := pushNotifications.ApnsService(apnsConfig, logger, repositories.pushRegistry)
 				if err != nil {
 					log.Fatalf("failed to initialize apple apns service err: %v", err)
 				}
-				log.Printf("initialized apple apns service")
+				logger.Log("initialized apple apns service")
 				return service
 			default:
 				log.Fatalf("unknown apns type %s", config.PushNotifications.Type)
@@ -155,9 +157,10 @@ func main() {
 				}
 				var defaultConfig jwt.DefaultConfig
 				json.Unmarshal(data, &defaultConfig)
-				log.Printf("creating jwt token service with config %v", defaultConfig)
+				logger.Log("creating jwt token service with config %v", defaultConfig)
 				return jwt.DefaultService(
 					defaultConfig,
+					logger,
 					func() time.Time {
 						return time.Now()
 					},
@@ -176,15 +179,15 @@ func main() {
 				}
 				var yandexConfig emailSender.YandexConfig
 				json.Unmarshal(data, &yandexConfig)
-				log.Printf("creating yandex email sender with config %v", yandexConfig)
-				return emailSender.YandexService(yandexConfig)
+				logger.Log("creating yandex email sender with config %v", yandexConfig)
+				return emailSender.YandexService(yandexConfig, logger)
 			default:
 				log.Fatalf("unknown email sender type %s", config.EmailSender.Type)
 				return nil
 			}
 		}(),
 		formatValidationService: func() formatValidation.Service {
-			return formatValidation.DefaultService()
+			return formatValidation.DefaultService(logger)
 		}(),
 	}
 	controllers := Controllers{
@@ -193,12 +196,15 @@ func main() {
 			repositories.pushRegistry,
 			services.jwt,
 			services.formatValidationService,
+			logger,
 		),
 		avatars: avatarsController.DefaultController(
 			repositories.images,
+			logger,
 		),
 		friends: friendsController.DefaultController(
 			repositories.friends,
+			logger,
 		),
 		profile: profileController.DefaultController(
 			repositories.auth,
@@ -206,19 +212,23 @@ func main() {
 			repositories.users,
 			repositories.friends,
 			services.formatValidationService,
+			logger,
 		),
 		spendings: spendingsController.DefaultController(
 			repositories.spendings,
 			services.push,
+			logger,
 		),
 		users: usersController.DefaultController(
 			repositories.users,
 			repositories.friends,
+			logger,
 		),
 		verification: verification.DefaultController(
 			repositories.verification,
 			repositories.auth,
 			services.emailSender,
+			logger,
 		),
 	}
 	server := func() http.Server {
@@ -236,12 +246,13 @@ func main() {
 			}
 			var ginConfig GinConfig
 			json.Unmarshal(data, &ginConfig)
-			log.Printf("creating gin server with config %v", ginConfig)
+			logger.Log("creating gin server with config %v", ginConfig)
 			gin.SetMode(ginConfig.RunMode)
 			router := gin.New()
 			tokenChecker := middleware.JwsAccessTokenCheck(
 				repositories.auth,
 				services.jwt,
+				logger,
 			)
 			longpollService := longpoll.DefaultService(router, tokenChecker)
 
@@ -249,7 +260,7 @@ func main() {
 
 			auth.RegisterRoutes(router, tokenChecker, controllers.auth)
 			profile.RegisterRoutes(router, tokenChecker, controllers.profile)
-			avatars.RegisterRoutes(router, repositories.images)
+			avatars.RegisterRoutes(router, controllers.avatars)
 			users.RegisterRoutes(router, tokenChecker, controllers.users)
 			spendings.RegisterRoutes(router, tokenChecker, controllers.spendings)
 			friends.RegisterRoutes(router, tokenChecker, controllers.friends)
@@ -266,6 +277,6 @@ func main() {
 			return http.Server{}
 		}
 	}()
-	log.Printf("[info] start http server listening %s", server.Addr)
+	logger.Log("[info] start http server listening %s", server.Addr)
 	server.ListenAndServe()
 }

@@ -3,6 +3,7 @@ package images
 import (
 	"verni/internal/db"
 	"verni/internal/repositories"
+	"verni/internal/services/logging"
 )
 
 type ImageId string
@@ -16,8 +17,9 @@ type Repository interface {
 	GetImagesBase64(ids []ImageId) ([]Image, error)
 }
 
-func PostgresRepository(db db.DB) Repository {
+func PostgresRepository(db db.DB, logger logging.Service) Repository {
 	return &postgresRepository{
-		db: db,
+		db:     db,
+		logger: logger,
 	}
 }

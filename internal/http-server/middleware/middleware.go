@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"log"
 	"net/http"
 	"strings"
 
@@ -10,6 +9,7 @@ import (
 	httpserver "verni/internal/http-server"
 	authRepository "verni/internal/repositories/auth"
 	"verni/internal/services/jwt"
+	"verni/internal/services/logging"
 
 	"verni/internal/http-server/responses"
 )
@@ -24,14 +24,14 @@ const (
 	accessTokenSubjectKey = "verni-subject"
 )
 
-func JwsAccessTokenCheck(repository authRepository.Repository, jwtService jwt.Service) AccessTokenChecker {
+func JwsAccessTokenCheck(repository authRepository.Repository, jwtService jwt.Service, logger logging.Service) AccessTokenChecker {
 	return AccessTokenChecker{
 		Handler: func(c *gin.Context) {
 			const op = "handlers.friends.ensureLoggedInMiddleware"
-			log.Printf("%s: validating access token", op)
+			logger.Log("%s: validating access token", op)
 			token := jwt.AccessToken(extractBearerToken(c))
 			if err := jwtService.ValidateAccessToken(token); err != nil {
-				log.Printf("%s: failed to validate token %v", op, err)
+				logger.Log("%s: failed to validate token %v", op, err)
 				switch err.Code {
 				case jwt.CodeTokenExpired:
 					httpserver.Answer(c, err, http.StatusUnauthorized, responses.CodeTokenExpired)
@@ -56,7 +56,7 @@ func JwsAccessTokenCheck(repository authRepository.Repository, jwtService jwt.Se
 				httpserver.Answer(c, err, http.StatusUnprocessableEntity, responses.CodeWrongAccessToken)
 				return
 			}
-			log.Printf("%s: access token ok", op)
+			logger.Log("%s: access token ok", op)
 			c.Request.Header.Set(accessTokenSubjectKey, string(subject))
 			c.Next()
 		},

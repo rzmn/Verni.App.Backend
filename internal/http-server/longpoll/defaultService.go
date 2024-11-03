@@ -2,8 +2,8 @@ package longpoll
 
 import (
 	"fmt"
-	"log"
 	"verni/internal/http-server/middleware"
+	"verni/internal/services/logging"
 
 	"github.com/jcuga/golongpoll"
 
@@ -14,17 +14,18 @@ type defaultService struct {
 	engine       *gin.Engine
 	tokenChecker middleware.AccessTokenChecker
 	longPoll     *golongpoll.LongpollManager
+	logger       logging.Service
 }
 
 func (s *defaultService) RegisterRoutes() {
 	const op = "longpoll.defaultService.RegisterRoutes"
-	log.Printf("%s: start", op)
+	s.logger.Log("%s: start", op)
 	longpoll, err := golongpoll.StartLongpoll(golongpoll.Options{})
 	if err != nil {
-		log.Printf("%s: failed err: %v", op, err)
+		s.logger.Log("%s: failed err: %v", op, err)
 		return
 	}
-	log.Printf("%s: success", op)
+	s.logger.Log("%s: success", op)
 	s.longPoll = longpoll
 	s.engine.GET("/queue/subscribe", s.tokenChecker.Handler, func(c *gin.Context) {
 		longpoll.SubscriptionHandler(c.Writer, c.Request)

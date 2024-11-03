@@ -3,6 +3,7 @@ package spendings
 import (
 	"verni/internal/db"
 	"verni/internal/repositories"
+	"verni/internal/services/logging"
 )
 
 type ExpenseId string
@@ -43,8 +44,9 @@ type Repository interface {
 	GetBalance(counterparty CounterpartyId) ([]Balance, error)
 }
 
-func PostgresRepository(db db.DB) Repository {
+func PostgresRepository(db db.DB, logger logging.Service) Repository {
 	return &postgresRepository{
-		db: db,
+		db:     db,
+		logger: logger,
 	}
 }

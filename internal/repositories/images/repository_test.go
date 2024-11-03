@@ -3,12 +3,12 @@ package images_test
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"os"
 	"testing"
 	"verni/internal/common"
 	"verni/internal/db"
 	"verni/internal/repositories/images"
+	"verni/internal/services/logging"
 
 	"github.com/google/uuid"
 )
@@ -18,21 +18,28 @@ var (
 )
 
 func TestMain(m *testing.M) {
+	logger := logging.TestService()
+	root, present := os.LookupEnv("VERNI_PROJECT_ROOT")
+	if present {
+		common.RegisterRelativePathRoot(root)
+	} else {
+		logger.Fatalf("project root not found")
+	}
 	database = func() db.DB {
 		configFile, err := os.Open(common.AbsolutePath("./config/test/postgres_storage.json"))
 		if err != nil {
-			log.Fatalf("failed to open config file: %s", err)
+			logger.Fatalf("failed to open config file: %s", err)
 		}
 		defer configFile.Close()
 		configData, err := io.ReadAll(configFile)
 		if err != nil {
-			log.Fatalf("failed to read config file: %s", err)
+			logger.Fatalf("failed to read config file: %s", err)
 		}
 		var config db.PostgresConfig
 		json.Unmarshal([]byte(configData), &config)
-		db, err := db.Postgres(config)
+		db, err := db.Postgres(config, logger)
 		if err != nil {
-			log.Fatalf("failed to init db err: %v", err)
+			logger.Fatalf("failed to init db err: %v", err)
 		}
 		return db
 	}()
@@ -41,17 +48,8 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func init() {
-	root, present := os.LookupEnv("VERNI_PROJECT_ROOT")
-	if present {
-		common.RegisterRelativePathRoot(root)
-	} else {
-		log.Fatalf("project root not found")
-	}
-}
-
 func TestUpload(t *testing.T) {
-	repository := images.PostgresRepository(database)
+	repository := images.PostgresRepository(database, logging.TestService())
 	base64 := uuid.New().String()
 
 	transaction := repository.UploadImageBase64(base64)
@@ -79,7 +77,7 @@ func TestUpload(t *testing.T) {
 }
 
 func TestGetEmpty(t *testing.T) {
-	repository := images.PostgresRepository(database)
+	repository := images.PostgresRepository(database, logging.TestService())
 	id := images.ImageId(uuid.New().String())
 
 	shouldBeEmpty, err := repository.GetImagesBase64([]images.ImageId{id})

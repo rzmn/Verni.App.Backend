@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
+	"verni/internal/services/logging"
 
 	_ "github.com/lib/pq"
 )
@@ -26,7 +26,7 @@ type PostgresConfig struct {
 	DbName   string `json:"dbName"`
 }
 
-func Postgres(config PostgresConfig) (DB, error) {
+func Postgres(config PostgresConfig, logger logging.Service) (DB, error) {
 	const op = "repositories.friends.PostgresRepository"
 	psqlConnection := fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
@@ -38,7 +38,7 @@ func Postgres(config PostgresConfig) (DB, error) {
 	)
 	db, err := sql.Open("postgres", psqlConnection)
 	if err != nil {
-		log.Printf("%s: open db failed err: %v", op, err)
+		logger.Log("%s: open db failed err: %v", op, err)
 		return nil, err
 	}
 	return db, nil

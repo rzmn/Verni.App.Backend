@@ -11,6 +11,7 @@ import (
 	"verni/internal/common"
 	"verni/internal/db"
 	"verni/internal/repositories/auth"
+	"verni/internal/services/logging"
 
 	"github.com/google/uuid"
 )
@@ -20,21 +21,28 @@ var (
 )
 
 func TestMain(m *testing.M) {
+	logger := logging.TestService()
+	root, present := os.LookupEnv("VERNI_PROJECT_ROOT")
+	if present {
+		common.RegisterRelativePathRoot(root)
+	} else {
+		logger.Fatalf("project root not found")
+	}
 	database = func() db.DB {
 		configFile, err := os.Open(common.AbsolutePath("./config/test/postgres_storage.json"))
 		if err != nil {
-			log.Fatalf("failed to open config file: %s", err)
+			logger.Fatalf("failed to open config file: %s", err)
 		}
 		defer configFile.Close()
 		configData, err := io.ReadAll(configFile)
 		if err != nil {
-			log.Fatalf("failed to read config file: %s", err)
+			logger.Fatalf("failed to read config file: %s", err)
 		}
 		var config db.PostgresConfig
 		json.Unmarshal([]byte(configData), &config)
-		db, err := db.Postgres(config)
+		db, err := db.Postgres(config, logger)
 		if err != nil {
-			log.Fatalf("failed to init db err: %v", err)
+			logger.Fatalf("failed to init db err: %v", err)
 		}
 		return db
 	}()
@@ -61,7 +69,7 @@ func randomEmail() string {
 }
 
 func TestGetUserInfo(t *testing.T) {
-	repository := auth.PostgresRepository(database)
+	repository := auth.PostgresRepository(database, logging.TestService())
 	userId := randomUid()
 	userEmail := randomEmail()
 	userToken := uuid.New().String()
@@ -97,7 +105,7 @@ func TestGetUserInfo(t *testing.T) {
 }
 
 func TestMarkUserEmailValidated(t *testing.T) {
-	repository := auth.PostgresRepository(database)
+	repository := auth.PostgresRepository(database, logging.TestService())
 	userId := randomUid()
 	userEmail := randomEmail()
 	userToken := uuid.New().String()
@@ -134,7 +142,7 @@ func TestMarkUserEmailValidated(t *testing.T) {
 }
 
 func TestIsUserExists(t *testing.T) {
-	repository := auth.PostgresRepository(database)
+	repository := auth.PostgresRepository(database, logging.TestService())
 	userId := randomUid()
 	userEmail := randomEmail()
 	userToken := uuid.New().String()
@@ -171,7 +179,7 @@ func TestIsUserExists(t *testing.T) {
 }
 
 func TestCheckCredentials(t *testing.T) {
-	repository := auth.PostgresRepository(database)
+	repository := auth.PostgresRepository(database, logging.TestService())
 	userId := randomUid()
 	userEmail := randomEmail()
 	userToken := uuid.New().String()
@@ -203,7 +211,7 @@ func TestCheckCredentials(t *testing.T) {
 }
 
 func TestGetUserIdByEmail(t *testing.T) {
-	repository := auth.PostgresRepository(database)
+	repository := auth.PostgresRepository(database, logging.TestService())
 	userId := randomUid()
 	userEmail := randomEmail()
 	userToken := uuid.New().String()
@@ -243,7 +251,7 @@ func TestGetUserIdByEmail(t *testing.T) {
 }
 
 func TestUpdateRefreshToken(t *testing.T) {
-	repository := auth.PostgresRepository(database)
+	repository := auth.PostgresRepository(database, logging.TestService())
 	userId := randomUid()
 	userEmail := randomEmail()
 	userToken := uuid.New().String()
@@ -281,7 +289,7 @@ func TestUpdateRefreshToken(t *testing.T) {
 }
 
 func TestUpdatePassword(t *testing.T) {
-	repository := auth.PostgresRepository(database)
+	repository := auth.PostgresRepository(database, logging.TestService())
 	userId := randomUid()
 	userEmail := randomEmail()
 	userToken := uuid.New().String()
@@ -319,7 +327,7 @@ func TestUpdatePassword(t *testing.T) {
 }
 
 func TestUpdateEmail(t *testing.T) {
-	repository := auth.PostgresRepository(database)
+	repository := auth.PostgresRepository(database, logging.TestService())
 	userId := randomUid()
 	userEmail := randomEmail()
 	userToken := uuid.New().String()

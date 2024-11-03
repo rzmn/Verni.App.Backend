@@ -2,6 +2,7 @@ package jwt
 
 import (
 	"time"
+	"verni/internal/services/logging"
 )
 
 type Subject string
@@ -28,6 +29,7 @@ type DefaultConfig struct {
 
 func DefaultService(
 	config DefaultConfig,
+	logger logging.Service,
 	currentTime func() time.Time,
 ) Service {
 	return &defaultService{
@@ -36,5 +38,6 @@ func DefaultService(
 		refreshTokenSecret:   config.RefreshTokenSecret,
 		accessTokenSecret:    config.AccessTokenSecret,
 		currentTime:          currentTime,
+		logger:               logger,
 	}
 }

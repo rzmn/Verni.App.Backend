@@ -7,6 +7,7 @@ import (
 	"verni/internal/repositories"
 	spendingsRepository "verni/internal/repositories/spendings"
 	spendings_mock "verni/internal/repositories/spendings/mock"
+	"verni/internal/services/logging"
 	"verni/internal/services/pushNotifications"
 	pushNotifications_mock "verni/internal/services/pushNotifications/mock"
 
@@ -17,7 +18,7 @@ func TestAddExpenseFailedNotYourExpense(t *testing.T) {
 	repository := spendings_mock.RepositoryMock{}
 	pushService := pushNotifications_mock.ServiceMock{}
 
-	controller := spendings.DefaultController(&repository, &pushService)
+	controller := spendings.DefaultController(&repository, &pushService, logging.TestService())
 
 	expense := spendings.Expense{
 		Shares: []spendingsRepository.ShareOfExpense{
@@ -50,7 +51,7 @@ func TestAddExpenseFailedToAddInRepository(t *testing.T) {
 	}
 	pushService := pushNotifications_mock.ServiceMock{}
 
-	controller := spendings.DefaultController(&repository, &pushService)
+	controller := spendings.DefaultController(&repository, &pushService, logging.TestService())
 	actor := spendings.CounterpartyId(uuid.New().String())
 	counterparty := spendings.CounterpartyId(uuid.New().String())
 
@@ -90,7 +91,7 @@ func TestAddExpenseOk(t *testing.T) {
 		},
 	}
 
-	controller := spendings.DefaultController(&repository, &pushService)
+	controller := spendings.DefaultController(&repository, &pushService, logging.TestService())
 	actor := spendings.CounterpartyId(uuid.New().String())
 	counterparty := spendings.CounterpartyId(uuid.New().String())
 
@@ -120,7 +121,7 @@ func TestRemoveExpenseFailedToGetById(t *testing.T) {
 		},
 	}
 	pushService := pushNotifications_mock.ServiceMock{}
-	controller := spendings.DefaultController(&repository, &pushService)
+	controller := spendings.DefaultController(&repository, &pushService, logging.TestService())
 	_, err := controller.RemoveExpense(spendings.ExpenseId(uuid.New().String()), spendings.CounterpartyId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`RemoveExpense` should be failed, found nil err")
@@ -137,7 +138,7 @@ func TestRemoveExpenseFailedNotFound(t *testing.T) {
 		},
 	}
 	pushService := pushNotifications_mock.ServiceMock{}
-	controller := spendings.DefaultController(&repository, &pushService)
+	controller := spendings.DefaultController(&repository, &pushService, logging.TestService())
 	_, err := controller.RemoveExpense(spendings.ExpenseId(uuid.New().String()), spendings.CounterpartyId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`RemoveExpense` should be failed, found nil err")
@@ -166,7 +167,7 @@ func TestRemoveExpenseFailedNotYourExpense(t *testing.T) {
 		},
 	}
 	pushService := pushNotifications_mock.ServiceMock{}
-	controller := spendings.DefaultController(&repository, &pushService)
+	controller := spendings.DefaultController(&repository, &pushService, logging.TestService())
 	_, err := controller.RemoveExpense(spendings.ExpenseId(uuid.New().String()), spendings.CounterpartyId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`RemoveExpense` should be failed, found nil err")
@@ -204,7 +205,7 @@ func TestRemoveExpenseRemoveFailed(t *testing.T) {
 		},
 	}
 	pushService := pushNotifications_mock.ServiceMock{}
-	controller := spendings.DefaultController(&repository, &pushService)
+	controller := spendings.DefaultController(&repository, &pushService, logging.TestService())
 	_, err := controller.RemoveExpense(spendings.ExpenseId(uuid.New().String()), actor)
 	if err == nil {
 		t.Fatalf("`RemoveExpense` should be failed, found nil err")
@@ -244,7 +245,7 @@ func TestRemoveExpenseOk(t *testing.T) {
 		},
 	}
 	pushService := pushNotifications_mock.ServiceMock{}
-	controller := spendings.DefaultController(&repository, &pushService)
+	controller := spendings.DefaultController(&repository, &pushService, logging.TestService())
 	_, err := controller.RemoveExpense(spendings.ExpenseId(uuid.New().String()), actor)
 	if err != nil {
 		t.Fatalf("`RemoveExpense` should not be failed, found err %v", err)
@@ -261,7 +262,7 @@ func TestGetExpenseFailedToGetFromRepository(t *testing.T) {
 		},
 	}
 	pushService := pushNotifications_mock.ServiceMock{}
-	controller := spendings.DefaultController(&repository, &pushService)
+	controller := spendings.DefaultController(&repository, &pushService, logging.TestService())
 	_, err := controller.GetExpense(spendings.ExpenseId(uuid.New().String()), spendings.CounterpartyId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`GetExpense` should be failed, found nil err")
@@ -278,7 +279,7 @@ func TestGetExpenseFailedNotFound(t *testing.T) {
 		},
 	}
 	pushService := pushNotifications_mock.ServiceMock{}
-	controller := spendings.DefaultController(&repository, &pushService)
+	controller := spendings.DefaultController(&repository, &pushService, logging.TestService())
 	_, err := controller.GetExpense(spendings.ExpenseId(uuid.New().String()), spendings.CounterpartyId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`GetExpense` should be failed, found nil err")
@@ -307,7 +308,7 @@ func TestGetExpenseNotYourExpense(t *testing.T) {
 		},
 	}
 	pushService := pushNotifications_mock.ServiceMock{}
-	controller := spendings.DefaultController(&repository, &pushService)
+	controller := spendings.DefaultController(&repository, &pushService, logging.TestService())
 	_, err := controller.GetExpense(spendings.ExpenseId(uuid.New().String()), spendings.CounterpartyId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`GetExpense` should be failed, found nil err")
@@ -340,7 +341,7 @@ func TestGetExpenseOk(t *testing.T) {
 		},
 	}
 	pushService := pushNotifications_mock.ServiceMock{}
-	controller := spendings.DefaultController(&repository, &pushService)
+	controller := spendings.DefaultController(&repository, &pushService, logging.TestService())
 	_, err := controller.GetExpense(spendings.ExpenseId(uuid.New().String()), actor)
 	if err != nil {
 		t.Fatalf("`GetExpense` should not be failed, found err %v", err)
@@ -357,7 +358,7 @@ func TestGetExpensesWithFailedToGetFromRepository(t *testing.T) {
 		},
 	}
 	pushService := pushNotifications_mock.ServiceMock{}
-	controller := spendings.DefaultController(&repository, &pushService)
+	controller := spendings.DefaultController(&repository, &pushService, logging.TestService())
 	_, err := controller.GetExpensesWith(spendings.CounterpartyId(uuid.New().String()), spendings.CounterpartyId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`GetExpensesWith` should be failed, found nil err")
@@ -376,7 +377,7 @@ func TestGetExpensesOk(t *testing.T) {
 		},
 	}
 	pushService := pushNotifications_mock.ServiceMock{}
-	controller := spendings.DefaultController(&repository, &pushService)
+	controller := spendings.DefaultController(&repository, &pushService, logging.TestService())
 	_, err := controller.GetExpensesWith(spendings.CounterpartyId(uuid.New().String()), spendings.CounterpartyId(uuid.New().String()))
 	if err != nil {
 		t.Fatalf("`GetExpensesWith` should not be failed, found err %v", err)
@@ -393,7 +394,7 @@ func TestGetBalanceWithFailedToGetFromRepository(t *testing.T) {
 		},
 	}
 	pushService := pushNotifications_mock.ServiceMock{}
-	controller := spendings.DefaultController(&repository, &pushService)
+	controller := spendings.DefaultController(&repository, &pushService, logging.TestService())
 	_, err := controller.GetBalance(spendings.CounterpartyId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`GetBalance` should be failed, found nil err")
@@ -412,7 +413,7 @@ func TestGetBalanceOk(t *testing.T) {
 		},
 	}
 	pushService := pushNotifications_mock.ServiceMock{}
-	controller := spendings.DefaultController(&repository, &pushService)
+	controller := spendings.DefaultController(&repository, &pushService, logging.TestService())
 	_, err := controller.GetBalance(spendings.CounterpartyId(uuid.New().String()))
 	if err != nil {
 		t.Fatalf("`GetBalance` should not be failed, found err %v", err)

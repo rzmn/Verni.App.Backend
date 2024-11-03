@@ -3,6 +3,7 @@ package users
 import (
 	"verni/internal/db"
 	"verni/internal/repositories"
+	"verni/internal/services/logging"
 )
 
 type UserId string
@@ -20,8 +21,9 @@ type Repository interface {
 	UpdateAvatarId(avatarId *AvatarId, id UserId) repositories.MutationWorkItem
 }
 
-func PostgresRepository(db db.DB) Repository {
+func PostgresRepository(db db.DB, logger logging.Service) Repository {
 	return &postgresRepository{
-		db: db,
+		db:     db,
+		logger: logger,
 	}
 }

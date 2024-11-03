@@ -1,8 +1,8 @@
 package main
 
 import (
-	"log"
 	"verni/internal/db"
+	"verni/internal/services/logging"
 )
 
 type databaseActions struct {
@@ -10,22 +10,22 @@ type databaseActions struct {
 	drop  func()
 }
 
-func createDatabaseActions(database db.DB) databaseActions {
+func createDatabaseActions(database db.DB, logger logging.Service) databaseActions {
 	return databaseActions{
 		setup: func() {
 			for _, table := range tables() {
 				if err := table.create(database); err != nil {
-					log.Printf("failed to create table %s err: %v", err, table.name)
+					logger.Log("failed to create table %s err: %v", err, table.name)
 				}
-				log.Printf("created table %s", table.name)
+				logger.Log("created table %s", table.name)
 			}
 		},
 		drop: func() {
 			for _, table := range tables() {
 				if err := table.delete(database); err != nil {
-					log.Printf("failed to drop table %s err: %v", err, table.name)
+					logger.Log("failed to drop table %s err: %v", err, table.name)
 				}
-				log.Printf("droped table %s", table.name)
+				logger.Log("droped table %s", table.name)
 			}
 		},
 	}

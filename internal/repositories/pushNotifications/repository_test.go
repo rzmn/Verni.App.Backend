@@ -9,6 +9,7 @@ import (
 	"verni/internal/common"
 	"verni/internal/db"
 	"verni/internal/repositories/pushNotifications"
+	"verni/internal/services/logging"
 
 	"github.com/google/uuid"
 )
@@ -18,21 +19,28 @@ var (
 )
 
 func TestMain(m *testing.M) {
+	logger := logging.TestService()
+	root, present := os.LookupEnv("VERNI_PROJECT_ROOT")
+	if present {
+		common.RegisterRelativePathRoot(root)
+	} else {
+		logger.Fatalf("project root not found")
+	}
 	database = func() db.DB {
 		configFile, err := os.Open(common.AbsolutePath("./config/test/postgres_storage.json"))
 		if err != nil {
-			log.Fatalf("failed to open config file: %s", err)
+			logger.Fatalf("failed to open config file: %s", err)
 		}
 		defer configFile.Close()
 		configData, err := io.ReadAll(configFile)
 		if err != nil {
-			log.Fatalf("failed to read config file: %s", err)
+			logger.Fatalf("failed to read config file: %s", err)
 		}
 		var config db.PostgresConfig
 		json.Unmarshal([]byte(configData), &config)
-		db, err := db.Postgres(config)
+		db, err := db.Postgres(config, logger)
 		if err != nil {
-			log.Fatalf("failed to init db err: %v", err)
+			logger.Fatalf("failed to init db err: %v", err)
 		}
 		return db
 	}()
@@ -55,7 +63,7 @@ func randomUid() pushNotifications.UserId {
 }
 
 func TestStorePushToken(t *testing.T) {
-	repository := pushNotifications.PostgresRepository(database)
+	repository := pushNotifications.PostgresRepository(database, logging.TestService())
 
 	// initially token should be nil
 

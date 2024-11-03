@@ -3,7 +3,6 @@ package spendings_test
 import (
 	"encoding/json"
 	"io"
-	"log"
 	"os"
 	"reflect"
 	"sort"
@@ -11,6 +10,7 @@ import (
 	"verni/internal/common"
 	"verni/internal/db"
 	"verni/internal/repositories/spendings"
+	"verni/internal/services/logging"
 
 	"github.com/google/uuid"
 )
@@ -20,36 +20,34 @@ var (
 )
 
 func TestMain(m *testing.M) {
+	logger := logging.TestService()
+	root, present := os.LookupEnv("VERNI_PROJECT_ROOT")
+	if present {
+		common.RegisterRelativePathRoot(root)
+	} else {
+		logger.Fatalf("project root not found")
+	}
 	database = func() db.DB {
 		configFile, err := os.Open(common.AbsolutePath("./config/test/postgres_storage.json"))
 		if err != nil {
-			log.Fatalf("failed to open config file: %s", err)
+			logger.Fatalf("failed to open config file: %s", err)
 		}
 		defer configFile.Close()
 		configData, err := io.ReadAll(configFile)
 		if err != nil {
-			log.Fatalf("failed to read config file: %s", err)
+			logger.Fatalf("failed to read config file: %s", err)
 		}
 		var config db.PostgresConfig
 		json.Unmarshal([]byte(configData), &config)
-		db, err := db.Postgres(config)
+		db, err := db.Postgres(config, logger)
 		if err != nil {
-			log.Fatalf("failed to init db err: %v", err)
+			logger.Fatalf("failed to init db err: %v", err)
 		}
 		return db
 	}()
 	code := m.Run()
 
 	os.Exit(code)
-}
-
-func init() {
-	root, present := os.LookupEnv("VERNI_PROJECT_ROOT")
-	if present {
-		common.RegisterRelativePathRoot(root)
-	} else {
-		log.Fatalf("project root not found")
-	}
 }
 
 func randomUid() spendings.CounterpartyId {
@@ -71,7 +69,7 @@ func expensesAreEqual(lhs spendings.Expense, rhs spendings.Expense) bool {
 }
 
 func TestGetExpensesEmpty(t *testing.T) {
-	repository := spendings.PostgresRepository(database)
+	repository := spendings.PostgresRepository(database, logging.TestService())
 	expenseId := randomEid()
 
 	shouldBeEmpty, err := repository.GetExpense(expenseId)
@@ -84,7 +82,7 @@ func TestGetExpensesEmpty(t *testing.T) {
 }
 
 func TestGetBalanceEmpty(t *testing.T) {
-	repository := spendings.PostgresRepository(database)
+	repository := spendings.PostgresRepository(database, logging.TestService())
 	counterparty := randomUid()
 
 	shouldBeEmpty, err := repository.GetBalance(counterparty)
@@ -97,7 +95,7 @@ func TestGetBalanceEmpty(t *testing.T) {
 }
 
 func TestExpensesAndCounterparties(t *testing.T) {
-	repository := spendings.PostgresRepository(database)
+	repository := spendings.PostgresRepository(database, logging.TestService())
 	firstCounterparty := randomUid()
 	secondCounterparty := randomUid()
 	cost1 := spendings.Cost(456)
@@ -271,7 +269,7 @@ func TestExpensesAndCounterparties(t *testing.T) {
 }
 
 func TestAddAndRemoveExpense(t *testing.T) {
-	repository := spendings.PostgresRepository(database)
+	repository := spendings.PostgresRepository(database, logging.TestService())
 	counterparty1 := randomUid()
 	counterparty2 := randomUid()
 	cost := spendings.Cost(456)

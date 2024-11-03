@@ -3,6 +3,7 @@ package spendings
 import (
 	"verni/internal/common"
 	spendingsRepository "verni/internal/repositories/spendings"
+	"verni/internal/services/logging"
 	"verni/internal/services/pushNotifications"
 )
 
@@ -21,9 +22,10 @@ type Controller interface {
 	GetBalance(actor CounterpartyId) ([]Balance, *common.CodeBasedError[GetBalanceErrorCode])
 }
 
-func DefaultController(repository Repository, pushNotifications pushNotifications.Service) Controller {
+func DefaultController(repository Repository, pushNotifications pushNotifications.Service, logger logging.Service) Controller {
 	return &defaultController{
 		repository:        repository,
 		pushNotifications: pushNotifications,
+		logger:            logger,
 	}
 }
