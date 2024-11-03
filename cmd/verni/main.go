@@ -255,7 +255,7 @@ func main() {
 				services.jwt,
 				logger,
 			)
-			longpollService := longpoll.DefaultService(router, tokenChecker)
+			longpollService := longpoll.DefaultService(router, logger, tokenChecker)
 
 			longpollService.RegisterRoutes()
 

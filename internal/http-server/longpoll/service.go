@@ -3,6 +3,7 @@ package longpoll
 import (
 	"verni/internal/http-server/middleware"
 	authRepository "verni/internal/repositories/auth"
+	"verni/internal/services/logging"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,9 +18,10 @@ type Service interface {
 	RegisterRoutes()
 }
 
-func DefaultService(e *gin.Engine, tokenChecker middleware.AccessTokenChecker) Service {
+func DefaultService(e *gin.Engine, logger logging.Service, tokenChecker middleware.AccessTokenChecker) Service {
 	return &defaultService{
 		engine:       e,
 		tokenChecker: tokenChecker,
+		logger:       logger,
 	}
 }
