@@ -195,6 +195,7 @@ func main() {
 		auth: authController.DefaultController(
 			repositories.auth,
 			repositories.pushRegistry,
+			repositories.users,
 			services.jwt,
 			services.formatValidationService,
 			logger,

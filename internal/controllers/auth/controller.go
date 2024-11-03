@@ -8,10 +8,12 @@ import (
 
 	authRepository "verni/internal/repositories/auth"
 	pushNotificationsRepository "verni/internal/repositories/pushNotifications"
+	usersRepository "verni/internal/repositories/users"
 )
 
 type UserId string
 type AuthRepository authRepository.Repository
+type UsersRepository usersRepository.Repository
 type PushTokensRepository pushNotificationsRepository.Repository
 
 type Session struct {
@@ -35,6 +37,7 @@ type Controller interface {
 func DefaultController(
 	authRepository AuthRepository,
 	pushTokensRepository PushTokensRepository,
+	usersRepository UsersRepository,
 	jwtService jwt.Service,
 	formatValidationService formatValidation.Service,
 	logger logging.Service,
@@ -42,6 +45,7 @@ func DefaultController(
 	return &defaultController{
 		authRepository:          authRepository,
 		pushTokensRepository:    pushTokensRepository,
+		usersRepository:         usersRepository,
 		jwtService:              jwtService,
 		formatValidationService: formatValidationService,
 		logger:                  logger,

@@ -1,9 +1,11 @@
 package auth
 
 import (
+	"strings"
 	"verni/internal/common"
 	"verni/internal/repositories/auth"
 	"verni/internal/repositories/pushNotifications"
+	"verni/internal/repositories/users"
 	"verni/internal/services/formatValidation"
 	"verni/internal/services/jwt"
 	"verni/internal/services/logging"
@@ -14,6 +16,7 @@ import (
 type defaultController struct {
 	authRepository          AuthRepository
 	pushTokensRepository    PushTokensRepository
+	usersRepository         UsersRepository
 	jwtService              jwt.Service
 	formatValidationService formatValidation.Service
 	logger                  logging.Service
@@ -50,8 +53,18 @@ func (c *defaultController) Signup(email string, password string) (Session, *com
 		c.logger.Log("%s: issuing refresh token failed err: %v", op, jwtErr)
 		return Session{}, common.NewErrorWithDescription(SignupErrorInternal, jwtErr.Error())
 	}
+	createUserTransaction := c.usersRepository.StoreUser(users.User{
+		Id:          users.UserId(uid),
+		DisplayName: strings.Split(email, "@")[0],
+		AvatarId:    nil,
+	})
+	if err := createUserTransaction.Perform(); err != nil {
+		c.logger.Log("storing user meta to db failed err: %v", err)
+		return Session{}, common.NewErrorWithDescription(SignupErrorInternal, err.Error())
+	}
 	transaction := c.authRepository.CreateUser(auth.UserId(uid), email, password, string(refreshToken))
 	if err := transaction.Perform(); err != nil {
+		createUserTransaction.Rollback()
 		c.logger.Log("storing credentials to db failed err: %v", err)
 		return Session{}, common.NewErrorWithDescription(SignupErrorInternal, err.Error())
 	}
