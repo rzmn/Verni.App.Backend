@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	logger := logging.DefaultService()
+	logger := logging.StandartOutput()
 	pathProvider := pathProvider.VerniEnvService(logger)
 	configFile, err := os.Open(pathProvider.AbsolutePath("./config/prod/verni.json"))
 	if err != nil {

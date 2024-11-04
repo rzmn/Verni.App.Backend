@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -70,8 +71,17 @@ type Controllers struct {
 }
 
 func main() {
-	logger := logging.DefaultService()
-	pathProvider := pathProvider.VerniEnvService(logger)
+	logger, pathProvider := func() (logging.Service, pathProvider.Service) {
+		startupTime := time.Now()
+		var loggingPathRef *string = nil
+		logger := logging.FileLoggerService(func() *string {
+			return loggingPathRef
+		})
+		pathProvider := pathProvider.VerniEnvService(logger)
+		loggingPath := pathProvider.AbsolutePath(fmt.Sprintf("./session[%s].log", startupTime.Format("2006.01.02 15:04:05")))
+		loggingPathRef = &loggingPath
+		return logger, pathProvider
+	}()
 	configFile, err := os.Open(pathProvider.AbsolutePath("./config/prod/verni.json"))
 	if err != nil {
 		logger.Fatalf("failed to open config file: %s", err)
