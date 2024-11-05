@@ -1,6 +1,10 @@
 package logging
 
-import "context"
+import (
+	"context"
+	"sync"
+	"verni/internal/services/watchdog"
+)
 
 type Service interface {
 	Log(format string, v ...any)
@@ -11,12 +15,33 @@ func StandartOutput() Service {
 	return &standartOutputLoggingService{}
 }
 
-func FileLoggerService(logPathProvider func() *string) Service {
-	logger := &fileLoggingService{
-		consoleLogger:   StandartOutput(),
-		delayedMessages: []string{},
-		logPathProvider: logPathProvider,
-		logger:          make(chan string, 10),
+type ProdLoggerConfig struct {
+	Watchdog         watchdog.Service
+	LoggingDirectory string
+}
+
+func Prod(configProvider func() *ProdLoggerConfig) Service {
+	logger := &prodLoggingService{
+		consoleLogger: StandartOutput(),
+		watchdogProvider: func() *watchdog.Service {
+			config := configProvider()
+			if config == nil {
+				return nil
+			}
+			return &config.Watchdog
+		},
+		logsDirectoryProvider: func() *string {
+			config := configProvider()
+			if config == nil {
+				return nil
+			}
+			return &config.LoggingDirectory
+		},
+		wg:                           sync.WaitGroup{},
+		logger:                       make(chan func(), 10),
+		delayedLinesToWriteToLogFile: []string{},
+		watchdogContext:              createWatchdogContext(),
+		delayedWatchdogCalls:         []func(watchdog.Service){},
 	}
 	go logger.logImpl(context.Background())
 	return logger

@@ -31,6 +31,7 @@ import (
 	"verni/internal/services/logging"
 	"verni/internal/services/pathProvider"
 	"verni/internal/services/pushNotifications"
+	"verni/internal/services/watchdog"
 
 	authController "verni/internal/controllers/auth"
 	avatarsController "verni/internal/controllers/avatars"
@@ -71,26 +72,6 @@ type Controllers struct {
 }
 
 func main() {
-	logger, pathProvider := func() (logging.Service, pathProvider.Service) {
-		startupTime := time.Now()
-		var loggingPathRef *string = nil
-		logger := logging.FileLoggerService(func() *string {
-			return loggingPathRef
-		})
-		pathProvider := pathProvider.VerniEnvService(logger)
-		loggingPath := pathProvider.AbsolutePath(fmt.Sprintf("./session[%s].log", startupTime.Format("2006.01.02 15:04:05")))
-		loggingPathRef = &loggingPath
-		return logger, pathProvider
-	}()
-	configFile, err := os.Open(pathProvider.AbsolutePath("./config/prod/verni.json"))
-	if err != nil {
-		logger.Fatalf("failed to open config file: %s", err)
-	}
-	defer configFile.Close()
-	configData, err := io.ReadAll(configFile)
-	if err != nil {
-		logger.Fatalf("failed to read config file: %s", err)
-	}
 	type Module struct {
 		Type   string                 `json:"type"`
 		Config map[string]interface{} `json:"config"`
@@ -101,9 +82,66 @@ func main() {
 		EmailSender       Module `json:"emailSender"`
 		Jwt               Module `json:"jwt"`
 		Server            Module `json:"server"`
+		Watchdog          Module `json:"watchdog"`
 	}
-	var config Config
-	json.Unmarshal([]byte(configData), &config)
+	logger, pathProvider, config := func() (logging.Service, pathProvider.Service, Config) {
+		startupTime := time.Now()
+		var loggingDirectoryRef *string = nil
+		var watchdogRef *watchdog.Service = nil
+		logger := logging.Prod(func() *logging.ProdLoggerConfig {
+			if loggingDirectoryRef == nil {
+				return nil
+			}
+			if watchdogRef == nil {
+				return nil
+			}
+			return &logging.ProdLoggerConfig{
+				Watchdog:         *watchdogRef,
+				LoggingDirectory: *loggingDirectoryRef,
+			}
+		})
+		pathProvider := pathProvider.VerniEnvService(logger)
+		loggingDirectory := pathProvider.AbsolutePath(fmt.Sprintf("./session[%s].log", startupTime.Format("2006.01.02 15:04:05")))
+		if err := os.MkdirAll(loggingDirectory, os.ModePerm); err != nil {
+			loggingDirectoryRef = nil
+		} else {
+			loggingDirectoryRef = &loggingDirectory
+		}
+		configFile, err := os.Open(pathProvider.AbsolutePath("./config/prod/verni.json"))
+		if err != nil {
+			logger.Fatalf("failed to open config file: %s", err)
+		}
+		defer configFile.Close()
+		configData, err := io.ReadAll(configFile)
+		if err != nil {
+			logger.Fatalf("failed to read config file: %s", err)
+		}
+		var config Config
+		json.Unmarshal([]byte(configData), &config)
+		watchdog := func() watchdog.Service {
+			switch config.Watchdog.Type {
+			case "telegram":
+				data, err := json.Marshal(config.Watchdog.Config)
+				if err != nil {
+					logger.Fatalf("failed to serialize telegram watchdog config err: %v", err)
+				}
+				var telegramConfig watchdog.TelegramConfig
+				json.Unmarshal(data, &telegramConfig)
+				logger.Log("creating telegram watchdog with config %v", telegramConfig)
+				watchdog, err := watchdog.TelegramService(telegramConfig)
+				if err != nil {
+					logger.Fatalf("failed to initialize telegram watchdog err: %v", err)
+				}
+				logger.Log("initialized postgres")
+				return watchdog
+			default:
+				logger.Fatalf("unknown storage type %s", config.Storage.Type)
+				return nil
+			}
+		}()
+		watchdogRef = &watchdog
+		return logger, pathProvider, config
+	}()
 	logger.Log("initializing with config %v", config)
 
 	database := func() db.DB {
