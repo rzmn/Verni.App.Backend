@@ -8,14 +8,14 @@ type ServiceMock struct {
 	NewExpenseReceivedImpl           func(receiver pushNotifications.UserId, expense pushNotifications.Expense, author pushNotifications.UserId)
 }
 
-func (s *ServiceMock) FriendRequestHasBeenAccepted(receiver pushNotifications.UserId, acceptedBy pushNotifications.UserId) {
-	s.FriendRequestHasBeenAcceptedImpl(receiver, acceptedBy)
+func (c *ServiceMock) FriendRequestHasBeenAccepted(receiver pushNotifications.UserId, acceptedBy pushNotifications.UserId) {
+	c.FriendRequestHasBeenAcceptedImpl(receiver, acceptedBy)
 }
 
-func (s *ServiceMock) FriendRequestHasBeenReceived(receiver pushNotifications.UserId, sentBy pushNotifications.UserId) {
-	s.FriendRequestHasBeenReceivedImpl(receiver, sentBy)
+func (c *ServiceMock) FriendRequestHasBeenReceived(receiver pushNotifications.UserId, sentBy pushNotifications.UserId) {
+	c.FriendRequestHasBeenReceivedImpl(receiver, sentBy)
 }
 
-func (s *ServiceMock) NewExpenseReceived(receiver pushNotifications.UserId, expense pushNotifications.Expense, author pushNotifications.UserId) {
-	s.NewExpenseReceivedImpl(receiver, expense, author)
+func (c *ServiceMock) NewExpenseReceived(receiver pushNotifications.UserId, expense pushNotifications.Expense, author pushNotifications.UserId) {
+	c.NewExpenseReceivedImpl(receiver, expense, author)
 }

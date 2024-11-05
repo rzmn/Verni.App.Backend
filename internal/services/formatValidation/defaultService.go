@@ -12,7 +12,7 @@ type defaultService struct {
 	logger logging.Service
 }
 
-func (s *defaultService) ValidateEmailFormat(email string) error {
+func (c *defaultService) ValidateEmailFormat(email string) error {
 	_, err := mail.ParseAddress(email)
 	if err != nil {
 		return fmt.Errorf("email is invalid: %v", err)
@@ -23,14 +23,14 @@ func (s *defaultService) ValidateEmailFormat(email string) error {
 	return nil
 }
 
-func (s *defaultService) ValidatePasswordFormat(password string) error {
+func (c *defaultService) ValidatePasswordFormat(password string) error {
 	if len(password) < 6 {
 		return fmt.Errorf("password should contain more than 6 characters")
 	}
 	return nil
 }
 
-func (s *defaultService) ValidateDisplayNameFormat(name string) error {
+func (c *defaultService) ValidateDisplayNameFormat(name string) error {
 	if !regexp.MustCompile(`^[A-Za-z]+$`).MatchString(name) {
 		return fmt.Errorf("display name is invalid: should contain latin characters only")
 	}

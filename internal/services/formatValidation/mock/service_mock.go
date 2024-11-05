@@ -6,14 +6,14 @@ type ServiceMock struct {
 	ValidateDisplayNameFormatImpl func(name string) error
 }
 
-func (s *ServiceMock) ValidateEmailFormat(email string) error {
-	return s.ValidateEmailFormatImpl(email)
+func (c *ServiceMock) ValidateEmailFormat(email string) error {
+	return c.ValidateEmailFormatImpl(email)
 }
 
-func (s *ServiceMock) ValidatePasswordFormat(password string) error {
-	return s.ValidatePasswordFormatImpl(password)
+func (c *ServiceMock) ValidatePasswordFormat(password string) error {
+	return c.ValidatePasswordFormatImpl(password)
 }
 
-func (s *ServiceMock) ValidateDisplayNameFormat(name string) error {
-	return s.ValidateDisplayNameFormatImpl(name)
+func (c *ServiceMock) ValidateDisplayNameFormat(name string) error {
+	return c.ValidateDisplayNameFormatImpl(name)
 }

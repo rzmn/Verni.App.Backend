@@ -48,16 +48,16 @@ type ApnsCredentials struct {
 	Password string `json:"cert_pwd"`
 }
 
-func (s *appleService) FriendRequestHasBeenAccepted(receiver UserId, acceptedBy UserId) {
+func (c *appleService) FriendRequestHasBeenAccepted(receiver UserId, acceptedBy UserId) {
 	const op = "apns.defaultService.FriendRequestHasBeenAccepted"
-	s.logger.Log("%s: start[receiver=%s acceptedBy=%s]", op, receiver, acceptedBy)
-	receiverToken, err := s.repository.GetPushToken(pushNotifications.UserId(receiver))
+	c.logger.Log("%s: start[receiver=%s acceptedBy=%s]", op, receiver, acceptedBy)
+	receiverToken, err := c.repository.GetPushToken(pushNotifications.UserId(receiver))
 	if err != nil {
-		s.logger.Log("%s: cannot get receiver token from db err: %v", op, err)
+		c.logger.Log("%s: cannot get receiver token from db err: %v", op, err)
 		return
 	}
 	if receiverToken == nil {
-		s.logger.Log("%s: receiver push token is nil", op)
+		c.logger.Log("%s: receiver push token is nil", op)
 		return
 	}
 	type Payload struct {
@@ -83,26 +83,26 @@ func (s *appleService) FriendRequestHasBeenAccepted(receiver UserId, acceptedBy 
 		},
 	})
 	if err != nil {
-		s.logger.Log("%s: failed to create payload string: %v", op, err)
+		c.logger.Log("%s: failed to create payload string: %v", op, err)
 		return
 	}
-	if err := s.send(*receiverToken, string(payloadString)); err != nil {
-		s.logger.Log("%s: failed to send push: %v", op, err)
+	if err := c.send(*receiverToken, string(payloadString)); err != nil {
+		c.logger.Log("%s: failed to send push: %v", op, err)
 		return
 	}
-	s.logger.Log("%s: success[receiver=%s acceptedBy=%s]", op, receiver, acceptedBy)
+	c.logger.Log("%s: success[receiver=%s acceptedBy=%s]", op, receiver, acceptedBy)
 }
 
-func (s *appleService) FriendRequestHasBeenReceived(receiver UserId, sentBy UserId) {
+func (c *appleService) FriendRequestHasBeenReceived(receiver UserId, sentBy UserId) {
 	const op = "apns.defaultService.FriendRequestHasBeenReceived"
-	s.logger.Log("%s: start[receiver=%s sentBy=%s]", op, receiver, sentBy)
-	receiverToken, err := s.repository.GetPushToken(pushNotifications.UserId(receiver))
+	c.logger.Log("%s: start[receiver=%s sentBy=%s]", op, receiver, sentBy)
+	receiverToken, err := c.repository.GetPushToken(pushNotifications.UserId(receiver))
 	if err != nil {
-		s.logger.Log("%s: cannot get receiver token from db err: %v", op, err)
+		c.logger.Log("%s: cannot get receiver token from db err: %v", op, err)
 		return
 	}
 	if receiverToken == nil {
-		s.logger.Log("%s: receiver push token is nil", op)
+		c.logger.Log("%s: receiver push token is nil", op)
 		return
 	}
 	type Payload struct {
@@ -128,26 +128,26 @@ func (s *appleService) FriendRequestHasBeenReceived(receiver UserId, sentBy User
 		},
 	})
 	if err != nil {
-		s.logger.Log("%s: failed to create payload string: %v", op, err)
+		c.logger.Log("%s: failed to create payload string: %v", op, err)
 		return
 	}
-	if err := s.send(*receiverToken, string(payloadString)); err != nil {
-		s.logger.Log("%s: failed to send push: %v", op, err)
+	if err := c.send(*receiverToken, string(payloadString)); err != nil {
+		c.logger.Log("%s: failed to send push: %v", op, err)
 		return
 	}
-	s.logger.Log("%s: success[receiver=%s sentBy=%s]", op, receiver, sentBy)
+	c.logger.Log("%s: success[receiver=%s sentBy=%s]", op, receiver, sentBy)
 }
 
-func (s *appleService) NewExpenseReceived(receiver UserId, expense Expense, author UserId) {
+func (c *appleService) NewExpenseReceived(receiver UserId, expense Expense, author UserId) {
 	const op = "apns.defaultService.NewExpenseReceived"
-	s.logger.Log("%s: start[receiver=%s id=%s author=%s]", op, receiver, expense.Id, author)
-	receiverToken, err := s.repository.GetPushToken(pushNotifications.UserId(receiver))
+	c.logger.Log("%s: start[receiver=%s id=%s author=%s]", op, receiver, expense.Id, author)
+	receiverToken, err := c.repository.GetPushToken(pushNotifications.UserId(receiver))
 	if err != nil {
-		s.logger.Log("%s: cannot get receiver token from db err: %v", op, err)
+		c.logger.Log("%s: cannot get receiver token from db err: %v", op, err)
 		return
 	}
 	if receiverToken == nil {
-		s.logger.Log("%s: receiver push token is nil", op)
+		c.logger.Log("%s: receiver push token is nil", op)
 		return
 	}
 	type Payload struct {
@@ -183,29 +183,29 @@ func (s *appleService) NewExpenseReceived(receiver UserId, expense Expense, auth
 		},
 	})
 	if err != nil {
-		s.logger.Log("%s: failed create payload string: %v", op, err)
+		c.logger.Log("%s: failed create payload string: %v", op, err)
 		return
 	}
-	if err := s.send(*receiverToken, string(payloadString)); err != nil {
-		s.logger.Log("%s: failed to send push: %v", op, err)
+	if err := c.send(*receiverToken, string(payloadString)); err != nil {
+		c.logger.Log("%s: failed to send push: %v", op, err)
 		return
 	}
-	s.logger.Log("%s: success[receiver=%s id=%s author=%s]", op, receiver, expense.Id, author)
+	c.logger.Log("%s: success[receiver=%s id=%s author=%s]", op, receiver, expense.Id, author)
 }
 
-func (s *appleService) send(token string, payloadString string) error {
+func (c *appleService) send(token string, payloadString string) error {
 	const op = "apns.defaultService.send"
 	notification := &apns2.Notification{}
 	notification.DeviceToken = token
 	notification.Topic = "com.rzmn.accountydev.app"
 
-	s.logger.Log("%s: sending push: %s", op, payloadString)
+	c.logger.Log("%s: sending push: %s", op, payloadString)
 	notification.Payload = payloadString
 
-	res, err := s.client.Push(notification)
+	res, err := c.client.Push(notification)
 
 	if err != nil {
-		s.logger.Log("%s: failed to send notification: %v", op, err)
+		c.logger.Log("%s: failed to send notification: %v", op, err)
 		return err
 	}
 	fmt.Printf("%s: sent %v %v %v\n", op, res.StatusCode, res.ApnsID, res.Reason)

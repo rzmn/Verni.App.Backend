@@ -17,38 +17,38 @@ type defaultService struct {
 	logger       logging.Service
 }
 
-func (s *defaultService) RegisterRoutes() {
+func (c *defaultService) RegisterRoutes() {
 	const op = "longpoll.defaultService.RegisterRoutes"
-	s.logger.Log("%s: start", op)
+	c.logger.Log("%s: start", op)
 	longpoll, err := golongpoll.StartLongpoll(golongpoll.Options{})
 	if err != nil {
-		s.logger.Log("%s: failed err: %v", op, err)
+		c.logger.Log("%s: failed err: %v", op, err)
 		return
 	}
-	s.logger.Log("%s: success", op)
-	s.longPoll = longpoll
-	s.engine.GET("/queue/subscribe", s.tokenChecker.Handler, func(c *gin.Context) {
+	c.logger.Log("%s: success", op)
+	c.longPoll = longpoll
+	c.engine.GET("/queue/subscribe", c.tokenChecker.Handler, func(c *gin.Context) {
 		longpoll.SubscriptionHandler(c.Writer, c.Request)
 	})
 }
 
-func (s *defaultService) CounterpartiesUpdated(uid UserId) {
+func (c *defaultService) CounterpartiesUpdated(uid UserId) {
 	type Payload struct{}
 	key := fmt.Sprintf("counterparties_%s", uid)
 	payload := Payload{}
-	s.longPoll.Publish(key, payload)
+	c.longPoll.Publish(key, payload)
 }
 
-func (s *defaultService) SpendingsUpdated(uid UserId) {
+func (c *defaultService) SpendingsUpdated(uid UserId) {
 	type Payload struct{}
 	key := fmt.Sprintf("spendings_%s", uid)
 	payload := Payload{}
-	s.longPoll.Publish(key, payload)
+	c.longPoll.Publish(key, payload)
 }
 
-func (s *defaultService) FriendsUpdated(uid UserId) {
+func (c *defaultService) FriendsUpdated(uid UserId) {
 	type Payload struct{}
 	key := fmt.Sprintf("friends_%s", uid)
 	payload := Payload{}
-	s.longPoll.Publish(key, payload)
+	c.longPoll.Publish(key, payload)
 }

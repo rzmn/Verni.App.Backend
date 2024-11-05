@@ -14,23 +14,23 @@ type yandexService struct {
 	logger   logging.Service
 }
 
-func (s *yandexService) Send(subject string, email string) error {
+func (c *yandexService) Send(subject string, email string) error {
 	const op = "emailSender.yandexService.Send"
-	s.logger.Log("%s: start", op)
+	c.logger.Log("%s: start", op)
 	to := []string{
 		email,
 	}
-	auth := smtp.PlainAuth("", s.sender, s.password, s.host)
+	auth := smtp.PlainAuth("", c.sender, c.password, c.host)
 
 	message := []byte(
-		fmt.Sprintf("From: Verni <%s>\r\n", s.sender) +
+		fmt.Sprintf("From: Verni <%s>\r\n", c.sender) +
 			fmt.Sprintf("To: %s\r\n", email) + subject,
 	)
-	err := smtp.SendMail(s.host+":"+s.port, auth, s.sender, to, []byte(message))
+	err := smtp.SendMail(c.host+":"+c.port, auth, c.sender, to, []byte(message))
 	if err != nil {
-		s.logger.Log("%s: send failed: %v", op, err)
+		c.logger.Log("%s: send failed: %v", op, err)
 		return err
 	}
-	s.logger.Log("%s: success", op)
+	c.logger.Log("%s: success", op)
 	return nil
 }
