@@ -53,7 +53,7 @@ func (c *appleService) FriendRequestHasBeenAccepted(receiver UserId, acceptedBy 
 	c.logger.LogInfo("%s: start[receiver=%s acceptedBy=%s]", op, receiver, acceptedBy)
 	receiverToken, err := c.repository.GetPushToken(pushNotifications.UserId(receiver))
 	if err != nil {
-		c.logger.LogInfo("%s: cannot get receiver token from db err: %v", op, err)
+		c.logger.LogError("%s: cannot get receiver token from db err: %v", op, err)
 		return
 	}
 	if receiverToken == nil {
@@ -83,11 +83,11 @@ func (c *appleService) FriendRequestHasBeenAccepted(receiver UserId, acceptedBy 
 		},
 	})
 	if err != nil {
-		c.logger.LogInfo("%s: failed to create payload string: %v", op, err)
+		c.logger.LogError("%s: failed to create payload string: %v", op, err)
 		return
 	}
 	if err := c.send(*receiverToken, string(payloadString)); err != nil {
-		c.logger.LogInfo("%s: failed to send push: %v", op, err)
+		c.logger.LogError("%s: failed to send push: %v", op, err)
 		return
 	}
 	c.logger.LogInfo("%s: success[receiver=%s acceptedBy=%s]", op, receiver, acceptedBy)
@@ -98,7 +98,7 @@ func (c *appleService) FriendRequestHasBeenReceived(receiver UserId, sentBy User
 	c.logger.LogInfo("%s: start[receiver=%s sentBy=%s]", op, receiver, sentBy)
 	receiverToken, err := c.repository.GetPushToken(pushNotifications.UserId(receiver))
 	if err != nil {
-		c.logger.LogInfo("%s: cannot get receiver token from db err: %v", op, err)
+		c.logger.LogError("%s: cannot get receiver token from db err: %v", op, err)
 		return
 	}
 	if receiverToken == nil {
@@ -128,11 +128,11 @@ func (c *appleService) FriendRequestHasBeenReceived(receiver UserId, sentBy User
 		},
 	})
 	if err != nil {
-		c.logger.LogInfo("%s: failed to create payload string: %v", op, err)
+		c.logger.LogError("%s: failed to create payload string: %v", op, err)
 		return
 	}
 	if err := c.send(*receiverToken, string(payloadString)); err != nil {
-		c.logger.LogInfo("%s: failed to send push: %v", op, err)
+		c.logger.LogError("%s: failed to send push: %v", op, err)
 		return
 	}
 	c.logger.LogInfo("%s: success[receiver=%s sentBy=%s]", op, receiver, sentBy)
@@ -143,7 +143,7 @@ func (c *appleService) NewExpenseReceived(receiver UserId, expense Expense, auth
 	c.logger.LogInfo("%s: start[receiver=%s id=%s author=%s]", op, receiver, expense.Id, author)
 	receiverToken, err := c.repository.GetPushToken(pushNotifications.UserId(receiver))
 	if err != nil {
-		c.logger.LogInfo("%s: cannot get receiver token from db err: %v", op, err)
+		c.logger.LogError("%s: cannot get receiver token from db err: %v", op, err)
 		return
 	}
 	if receiverToken == nil {
@@ -183,11 +183,11 @@ func (c *appleService) NewExpenseReceived(receiver UserId, expense Expense, auth
 		},
 	})
 	if err != nil {
-		c.logger.LogInfo("%s: failed create payload string: %v", op, err)
+		c.logger.LogError("%s: failed create payload string: %v", op, err)
 		return
 	}
 	if err := c.send(*receiverToken, string(payloadString)); err != nil {
-		c.logger.LogInfo("%s: failed to send push: %v", op, err)
+		c.logger.LogError("%s: failed to send push: %v", op, err)
 		return
 	}
 	c.logger.LogInfo("%s: success[receiver=%s id=%s author=%s]", op, receiver, expense.Id, author)

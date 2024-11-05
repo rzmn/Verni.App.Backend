@@ -38,17 +38,20 @@ func JwsAccessTokenCheck(repository authRepository.Repository, jwtService jwt.Se
 				case jwt.CodeTokenInvalid:
 					httpserver.Answer(c, err, http.StatusUnprocessableEntity, responses.CodeWrongAccessToken)
 				default:
+					logger.LogError("jwt token validation failed %v", err)
 					httpserver.AnswerWithUnknownError(c, err)
 				}
 				return
 			}
 			subject, getSubjectError := jwtService.GetAccessTokenSubject(token)
 			if getSubjectError != nil {
+				logger.LogError("jwt token get subject failed %v", getSubjectError)
 				httpserver.AnswerWithUnknownError(c, getSubjectError)
 				return
 			}
 			exists, err := repository.IsUserExists(authRepository.UserId(subject))
 			if err != nil {
+				logger.LogError("valid token with invalid subject - %v", err)
 				httpserver.AnswerWithUnknownError(c, err)
 				return
 			}
