@@ -109,12 +109,12 @@ func main() {
 		}
 		configFile, err := os.Open(pathProvider.AbsolutePath("./config/prod/verni.json"))
 		if err != nil {
-			logger.Fatalf("failed to open config file: %s", err)
+			logger.LogFatal("failed to open config file: %s", err)
 		}
 		defer configFile.Close()
 		configData, err := io.ReadAll(configFile)
 		if err != nil {
-			logger.Fatalf("failed to read config file: %s", err)
+			logger.LogFatal("failed to read config file: %s", err)
 		}
 		var config Config
 		json.Unmarshal([]byte(configData), &config)
@@ -123,45 +123,45 @@ func main() {
 			case "telegram":
 				data, err := json.Marshal(config.Watchdog.Config)
 				if err != nil {
-					logger.Fatalf("failed to serialize telegram watchdog config err: %v", err)
+					logger.LogFatal("failed to serialize telegram watchdog config err: %v", err)
 				}
 				var telegramConfig watchdog.TelegramConfig
 				json.Unmarshal(data, &telegramConfig)
-				logger.Log("creating telegram watchdog with config %v", telegramConfig)
+				logger.LogInfo("creating telegram watchdog with config %v", telegramConfig)
 				watchdog, err := watchdog.TelegramService(telegramConfig)
 				if err != nil {
-					logger.Fatalf("failed to initialize telegram watchdog err: %v", err)
+					logger.LogFatal("failed to initialize telegram watchdog err: %v", err)
 				}
-				logger.Log("initialized postgres")
+				logger.LogInfo("initialized postgres")
 				return watchdog
 			default:
-				logger.Fatalf("unknown storage type %s", config.Storage.Type)
+				logger.LogFatal("unknown storage type %s", config.Storage.Type)
 				return nil
 			}
 		}()
 		watchdogRef = &watchdog
 		return logger, pathProvider, config
 	}()
-	logger.Log("initializing with config %v", config)
+	logger.LogInfo("initializing with config %v", config)
 
 	database := func() db.DB {
 		switch config.Storage.Type {
 		case "postgres":
 			data, err := json.Marshal(config.Storage.Config)
 			if err != nil {
-				logger.Fatalf("failed to serialize ydb config err: %v", err)
+				logger.LogFatal("failed to serialize ydb config err: %v", err)
 			}
 			var postgresConfig db.PostgresConfig
 			json.Unmarshal(data, &postgresConfig)
-			logger.Log("creating postgres with config %v", postgresConfig)
+			logger.LogInfo("creating postgres with config %v", postgresConfig)
 			db, err := db.Postgres(postgresConfig, logger)
 			if err != nil {
-				logger.Fatalf("failed to initialize postgres err: %v", err)
+				logger.LogFatal("failed to initialize postgres err: %v", err)
 			}
-			logger.Log("initialized postgres")
+			logger.LogInfo("initialized postgres")
 			return db
 		default:
-			logger.Fatalf("unknown storage type %s", config.Storage.Type)
+			logger.LogFatal("unknown storage type %s", config.Storage.Type)
 			return nil
 		}
 	}()
@@ -181,19 +181,19 @@ func main() {
 			case "apns":
 				data, err := json.Marshal(config.PushNotifications.Config)
 				if err != nil {
-					logger.Fatalf("failed to serialize apple apns config err: %v", err)
+					logger.LogFatal("failed to serialize apple apns config err: %v", err)
 				}
 				var apnsConfig pushNotifications.ApnsConfig
 				json.Unmarshal(data, &apnsConfig)
-				logger.Log("creating apple apns service with config %v", apnsConfig)
+				logger.LogInfo("creating apple apns service with config %v", apnsConfig)
 				service, err := pushNotifications.ApnsService(apnsConfig, logger, pathProvider, repositories.pushRegistry)
 				if err != nil {
-					logger.Fatalf("failed to initialize apple apns service err: %v", err)
+					logger.LogFatal("failed to initialize apple apns service err: %v", err)
 				}
-				logger.Log("initialized apple apns service")
+				logger.LogInfo("initialized apple apns service")
 				return service
 			default:
-				logger.Fatalf("unknown apns type %s", config.PushNotifications.Type)
+				logger.LogFatal("unknown apns type %s", config.PushNotifications.Type)
 				return nil
 			}
 		}(),
@@ -202,11 +202,11 @@ func main() {
 			case "default":
 				data, err := json.Marshal(config.Jwt.Config)
 				if err != nil {
-					logger.Fatalf("failed to serialize jwt config err: %v", err)
+					logger.LogFatal("failed to serialize jwt config err: %v", err)
 				}
 				var defaultConfig jwt.DefaultConfig
 				json.Unmarshal(data, &defaultConfig)
-				logger.Log("creating jwt token service with config %v", defaultConfig)
+				logger.LogInfo("creating jwt token service with config %v", defaultConfig)
 				return jwt.DefaultService(
 					defaultConfig,
 					logger,
@@ -215,7 +215,7 @@ func main() {
 					},
 				)
 			default:
-				logger.Fatalf("unknown jwt service type %s", config.Jwt.Type)
+				logger.LogFatal("unknown jwt service type %s", config.Jwt.Type)
 				return nil
 			}
 		}(),
@@ -224,14 +224,14 @@ func main() {
 			case "yandex":
 				data, err := json.Marshal(config.EmailSender.Config)
 				if err != nil {
-					logger.Fatalf("failed to serialize yandex email sender config err: %v", err)
+					logger.LogFatal("failed to serialize yandex email sender config err: %v", err)
 				}
 				var yandexConfig emailSender.YandexConfig
 				json.Unmarshal(data, &yandexConfig)
-				logger.Log("creating yandex email sender with config %v", yandexConfig)
+				logger.LogInfo("creating yandex email sender with config %v", yandexConfig)
 				return emailSender.YandexService(yandexConfig, logger)
 			default:
-				logger.Fatalf("unknown email sender type %s", config.EmailSender.Type)
+				logger.LogFatal("unknown email sender type %s", config.EmailSender.Type)
 				return nil
 			}
 		}(),
@@ -292,11 +292,11 @@ func main() {
 			}
 			data, err := json.Marshal(config.Server.Config)
 			if err != nil {
-				logger.Fatalf("failed to serialize default server config err: %v", err)
+				logger.LogFatal("failed to serialize default server config err: %v", err)
 			}
 			var ginConfig GinConfig
 			json.Unmarshal(data, &ginConfig)
-			logger.Log("creating gin server with config %v", ginConfig)
+			logger.LogInfo("creating gin server with config %v", ginConfig)
 			gin.SetMode(ginConfig.RunMode)
 			router := gin.New()
 			tokenChecker := middleware.JwsAccessTokenCheck(
@@ -323,10 +323,10 @@ func main() {
 				WriteTimeout: time.Second * time.Duration(ginConfig.IdleTimeoutSec),
 			}
 		default:
-			logger.Fatalf("unknown server type %s", config.Server.Type)
+			logger.LogFatal("unknown server type %s", config.Server.Type)
 			return http.Server{}
 		}
 	}()
-	logger.Log("[info] start http server listening %s", server.Addr)
+	logger.LogInfo("[info] start http server listening %s", server.Addr)
 	server.ListenAndServe()
 }

@@ -17,14 +17,14 @@ func (c *postgresRepository) StoreEmailVerificationCode(email string, code strin
 	return repositories.MutationWorkItem{
 		Perform: func() error {
 			if err != nil {
-				c.logger.Log("%s: failed to get current code err: %v", op, err)
+				c.logger.LogInfo("%s: failed to get current code err: %v", op, err)
 				return err
 			}
 			return c.storeEmailVerificationCode(email, code)
 		},
 		Rollback: func() error {
 			if err != nil {
-				c.logger.Log("%s: failed to get current code err: %v", op, err)
+				c.logger.LogInfo("%s: failed to get current code err: %v", op, err)
 				return err
 			}
 			if currentCode == nil {
@@ -38,48 +38,48 @@ func (c *postgresRepository) StoreEmailVerificationCode(email string, code strin
 
 func (c *postgresRepository) storeEmailVerificationCode(email string, code string) error {
 	const op = "repositories.verification.postgresRepository.storeEmailVerificationCode"
-	c.logger.Log("%s: start[email=%s]", op, email)
+	c.logger.LogInfo("%s: start[email=%s]", op, email)
 	query := `
 INSERT INTO emailVerification(email, code) VALUES ($1, $2) 
 ON CONFLICT (email) DO UPDATE SET code = $2;
 `
 	_, err := c.db.Exec(query, email, code)
 	if err != nil {
-		c.logger.Log("%s: failed to perform query err: %v", op, err)
+		c.logger.LogInfo("%s: failed to perform query err: %v", op, err)
 		return err
 	}
-	c.logger.Log("%s: success[email=%s]", op, email)
+	c.logger.LogInfo("%s: success[email=%s]", op, email)
 	return nil
 }
 
 func (c *postgresRepository) GetEmailVerificationCode(email string) (*string, error) {
 	const op = "repositories.verification.postgresRepository.GetEmailVerificationCode"
-	c.logger.Log("%s: start[email=%s]", op, email)
+	c.logger.LogInfo("%s: start[email=%s]", op, email)
 	query := `SELECT code FROM emailVerification WHERE email = $1;`
 	rows, err := c.db.Query(query, email)
 	if err != nil {
-		c.logger.Log("%s: failed to perform query err: %v", op, err)
+		c.logger.LogInfo("%s: failed to perform query err: %v", op, err)
 		return nil, err
 	}
 	defer rows.Close()
 	if rows.Next() {
 		var code string
 		if err := rows.Scan(&code); err != nil {
-			c.logger.Log("%s: failed to perform scan err: %v", op, err)
+			c.logger.LogInfo("%s: failed to perform scan err: %v", op, err)
 			return nil, err
 		}
 		if err := rows.Err(); err != nil {
-			c.logger.Log("%s: found rows err: %v", op, err)
+			c.logger.LogInfo("%s: found rows err: %v", op, err)
 			return nil, err
 		}
-		c.logger.Log("%s: success[email=%s]", op, email)
+		c.logger.LogInfo("%s: success[email=%s]", op, email)
 		return &code, nil
 	}
 	if err := rows.Err(); err != nil {
-		c.logger.Log("%s: found rows err: %v", op, err)
+		c.logger.LogInfo("%s: found rows err: %v", op, err)
 		return nil, err
 	}
-	c.logger.Log("%s: success[email=%s]", op, email)
+	c.logger.LogInfo("%s: success[email=%s]", op, email)
 	return nil, nil
 }
 
@@ -89,7 +89,7 @@ func (c *postgresRepository) RemoveEmailVerificationCode(email string) repositor
 	return repositories.MutationWorkItem{
 		Perform: func() error {
 			if err != nil {
-				c.logger.Log("%s: failed to get current code err: %v", op, err)
+				c.logger.LogInfo("%s: failed to get current code err: %v", op, err)
 				return err
 			}
 			if code == nil {
@@ -100,7 +100,7 @@ func (c *postgresRepository) RemoveEmailVerificationCode(email string) repositor
 		},
 		Rollback: func() error {
 			if err != nil {
-				c.logger.Log("%s: failed to get current code err: %v", op, err)
+				c.logger.LogInfo("%s: failed to get current code err: %v", op, err)
 				return err
 			}
 			if code == nil {
@@ -114,13 +114,13 @@ func (c *postgresRepository) RemoveEmailVerificationCode(email string) repositor
 
 func (c *postgresRepository) removeEmailVerificationCode(email string) error {
 	const op = "repositories.verification.postgresRepository.removeEmailVerificationCode"
-	c.logger.Log("%s: start[email=%s]", op, email)
+	c.logger.LogInfo("%s: start[email=%s]", op, email)
 	query := `DELETE FROM emailVerification WHERE email = $1;`
 	_, err := c.db.Exec(query, email)
 	if err != nil {
-		c.logger.Log("%s: failed to perform query err: %v", op, err)
+		c.logger.LogInfo("%s: failed to perform query err: %v", op, err)
 		return err
 	}
-	c.logger.Log("%s: success[email=%s]", op, email)
+	c.logger.LogInfo("%s: success[email=%s]", op, email)
 	return nil
 }

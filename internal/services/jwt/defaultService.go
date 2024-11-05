@@ -34,7 +34,7 @@ func (c *defaultService) IssueRefreshToken(subject Subject) (RefreshToken, *Erro
 		},
 	}, []byte(c.refreshTokenSecret))
 	if err != nil {
-		c.logger.Log("%s: cannot generate token %v", op, err)
+		c.logger.LogInfo("%s: cannot generate token %v", op, err)
 		return RefreshToken(rawToken), &Error{
 			Code: CodeInternal,
 		}
@@ -54,7 +54,7 @@ func (c *defaultService) IssueAccessToken(subject Subject) (AccessToken, *Error)
 		},
 	}, []byte(c.accessTokenSecret))
 	if err != nil {
-		c.logger.Log("%s: cannot generate token %v", op, err)
+		c.logger.LogInfo("%s: cannot generate token %v", op, err)
 		return AccessToken(rawToken), &Error{
 			Code: CodeInternal,
 		}
@@ -67,20 +67,20 @@ func (c *defaultService) ValidateRefreshToken(token RefreshToken) *Error {
 	rawToken, err := parseToken(string(token), []byte(c.refreshTokenSecret))
 	expired := errors.Is(err, jwt.ErrTokenExpired)
 	if rawToken == nil || (err != nil && !expired) {
-		c.logger.Log("%s: bad jwt token %v", op, err)
+		c.logger.LogInfo("%s: bad jwt token %v", op, err)
 		return &Error{
 			Code: CodeTokenInvalid,
 		}
 	}
 	claims, ok := rawToken.Claims.(*jwtClaims)
 	if !ok {
-		c.logger.Log("%s: bad jwt token claims", op)
+		c.logger.LogInfo("%s: bad jwt token claims", op)
 		return &Error{
 			Code: CodeTokenInvalid,
 		}
 	}
 	if claims.TokenType != tokenTypeRefresh || claims.ExpiresAt == nil {
-		c.logger.Log("%s: bad token claims %s", op, claims)
+		c.logger.LogInfo("%s: bad token claims %s", op, claims)
 		return &Error{
 			Code: CodeTokenInvalid,
 		}
@@ -98,20 +98,20 @@ func (c *defaultService) ValidateAccessToken(token AccessToken) *Error {
 	rawToken, err := parseToken(string(token), []byte(c.accessTokenSecret))
 	expired := errors.Is(err, jwt.ErrTokenExpired)
 	if rawToken == nil || (err != nil && !expired) {
-		c.logger.Log("%s: bad jwt token %v", op, err)
+		c.logger.LogInfo("%s: bad jwt token %v", op, err)
 		return &Error{
 			Code: CodeTokenInvalid,
 		}
 	}
 	claims, ok := rawToken.Claims.(*jwtClaims)
 	if !ok {
-		c.logger.Log("%s: bad jwt token claims", op)
+		c.logger.LogInfo("%s: bad jwt token claims", op)
 		return &Error{
 			Code: CodeTokenInvalid,
 		}
 	}
 	if claims.TokenType != tokenTypeAccess || claims.ExpiresAt == nil {
-		c.logger.Log("%s: bad token claims %s", op, claims)
+		c.logger.LogInfo("%s: bad token claims %s", op, claims)
 		return &Error{
 			Code: CodeTokenInvalid,
 		}
@@ -129,12 +129,12 @@ func (c *defaultService) GetRefreshTokenSubject(token RefreshToken) (Subject, *E
 	rawToken, err := parseToken(string(token), []byte(c.refreshTokenSecret))
 	if rawToken == nil || err != nil {
 		if errors.Is(err, jwt.ErrTokenExpired) {
-			c.logger.Log("%s: jwt token expired %v", op, err)
+			c.logger.LogInfo("%s: jwt token expired %v", op, err)
 			return "", &Error{
 				Code: CodeTokenExpired,
 			}
 		} else {
-			c.logger.Log("%s: bad jwt token %v", op, err)
+			c.logger.LogInfo("%s: bad jwt token %v", op, err)
 			return "", &Error{
 				Code: CodeTokenInvalid,
 			}
@@ -142,7 +142,7 @@ func (c *defaultService) GetRefreshTokenSubject(token RefreshToken) (Subject, *E
 	}
 	claims, ok := rawToken.Claims.(*jwtClaims)
 	if !ok || claims.TokenType != tokenTypeRefresh {
-		c.logger.Log("%s: bad jwt token claims", op)
+		c.logger.LogInfo("%s: bad jwt token claims", op)
 		return "", &Error{
 			Code: CodeTokenInvalid,
 		}
@@ -155,12 +155,12 @@ func (c *defaultService) GetAccessTokenSubject(token AccessToken) (Subject, *Err
 	rawToken, err := parseToken(string(token), []byte(c.accessTokenSecret))
 	if rawToken == nil || err != nil {
 		if errors.Is(err, jwt.ErrTokenExpired) {
-			c.logger.Log("%s: jwt token expired %v", op, err)
+			c.logger.LogInfo("%s: jwt token expired %v", op, err)
 			return "", &Error{
 				Code: CodeTokenExpired,
 			}
 		} else {
-			c.logger.Log("%s: bad jwt token %v", op, err)
+			c.logger.LogInfo("%s: bad jwt token %v", op, err)
 			return "", &Error{
 				Code: CodeTokenInvalid,
 			}
@@ -168,7 +168,7 @@ func (c *defaultService) GetAccessTokenSubject(token AccessToken) (Subject, *Err
 	}
 	claims, ok := rawToken.Claims.(*jwtClaims)
 	if !ok || claims.TokenType != tokenTypeAccess {
-		c.logger.Log("%s: bad jwt token claims", op)
+		c.logger.LogInfo("%s: bad jwt token claims", op)
 		return "", &Error{
 			Code: CodeTokenInvalid,
 		}

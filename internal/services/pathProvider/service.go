@@ -10,7 +10,7 @@ type Service interface {
 }
 
 func DefaultService(root string, logger logging.Service) Service {
-	logger.Log("override relative paths root: %s", root)
+	logger.LogInfo("override relative paths root: %s", root)
 	return &defaultService{
 		root: root,
 	}
@@ -19,7 +19,7 @@ func DefaultService(root string, logger logging.Service) Service {
 func VerniEnvService(logger logging.Service) Service {
 	root, present := os.LookupEnv("VERNI_PROJECT_ROOT")
 	if !present {
-		logger.Fatalf("`VERNI_PROJECT_ROOT` should be set")
+		logger.LogFatal("`VERNI_PROJECT_ROOT` should be set")
 	}
 	return DefaultService(root, logger)
 }

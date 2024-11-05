@@ -33,14 +33,14 @@ func ApnsService(config ApnsConfig, logger logging.Service, pathProviderService 
 	const op = "apns.AppleService"
 	credentialsData, err := os.ReadFile(pathProviderService.AbsolutePath(config.CredentialsPath))
 	if err != nil {
-		logger.Log("%s: failed to open config: %v", op, err)
+		logger.LogInfo("%s: failed to open config: %v", op, err)
 		return &appleService{}, err
 	}
 	var credentials ApnsCredentials
 	json.Unmarshal(credentialsData, &credentials)
 	cert, err := certificate.FromP12File(pathProviderService.AbsolutePath(config.CertificatePath), credentials.Password)
 	if err != nil {
-		logger.Log("%s: failed to open p12 creds %v: %v", op, err, credentials)
+		logger.LogInfo("%s: failed to open p12 creds %v: %v", op, err, credentials)
 		return &appleService{}, err
 	}
 	return &appleService{

@@ -28,10 +28,10 @@ func JwsAccessTokenCheck(repository authRepository.Repository, jwtService jwt.Se
 	return AccessTokenChecker{
 		Handler: func(c *gin.Context) {
 			const op = "handlers.friends.ensureLoggedInMiddleware"
-			logger.Log("%s: validating access token", op)
+			logger.LogInfo("%s: validating access token", op)
 			token := jwt.AccessToken(extractBearerToken(c))
 			if err := jwtService.ValidateAccessToken(token); err != nil {
-				logger.Log("%s: failed to validate token %v", op, err)
+				logger.LogInfo("%s: failed to validate token %v", op, err)
 				switch err.Code {
 				case jwt.CodeTokenExpired:
 					httpserver.Answer(c, err, http.StatusUnauthorized, responses.CodeTokenExpired)
@@ -56,7 +56,7 @@ func JwsAccessTokenCheck(repository authRepository.Repository, jwtService jwt.Se
 				httpserver.Answer(c, err, http.StatusUnprocessableEntity, responses.CodeWrongAccessToken)
 				return
 			}
-			logger.Log("%s: access token ok", op)
+			logger.LogInfo("%s: access token ok", op)
 			c.Request.Header.Set(accessTokenSubjectKey, string(subject))
 			c.Next()
 		},

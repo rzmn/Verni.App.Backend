@@ -19,13 +19,13 @@ type defaultService struct {
 
 func (c *defaultService) RegisterRoutes() {
 	const op = "longpoll.defaultService.RegisterRoutes"
-	c.logger.Log("%s: start", op)
+	c.logger.LogInfo("%s: start", op)
 	longpoll, err := golongpoll.StartLongpoll(golongpoll.Options{})
 	if err != nil {
-		c.logger.Log("%s: failed err: %v", op, err)
+		c.logger.LogInfo("%s: failed err: %v", op, err)
 		return
 	}
-	c.logger.Log("%s: success", op)
+	c.logger.LogInfo("%s: success", op)
 	c.longPoll = longpoll
 	c.engine.GET("/queue/subscribe", c.tokenChecker.Handler, func(c *gin.Context) {
 		longpoll.SubscriptionHandler(c.Writer, c.Request)

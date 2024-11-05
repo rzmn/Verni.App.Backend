@@ -15,17 +15,17 @@ func createDatabaseActions(database db.DB, logger logging.Service) databaseActio
 		setup: func() {
 			for _, table := range tables() {
 				if err := table.create(database); err != nil {
-					logger.Log("failed to create table %s err: %v", err, table.name)
+					logger.LogInfo("failed to create table %s err: %v", err, table.name)
 				}
-				logger.Log("created table %s", table.name)
+				logger.LogInfo("created table %s", table.name)
 			}
 		},
 		drop: func() {
 			for _, table := range tables() {
 				if err := table.delete(database); err != nil {
-					logger.Log("failed to drop table %s err: %v", err, table.name)
+					logger.LogInfo("failed to drop table %s err: %v", err, table.name)
 				}
-				logger.Log("droped table %s", table.name)
+				logger.LogInfo("droped table %s", table.name)
 			}
 		},
 	}

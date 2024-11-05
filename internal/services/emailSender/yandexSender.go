@@ -16,7 +16,7 @@ type yandexService struct {
 
 func (c *yandexService) Send(subject string, email string) error {
 	const op = "emailSender.yandexService.Send"
-	c.logger.Log("%s: start", op)
+	c.logger.LogInfo("%s: start", op)
 	to := []string{
 		email,
 	}
@@ -28,9 +28,9 @@ func (c *yandexService) Send(subject string, email string) error {
 	)
 	err := smtp.SendMail(c.host+":"+c.port, auth, c.sender, to, []byte(message))
 	if err != nil {
-		c.logger.Log("%s: send failed: %v", op, err)
+		c.logger.LogInfo("%s: send failed: %v", op, err)
 		return err
 	}
-	c.logger.Log("%s: success", op)
+	c.logger.LogInfo("%s: success", op)
 	return nil
 }

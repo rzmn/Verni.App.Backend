@@ -14,12 +14,12 @@ func main() {
 	pathProvider := pathProvider.VerniEnvService(logger)
 	configFile, err := os.Open(pathProvider.AbsolutePath("./config/prod/verni.json"))
 	if err != nil {
-		logger.Fatalf("failed to open config file: %s", err)
+		logger.LogFatal("failed to open config file: %s", err)
 	}
 	defer configFile.Close()
 	configData, err := io.ReadAll(configFile)
 	if err != nil {
-		logger.Fatalf("failed to read config file: %s", err)
+		logger.LogFatal("failed to read config file: %s", err)
 	}
 	type Module struct {
 		Type   string                 `json:"type"`
@@ -30,25 +30,25 @@ func main() {
 	}
 	var config Config
 	json.Unmarshal([]byte(configData), &config)
-	logger.Log("initializing with config %v", config)
+	logger.LogInfo("initializing with config %v", config)
 	database := func() db.DB {
 		switch config.Storage.Type {
 		case "postgres":
 			data, err := json.Marshal(config.Storage.Config)
 			if err != nil {
-				logger.Fatalf("failed to serialize ydb config err: %v", err)
+				logger.LogFatal("failed to serialize ydb config err: %v", err)
 			}
 			var postgresConfig db.PostgresConfig
 			json.Unmarshal(data, &postgresConfig)
-			logger.Log("creating postgres with config %v", postgresConfig)
+			logger.LogInfo("creating postgres with config %v", postgresConfig)
 			db, err := db.Postgres(postgresConfig, logger)
 			if err != nil {
-				logger.Fatalf("failed to initialize postgres err: %v", err)
+				logger.LogFatal("failed to initialize postgres err: %v", err)
 			}
-			logger.Log("initialized postgres")
+			logger.LogInfo("initialized postgres")
 			return db
 		default:
-			logger.Fatalf("unknown storage type %s", config.Storage.Type)
+			logger.LogFatal("unknown storage type %s", config.Storage.Type)
 			return nil
 		}
 	}()

@@ -38,7 +38,7 @@ func Postgres(config PostgresConfig, logger logging.Service) (DB, error) {
 	)
 	db, err := sql.Open("postgres", psqlConnection)
 	if err != nil {
-		logger.Log("%s: open db failed err: %v", op, err)
+		logger.LogInfo("%s: open db failed err: %v", op, err)
 		return nil, err
 	}
 	return db, nil

@@ -57,9 +57,9 @@ type prodLoggingService struct {
 	delayedWatchdogCalls         []func(watchdog.Service)
 }
 
-func (c *prodLoggingService) Log(format string, v ...any) {
+func (c *prodLoggingService) LogInfo(format string, v ...any) {
 	message := prepare(format, v...)
-	c.consoleLogger.Log(message)
+	c.consoleLogger.LogInfo(message)
 	c.wg.Add(1)
 	c.logger <- func() {
 		c.watchdogContext.Append(message)
@@ -67,7 +67,20 @@ func (c *prodLoggingService) Log(format string, v ...any) {
 	}
 }
 
-func (c *prodLoggingService) Fatalf(format string, v ...any) {
+func (c *prodLoggingService) LogError(format string, v ...any) {
+	message := prepare(format, v...)
+	c.consoleLogger.LogError(message)
+	c.wg.Add(2)
+	c.logger <- func() {
+		c.watchdogContext.Append(message)
+		c.writeToFile("[error] " + message)
+	}
+	c.logger <- func() {
+		c.fireWatchdog("[error] " + message)
+	}
+}
+
+func (c *prodLoggingService) LogFatal(format string, v ...any) {
 	message := prepare(format, v...)
 	c.wg.Add(2)
 	c.logger <- func() {
@@ -79,7 +92,7 @@ func (c *prodLoggingService) Fatalf(format string, v ...any) {
 	}
 	c.wg.Wait()
 	close(c.logger)
-	c.consoleLogger.Fatalf(message)
+	c.consoleLogger.LogFatal(message)
 }
 
 func prepare(format string, v ...any) string {

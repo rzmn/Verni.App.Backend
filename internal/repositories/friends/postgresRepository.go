@@ -16,7 +16,7 @@ type postgresRepository struct {
 
 func (c *postgresRepository) GetFriends(userId UserId) ([]UserId, error) {
 	const op = "repositories.friends.postgresRepository.GetFriends"
-	c.logger.Log("%s: start[userId=%s]", op, userId)
+	c.logger.LogInfo("%s: start[userId=%s]", op, userId)
 	query := `
 SELECT r1.sender FROM friendRequests r1 WHERE r1.target = $1 AND EXISTS (
 	SELECT * FROM friendRequests r2 WHERE r2.sender = $1 AND r2.target = r1.sender
@@ -24,7 +24,7 @@ SELECT r1.sender FROM friendRequests r1 WHERE r1.target = $1 AND EXISTS (
 `
 	rows, err := c.db.Query(query, string(userId))
 	if err != nil {
-		c.logger.Log("%s: failed to perform query err: %v", op, err)
+		c.logger.LogInfo("%s: failed to perform query err: %v", op, err)
 		return []UserId{}, err
 	}
 	defer rows.Close()
@@ -32,22 +32,22 @@ SELECT r1.sender FROM friendRequests r1 WHERE r1.target = $1 AND EXISTS (
 	for rows.Next() {
 		var id string
 		if err := rows.Scan(&id); err != nil {
-			c.logger.Log("%s: failed to perform scan err: %v", op, err)
+			c.logger.LogInfo("%s: failed to perform scan err: %v", op, err)
 			return []UserId{}, err
 		}
 		subscriptions = append(subscriptions, UserId(id))
 	}
 	if err := rows.Err(); err != nil {
-		c.logger.Log("%s: found rows err: %v", op, err)
+		c.logger.LogInfo("%s: found rows err: %v", op, err)
 		return []UserId{}, err
 	}
-	c.logger.Log("%s: success[userId=%s]", op, userId)
+	c.logger.LogInfo("%s: success[userId=%s]", op, userId)
 	return subscriptions, nil
 }
 
 func (c *postgresRepository) GetSubscribers(userId UserId) ([]UserId, error) {
 	const op = "repositories.friends.postgresRepository.GetSubscribers"
-	c.logger.Log("%s: start[userId=%s]", op, userId)
+	c.logger.LogInfo("%s: start[userId=%s]", op, userId)
 	query := `
 SELECT r1.sender FROM friendRequests r1 WHERE r1.target = $1 AND NOT EXISTS (
 	SELECT * FROM friendRequests r2 WHERE r2.sender = $1 AND r2.target = r1.sender
@@ -55,7 +55,7 @@ SELECT r1.sender FROM friendRequests r1 WHERE r1.target = $1 AND NOT EXISTS (
 `
 	rows, err := c.db.Query(query, string(userId))
 	if err != nil {
-		c.logger.Log("%s: failed to perform query err: %v", op, err)
+		c.logger.LogInfo("%s: failed to perform query err: %v", op, err)
 		return []UserId{}, err
 	}
 	defer rows.Close()
@@ -63,22 +63,22 @@ SELECT r1.sender FROM friendRequests r1 WHERE r1.target = $1 AND NOT EXISTS (
 	for rows.Next() {
 		var id string
 		if err := rows.Scan(&id); err != nil {
-			c.logger.Log("%s: failed to perform scan err: %v", op, err)
+			c.logger.LogInfo("%s: failed to perform scan err: %v", op, err)
 			return []UserId{}, err
 		}
 		subscriptions = append(subscriptions, UserId(id))
 	}
 	if err := rows.Err(); err != nil {
-		c.logger.Log("%s: found rows err: %v", op, err)
+		c.logger.LogInfo("%s: found rows err: %v", op, err)
 		return []UserId{}, err
 	}
-	c.logger.Log("%s: success[userId=%s]", op, userId)
+	c.logger.LogInfo("%s: success[userId=%s]", op, userId)
 	return subscriptions, nil
 }
 
 func (c *postgresRepository) GetSubscriptions(userId UserId) ([]UserId, error) {
 	const op = "repositories.friends.postgresRepository.GetSubscriptions"
-	c.logger.Log("%s: start[userId=%s]", op, userId)
+	c.logger.LogInfo("%s: start[userId=%s]", op, userId)
 	query := `
 SELECT r1.target FROM friendRequests r1 WHERE r1.sender = $1 AND NOT EXISTS (
 	SELECT * FROM friendRequests r2 WHERE r2.target = $1 AND r2.sender = r1.target
@@ -86,7 +86,7 @@ SELECT r1.target FROM friendRequests r1 WHERE r1.sender = $1 AND NOT EXISTS (
 `
 	rows, err := c.db.Query(query, string(userId))
 	if err != nil {
-		c.logger.Log("%s: failed to perform query err: %v", op, err)
+		c.logger.LogInfo("%s: failed to perform query err: %v", op, err)
 		return []UserId{}, err
 	}
 	defer rows.Close()
@@ -94,25 +94,25 @@ SELECT r1.target FROM friendRequests r1 WHERE r1.sender = $1 AND NOT EXISTS (
 	for rows.Next() {
 		var id string
 		if err := rows.Scan(&id); err != nil {
-			c.logger.Log("%s: failed to perform scan err: %v", op, err)
+			c.logger.LogInfo("%s: failed to perform scan err: %v", op, err)
 			return []UserId{}, err
 		}
 		subscriptions = append(subscriptions, UserId(id))
 	}
 	if err := rows.Err(); err != nil {
-		c.logger.Log("%s: found rows err: %v", op, err)
+		c.logger.LogInfo("%s: found rows err: %v", op, err)
 		return []UserId{}, err
 	}
-	c.logger.Log("%s: success[userId=%s]", op, userId)
+	c.logger.LogInfo("%s: success[userId=%s]", op, userId)
 	return subscriptions, nil
 }
 
 func (c *postgresRepository) GetStatuses(sender UserId, ids []UserId) (map[UserId]FriendStatus, error) {
 	const op = "repositories.friends.postgresRepository.GetStatuses"
-	c.logger.Log("%s: start[sender=%s]", op, sender)
+	c.logger.LogInfo("%s: start[sender=%s]", op, sender)
 
 	if len(ids) == 0 {
-		c.logger.Log("%s: success[sender=%s]", op, sender)
+		c.logger.LogInfo("%s: success[sender=%s]", op, sender)
 		return map[UserId]FriendStatus{}, nil
 	}
 	argsList := strings.Join(common.Map(ids, func(id UserId) string {
@@ -145,7 +145,7 @@ FROM
 `, argsList)
 	rows, err := c.db.Query(query, string(sender))
 	if err != nil {
-		c.logger.Log("%s: failed to perform query err: %v", op, err)
+		c.logger.LogInfo("%s: failed to perform query err: %v", op, err)
 		return map[UserId]FriendStatus{}, err
 	}
 	defer rows.Close()
@@ -156,7 +156,7 @@ FROM
 		var isSubscription bool
 		var isFriend bool
 		if err := rows.Scan(&id, &isSubscriber, &isSubscription, &isFriend); err != nil {
-			c.logger.Log("%s: failed to perform scan err: %v", op, err)
+			c.logger.LogInfo("%s: failed to perform scan err: %v", op, err)
 			return map[UserId]FriendStatus{}, err
 		}
 		status := FriendStatusNo
@@ -172,10 +172,10 @@ FROM
 		statuses[UserId(id)] = FriendStatus(status)
 	}
 	if err := rows.Err(); err != nil {
-		c.logger.Log("%s: found rows err: %v", op, err)
+		c.logger.LogInfo("%s: found rows err: %v", op, err)
 		return map[UserId]FriendStatus{}, err
 	}
-	c.logger.Log("%s: success[sender=%s]", op, sender)
+	c.logger.LogInfo("%s: success[sender=%s]", op, sender)
 	return statuses, nil
 }
 
@@ -183,7 +183,7 @@ func (c *postgresRepository) HasFriendRequest(sender UserId, target UserId) (boo
 	const op = "repositories.friends.postgresRepository.HasFriendRequest"
 	hasRequest, err := c.hasFriendRequest(sender, target)
 	if err != nil {
-		c.logger.Log("%s: failed to call hasFriendRequest from sender to target err: %v", op, err)
+		c.logger.LogInfo("%s: failed to call hasFriendRequest from sender to target err: %v", op, err)
 		return false, err
 	}
 	if !hasRequest {
@@ -191,7 +191,7 @@ func (c *postgresRepository) HasFriendRequest(sender UserId, target UserId) (boo
 	}
 	hasRequestFromTarget, err := c.hasFriendRequest(target, sender)
 	if err != nil {
-		c.logger.Log("%s: failed to call hasFriendRequest from target to sender err: %v", op, err)
+		c.logger.LogInfo("%s: failed to call hasFriendRequest from target to sender err: %v", op, err)
 		return false, err
 	}
 	return !hasRequestFromTarget, nil
@@ -199,15 +199,15 @@ func (c *postgresRepository) HasFriendRequest(sender UserId, target UserId) (boo
 
 func (c *postgresRepository) hasFriendRequest(sender UserId, target UserId) (bool, error) {
 	const op = "repositories.friends.postgresRepository.hasFriendRequest"
-	c.logger.Log("%s: start[sender=%s target=%s]", op, sender, target)
+	c.logger.LogInfo("%s: start[sender=%s target=%s]", op, sender, target)
 	query := `SELECT EXISTS(SELECT 1 FROM friendRequests WHERE sender = $1 AND target = $2);`
 	row := c.db.QueryRow(query, string(sender), string(target))
 	var has bool
 	if err := row.Scan(&has); err != nil {
-		c.logger.Log("%s: failed to perform scan err: %v", op, err)
+		c.logger.LogInfo("%s: failed to perform scan err: %v", op, err)
 		return false, err
 	}
-	c.logger.Log("%s: success[sender=%s target=%s]", op, sender, target)
+	c.logger.LogInfo("%s: success[sender=%s target=%s]", op, sender, target)
 	return has, nil
 }
 
@@ -224,14 +224,14 @@ func (c *postgresRepository) StoreFriendRequest(sender UserId, target UserId) re
 
 func (c *postgresRepository) storeFriendRequest(sender UserId, target UserId) error {
 	const op = "repositories.friends.postgresRepository.storeFriendRequest"
-	c.logger.Log("%s: start[sender=%s target=%s]", op, sender, target)
+	c.logger.LogInfo("%s: start[sender=%s target=%s]", op, sender, target)
 	query := `INSERT INTO friendRequests(sender, target) VALUES($1, $2);`
 	_, err := c.db.Exec(query, string(sender), string(target))
 	if err != nil {
-		c.logger.Log("%s: failed to perform query err: %v", op, err)
+		c.logger.LogInfo("%s: failed to perform query err: %v", op, err)
 		return err
 	}
-	c.logger.Log("%s: success[sender=%s target=%s]", op, sender, target)
+	c.logger.LogInfo("%s: success[sender=%s target=%s]", op, sender, target)
 	return nil
 }
 
@@ -241,7 +241,7 @@ func (c *postgresRepository) RemoveFriendRequest(sender UserId, target UserId) r
 	return repositories.MutationWorkItem{
 		Perform: func() error {
 			if err != nil {
-				c.logger.Log("%s: failed to check is friendship exists err: %v", op, err)
+				c.logger.LogInfo("%s: failed to check is friendship exists err: %v", op, err)
 				return err
 			}
 			if has {
@@ -252,7 +252,7 @@ func (c *postgresRepository) RemoveFriendRequest(sender UserId, target UserId) r
 		},
 		Rollback: func() error {
 			if err != nil {
-				c.logger.Log("%s: failed to check is friendship exists err: %v", op, err)
+				c.logger.LogInfo("%s: failed to check is friendship exists err: %v", op, err)
 				return err
 			}
 			if has {
@@ -266,13 +266,13 @@ func (c *postgresRepository) RemoveFriendRequest(sender UserId, target UserId) r
 
 func (c *postgresRepository) removeFriendRequest(sender UserId, target UserId) error {
 	const op = "repositories.friends.postgresRepository.removeFriendRequest"
-	c.logger.Log("%s: start[sender=%s target=%s]", op, sender, target)
+	c.logger.LogInfo("%s: start[sender=%s target=%s]", op, sender, target)
 	query := `DELETE FROM friendRequests WHERE sender = $1 and target = $2;`
 	_, err := c.db.Exec(query, string(sender), string(target))
 	if err != nil {
-		c.logger.Log("%s: failed to perform query err: %v", op, err)
+		c.logger.LogInfo("%s: failed to perform query err: %v", op, err)
 		return err
 	}
-	c.logger.Log("%s: success[sender=%s target=%s]", op, sender, target)
+	c.logger.LogInfo("%s: success[sender=%s target=%s]", op, sender, target)
 	return nil
 }

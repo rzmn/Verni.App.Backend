@@ -7,8 +7,9 @@ import (
 )
 
 type Service interface {
-	Log(format string, v ...any)
-	Fatalf(format string, v ...any)
+	LogInfo(format string, v ...any)
+	LogError(format string, v ...any)
+	LogFatal(format string, v ...any)
 }
 
 func StandartOutput() Service {
@@ -48,5 +49,5 @@ func Prod(configProvider func() *ProdLoggerConfig) Service {
 }
 
 func TestService() Service {
-	return &standartOutputLoggingService{}
+	return StandartOutput()
 }

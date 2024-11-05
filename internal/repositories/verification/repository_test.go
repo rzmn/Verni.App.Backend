@@ -25,18 +25,18 @@ func TestMain(m *testing.M) {
 	database = func() db.DB {
 		configFile, err := os.Open(pathProvider.AbsolutePath("./config/test/postgres_storage.json"))
 		if err != nil {
-			logger.Fatalf("failed to open config file: %s", err)
+			logger.LogFatal("failed to open config file: %s", err)
 		}
 		defer configFile.Close()
 		configData, err := io.ReadAll(configFile)
 		if err != nil {
-			logger.Fatalf("failed to read config file: %s", err)
+			logger.LogFatal("failed to read config file: %s", err)
 		}
 		var config db.PostgresConfig
 		json.Unmarshal([]byte(configData), &config)
 		db, err := db.Postgres(config, logger)
 		if err != nil {
-			logger.Fatalf("failed to init db err: %v", err)
+			logger.LogFatal("failed to init db err: %v", err)
 		}
 		return db
 	}()
