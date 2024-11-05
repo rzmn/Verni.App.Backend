@@ -6,6 +6,7 @@ import (
 	httpserver "verni/internal/http-server"
 	"verni/internal/http-server/middleware"
 	"verni/internal/http-server/responses"
+	"verni/internal/services/logging"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,6 +15,7 @@ type ProfileController profileController.Controller
 
 func RegisterRoutes(
 	router *gin.Engine,
+	logger logging.Service,
 	tokenChecker middleware.AccessTokenChecker,
 	profile ProfileController,
 ) {
@@ -25,6 +27,7 @@ func RegisterRoutes(
 			case profileController.GetInfoErrorNotFound:
 				httpserver.Answer(c, err, http.StatusConflict, responses.CodeNoSuchRequest)
 			default:
+				logger.LogError("getProfile request failed with unknown err: %v", err)
 				httpserver.AnswerWithUnknownError(c, err)
 			}
 			return
@@ -44,6 +47,7 @@ func RegisterRoutes(
 		if err != nil {
 			switch err.Code {
 			default:
+				logger.LogError("setAvatar request %v failed with unknown err: %v", request, err)
 				httpserver.AnswerWithUnknownError(c, err)
 			}
 			return
@@ -66,6 +70,7 @@ func RegisterRoutes(
 			case profileController.UpdateDisplayNameErrorWrongFormat:
 				httpserver.Answer(c, err, http.StatusUnprocessableEntity, responses.CodeWrongFormat)
 			default:
+				logger.LogError("setDisplayName request %v failed with unknown err: %v", request, err)
 				httpserver.AnswerWithUnknownError(c, err)
 			}
 			return

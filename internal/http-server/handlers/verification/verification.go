@@ -6,6 +6,7 @@ import (
 	httpserver "verni/internal/http-server"
 	"verni/internal/http-server/middleware"
 	"verni/internal/http-server/responses"
+	"verni/internal/services/logging"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,6 +15,7 @@ type VerificationController verificationController.Controller
 
 func RegisterRoutes(
 	router *gin.Engine,
+	logger logging.Service,
 	tokenChecker middleware.AccessTokenChecker,
 	verification VerificationController,
 ) {
@@ -32,6 +34,7 @@ func RegisterRoutes(
 			case verificationController.ConfirmEmailErrorWrongConfirmationCode:
 				httpserver.Answer(c, err, http.StatusConflict, responses.CodeIncorrectCredentials)
 			default:
+				logger.LogError("confirmEmail request %v failed with unknown err: %v", request, err)
 				httpserver.AnswerWithUnknownError(c, err)
 			}
 		}
@@ -41,6 +44,7 @@ func RegisterRoutes(
 		if err := verification.SendConfirmationCode(verificationController.UserId(tokenChecker.AccessToken(c))); err != nil {
 			switch err.Code {
 			default:
+				logger.LogError("sendEmailConfirmationCode request failed with unknown err: %v", err)
 				httpserver.AnswerWithUnknownError(c, err)
 			}
 		}

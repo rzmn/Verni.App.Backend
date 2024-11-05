@@ -8,7 +8,6 @@ import (
 	"os"
 	"time"
 
-	"verni/internal/controllers/verification"
 	"verni/internal/db"
 	"verni/internal/http-server/handlers/auth"
 	"verni/internal/http-server/handlers/avatars"
@@ -274,7 +273,7 @@ func main() {
 			repositories.friends,
 			logger,
 		),
-		verification: verification.DefaultController(
+		verification: verificationController.DefaultController(
 			repositories.verification,
 			repositories.auth,
 			services.emailSender,
@@ -308,12 +307,12 @@ func main() {
 
 			longpollService.RegisterRoutes()
 
-			auth.RegisterRoutes(router, tokenChecker, controllers.auth)
-			profile.RegisterRoutes(router, tokenChecker, controllers.profile)
-			avatars.RegisterRoutes(router, controllers.avatars)
-			users.RegisterRoutes(router, tokenChecker, controllers.users)
-			spendings.RegisterRoutes(router, tokenChecker, controllers.spendings)
-			friends.RegisterRoutes(router, tokenChecker, controllers.friends)
+			auth.RegisterRoutes(router, logger, tokenChecker, controllers.auth)
+			profile.RegisterRoutes(router, logger, tokenChecker, controllers.profile)
+			avatars.RegisterRoutes(router, logger, controllers.avatars)
+			users.RegisterRoutes(router, logger, tokenChecker, controllers.users)
+			spendings.RegisterRoutes(router, logger, tokenChecker, controllers.spendings)
+			friends.RegisterRoutes(router, logger, tokenChecker, controllers.friends)
 
 			address := ":" + ginConfig.Port
 			return http.Server{

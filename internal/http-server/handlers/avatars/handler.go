@@ -6,11 +6,16 @@ import (
 	avatarsController "verni/internal/controllers/avatars"
 	httpserver "verni/internal/http-server"
 	"verni/internal/http-server/responses"
+	"verni/internal/services/logging"
 
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes(router *gin.Engine, controller avatarsController.Controller) {
+func RegisterRoutes(
+	router *gin.Engine,
+	logger logging.Service,
+	controller avatarsController.Controller,
+) {
 	router.GET("/avatars/get", func(c *gin.Context) {
 		type GetAvatarsRequest struct {
 			Ids []httpserver.ImageId `json:"ids"`
@@ -26,6 +31,7 @@ func RegisterRoutes(router *gin.Engine, controller avatarsController.Controller)
 		if err != nil {
 			switch err.Code {
 			default:
+				logger.LogError("getAvatars request %v failed with unknown err: %v", request, err)
 				httpserver.AnswerWithUnknownError(c, err)
 			}
 			return

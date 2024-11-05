@@ -8,6 +8,7 @@ import (
 	"verni/internal/http-server/middleware"
 	"verni/internal/http-server/responses"
 	spendingsRepository "verni/internal/repositories/spendings"
+	"verni/internal/services/logging"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,6 +17,7 @@ type SpendingController spendingsController.Controller
 
 func RegisterRoutes(
 	router *gin.Engine,
+	logger logging.Service,
 	tokenChecker middleware.AccessTokenChecker,
 	spendings SpendingController,
 ) {
@@ -48,6 +50,7 @@ func RegisterRoutes(
 			case spendingsController.AddExpenseErrorNotYourExpense:
 				httpserver.Answer(c, err, http.StatusConflict, responses.CodeIsNotYourExpense)
 			default:
+				logger.LogError("addExpense request %v failed with unknown err: %v", request, err)
 				httpserver.AnswerWithUnknownError(c, err)
 			}
 			return
@@ -73,6 +76,7 @@ func RegisterRoutes(
 			case spendingsController.RemoveExpenseErrorNotYourExpense:
 				httpserver.Answer(c, err, http.StatusConflict, responses.CodeIsNotYourExpense)
 			default:
+				logger.LogError("removeExpense request %v failed with unknown err: %v", request, err)
 				httpserver.AnswerWithUnknownError(c, err)
 			}
 			return
@@ -84,6 +88,7 @@ func RegisterRoutes(
 		if err != nil {
 			switch err.Code {
 			default:
+				logger.LogError("getBalance request failed with unknown err: %v", err)
 				httpserver.AnswerWithUnknownError(c, err)
 			}
 			return
@@ -104,6 +109,7 @@ func RegisterRoutes(
 		if err != nil {
 			switch err.Code {
 			default:
+				logger.LogError("getExpenses request %v failed with unknown err: %v", request, err)
 				httpserver.AnswerWithUnknownError(c, err)
 			}
 			return
@@ -128,6 +134,7 @@ func RegisterRoutes(
 			case spendingsController.GetExpenseErrorNotYourExpense:
 				httpserver.Answer(c, err, http.StatusConflict, responses.CodeIsNotYourExpense)
 			default:
+				logger.LogError("getExpense request %v failed with unknown err: %v", request, err)
 				httpserver.AnswerWithUnknownError(c, err)
 			}
 			return

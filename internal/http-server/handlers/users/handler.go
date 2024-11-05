@@ -7,6 +7,7 @@ import (
 	httpserver "verni/internal/http-server"
 	"verni/internal/http-server/middleware"
 	"verni/internal/http-server/responses"
+	"verni/internal/services/logging"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,6 +16,7 @@ type UsersController usersController.Controller
 
 func RegisterRoutes(
 	router *gin.Engine,
+	logger logging.Service,
 	tokenChecker middleware.AccessTokenChecker,
 	users UsersController,
 ) {
@@ -34,6 +36,7 @@ func RegisterRoutes(
 		if err != nil {
 			switch err.Code {
 			default:
+				logger.LogError("getUsers request %v failed with unknown err: %v", request, err)
 				httpserver.AnswerWithUnknownError(c, err)
 			}
 			return

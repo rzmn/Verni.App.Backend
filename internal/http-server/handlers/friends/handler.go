@@ -6,6 +6,7 @@ import (
 	httpserver "verni/internal/http-server"
 	"verni/internal/http-server/middleware"
 	"verni/internal/http-server/responses"
+	"verni/internal/services/logging"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,6 +15,7 @@ type FriendsController friendsController.Controller
 
 func RegisterRoutes(
 	router *gin.Engine,
+	logger logging.Service,
 	tokenChecker middleware.AccessTokenChecker,
 	friends FriendsController,
 ) {
@@ -32,6 +34,7 @@ func RegisterRoutes(
 			case friendsController.AcceptFriendRequestErrorNoSuchRequest:
 				httpserver.Answer(c, err, http.StatusConflict, responses.CodeNoSuchRequest)
 			default:
+				logger.LogError("acceptRequest request %v failed with unknown err: %v", request, err)
 				httpserver.AnswerWithUnknownError(c, err)
 			}
 			return
@@ -51,6 +54,7 @@ func RegisterRoutes(
 		if err != nil {
 			switch err.Code {
 			default:
+				logger.LogError("getFriends request %v failed with unknown err: %v", request, err)
 				httpserver.AnswerWithUnknownError(c, err)
 			}
 			return
@@ -71,6 +75,7 @@ func RegisterRoutes(
 			case friendsController.RollbackFriendRequestErrorNoSuchRequest:
 				httpserver.Answer(c, err, http.StatusConflict, responses.CodeNoSuchRequest)
 			default:
+				logger.LogError("rejectRequest request %v failed with unknown err: %v", request, err)
 				httpserver.AnswerWithUnknownError(c, err)
 			}
 			return
@@ -91,6 +96,7 @@ func RegisterRoutes(
 			case friendsController.RollbackFriendRequestErrorAlreadyFriends:
 				httpserver.Answer(c, err, http.StatusConflict, responses.CodeAlreadyFriends)
 			default:
+				logger.LogError("rollbackRequest request %v failed with unknown err: %v", request, err)
 				httpserver.AnswerWithUnknownError(c, err)
 			}
 			return
@@ -115,6 +121,7 @@ func RegisterRoutes(
 			case friendsController.SendFriendRequestErrorAlreadyFriends:
 				httpserver.Answer(c, err, http.StatusConflict, responses.CodeAlreadyFriends)
 			default:
+				logger.LogError("sendRequest request %v failed with unknown err: %v", request, err)
 				httpserver.AnswerWithUnknownError(c, err)
 			}
 			return
@@ -135,6 +142,7 @@ func RegisterRoutes(
 			case friendsController.UnfriendErrorNotAFriend:
 				httpserver.Answer(c, err, http.StatusConflict, responses.CodeNotAFriend)
 			default:
+				logger.LogError("unfriend request %v failed with unknown err: %v", request, err)
 				httpserver.AnswerWithUnknownError(c, err)
 			}
 			return

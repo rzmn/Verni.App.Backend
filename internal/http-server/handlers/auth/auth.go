@@ -6,6 +6,7 @@ import (
 	httpserver "verni/internal/http-server"
 	"verni/internal/http-server/middleware"
 	"verni/internal/http-server/responses"
+	"verni/internal/services/logging"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,6 +15,7 @@ type AuthController authController.Controller
 
 func RegisterRoutes(
 	router *gin.Engine,
+	logger logging.Service,
 	tokenChecker middleware.AccessTokenChecker,
 	auth AuthController,
 ) {
@@ -34,6 +36,7 @@ func RegisterRoutes(
 			case authController.SignupErrorWrongFormat:
 				httpserver.Answer(c, err, http.StatusUnprocessableEntity, responses.CodeWrongFormat)
 			default:
+				logger.LogError("signup request %v failed with unknown err: %v", request, err)
 				httpserver.AnswerWithUnknownError(c, err)
 			}
 			return
@@ -55,6 +58,7 @@ func RegisterRoutes(
 			case authController.LoginErrorWrongCredentials:
 				httpserver.Answer(c, err, http.StatusConflict, responses.CodeIncorrectCredentials)
 			default:
+				logger.LogError("login request %v failed with unknown err: %v", request, err)
 				httpserver.AnswerWithUnknownError(c, err)
 			}
 		}
@@ -77,6 +81,7 @@ func RegisterRoutes(
 			case authController.RefreshErrorTokenIsWrong:
 				httpserver.Answer(c, err, http.StatusConflict, responses.CodeIncorrectCredentials)
 			default:
+				logger.LogError("refresh request %v failed with unknown err: %v", request, err)
 				httpserver.AnswerWithUnknownError(c, err)
 			}
 		}
@@ -99,6 +104,7 @@ func RegisterRoutes(
 			case authController.UpdateEmailErrorWrongFormat:
 				httpserver.Answer(c, err, http.StatusUnprocessableEntity, responses.CodeWrongFormat)
 			default:
+				logger.LogError("updateEmail request %v failed with unknown err: %v", request, err)
 				httpserver.AnswerWithUnknownError(c, err)
 			}
 		}
@@ -120,6 +126,7 @@ func RegisterRoutes(
 			case authController.UpdatePasswordErrorOldPasswordIsWrong:
 				httpserver.Answer(c, err, http.StatusConflict, responses.CodeIncorrectCredentials)
 			default:
+				logger.LogError("updatePassword request %v failed with unknown err: %v", request, err)
 				httpserver.AnswerWithUnknownError(c, err)
 			}
 		}
@@ -129,6 +136,7 @@ func RegisterRoutes(
 		if err := auth.Logout(authController.UserId(tokenChecker.AccessToken(c))); err != nil {
 			switch err.Code {
 			default:
+				logger.LogError("logout request failed with unknown err: %v", err)
 				httpserver.AnswerWithUnknownError(c, err)
 			}
 		}
@@ -146,6 +154,7 @@ func RegisterRoutes(
 		if err := auth.RegisterForPushNotifications(request.Token, authController.UserId(tokenChecker.AccessToken(c))); err != nil {
 			switch err.Code {
 			default:
+				logger.LogError("registerForPushNotifications request %v failed with unknown err: %v", request, err)
 				httpserver.AnswerWithUnknownError(c, err)
 			}
 		}
