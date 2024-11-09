@@ -6,6 +6,7 @@ type ImageId string
 type FriendStatus int
 type Cost int64
 type Currency string
+type StatusCode int
 
 const (
 	FriendStatusNo = iota

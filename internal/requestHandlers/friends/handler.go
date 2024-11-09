@@ -9,8 +9,6 @@ import (
 	"verni/internal/services/pushNotifications"
 )
 
-type HttpCode int
-
 type AcceptFriendRequest struct {
 	Sender httpserver.UserId `json:"sender"`
 }
@@ -37,40 +35,40 @@ type UnfriendRequest struct {
 
 type RequestsHandler interface {
 	AcceptRequest(
-		subject friendsController.UserId,
+		subject httpserver.UserId,
 		request AcceptFriendRequest,
-		success func(HttpCode, responses.VoidResponse),
-		failure func(HttpCode, responses.Response[responses.Error]),
+		success func(httpserver.StatusCode, responses.VoidResponse),
+		failure func(httpserver.StatusCode, responses.Response[responses.Error]),
 	)
 	GetFriends(
-		subject friendsController.UserId,
+		subject httpserver.UserId,
 		request GetFriendsRequest,
-		success func(HttpCode, responses.Response[map[httpserver.FriendStatus][]httpserver.UserId]),
-		failure func(HttpCode, responses.Response[responses.Error]),
+		success func(httpserver.StatusCode, responses.Response[map[httpserver.FriendStatus][]httpserver.UserId]),
+		failure func(httpserver.StatusCode, responses.Response[responses.Error]),
 	)
 	RejectRequest(
-		subject friendsController.UserId,
+		subject httpserver.UserId,
 		request RejectFriendRequest,
-		success func(HttpCode, responses.VoidResponse),
-		failure func(HttpCode, responses.Response[responses.Error]),
+		success func(httpserver.StatusCode, responses.VoidResponse),
+		failure func(httpserver.StatusCode, responses.Response[responses.Error]),
 	)
 	RollbackRequest(
-		subject friendsController.UserId,
+		subject httpserver.UserId,
 		request RollbackFriendRequest,
-		success func(HttpCode, responses.VoidResponse),
-		failure func(HttpCode, responses.Response[responses.Error]),
+		success func(httpserver.StatusCode, responses.VoidResponse),
+		failure func(httpserver.StatusCode, responses.Response[responses.Error]),
 	)
 	SendRequest(
-		subject friendsController.UserId,
+		subject httpserver.UserId,
 		request SendFriendRequest,
-		success func(HttpCode, responses.VoidResponse),
-		failure func(HttpCode, responses.Response[responses.Error]),
+		success func(httpserver.StatusCode, responses.VoidResponse),
+		failure func(httpserver.StatusCode, responses.Response[responses.Error]),
 	)
 	Unfriend(
-		subject friendsController.UserId,
+		subject httpserver.UserId,
 		request UnfriendRequest,
-		success func(HttpCode, responses.VoidResponse),
-		failure func(HttpCode, responses.Response[responses.Error]),
+		success func(httpserver.StatusCode, responses.VoidResponse),
+		failure func(httpserver.StatusCode, responses.Response[responses.Error]),
 	)
 }
 

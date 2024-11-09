@@ -341,10 +341,10 @@ func main() {
 				requestHandlers.spendings.AddExpense(
 					spendingsController.CounterpartyId(tokenChecker.AccessToken(c)),
 					request,
-					func(status spendings.HttpCode, response responses.Response[httpserver.IdentifiableExpense]) {
+					func(status httpserver.StatusCode, response responses.Response[httpserver.IdentifiableExpense]) {
 						c.JSON(int(status), response)
 					},
-					func(status spendings.HttpCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -361,10 +361,10 @@ func main() {
 				requestHandlers.spendings.RemoveExpense(
 					spendingsController.CounterpartyId(tokenChecker.AccessToken(c)),
 					request,
-					func(status spendings.HttpCode, response responses.Response[httpserver.IdentifiableExpense]) {
+					func(status httpserver.StatusCode, response responses.Response[httpserver.IdentifiableExpense]) {
 						c.JSON(int(status), response)
 					},
-					func(status spendings.HttpCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -372,10 +372,10 @@ func main() {
 			spendingsGroup.GET("/getBalance", func(c *gin.Context) {
 				requestHandlers.spendings.GetBalance(
 					spendingsController.CounterpartyId(tokenChecker.AccessToken(c)),
-					func(status spendings.HttpCode, response responses.Response[[]httpserver.Balance]) {
+					func(status httpserver.StatusCode, response responses.Response[[]httpserver.Balance]) {
 						c.JSON(int(status), response)
 					},
-					func(status spendings.HttpCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -392,10 +392,10 @@ func main() {
 				requestHandlers.spendings.GetExpenses(
 					spendingsController.CounterpartyId(tokenChecker.AccessToken(c)),
 					request,
-					func(status spendings.HttpCode, response responses.Response[[]httpserver.IdentifiableExpense]) {
+					func(status httpserver.StatusCode, response responses.Response[[]httpserver.IdentifiableExpense]) {
 						c.JSON(int(status), response)
 					},
-					func(status spendings.HttpCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -412,10 +412,10 @@ func main() {
 				requestHandlers.spendings.GetExpense(
 					spendingsController.CounterpartyId(tokenChecker.AccessToken(c)),
 					request,
-					func(status spendings.HttpCode, response responses.Response[httpserver.IdentifiableExpense]) {
+					func(status httpserver.StatusCode, response responses.Response[httpserver.IdentifiableExpense]) {
 						c.JSON(int(status), response)
 					},
-					func(status spendings.HttpCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -433,10 +433,10 @@ func main() {
 				requestHandlers.friends.AcceptRequest(
 					friendsController.UserId(tokenChecker.AccessToken(c)),
 					request,
-					func(status friends.HttpCode, response responses.VoidResponse) {
+					func(status httpserver.StatusCode, response responses.VoidResponse) {
 						c.JSON(int(status), response)
 					},
-					func(status friends.HttpCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -453,10 +453,10 @@ func main() {
 				requestHandlers.friends.GetFriends(
 					friendsController.UserId(tokenChecker.AccessToken(c)),
 					request,
-					func(status friends.HttpCode, response responses.Response[map[httpserver.FriendStatus][]httpserver.UserId]) {
+					func(status httpserver.StatusCode, response responses.Response[map[httpserver.FriendStatus][]httpserver.UserId]) {
 						c.JSON(int(status), response)
 					},
-					func(status friends.HttpCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -473,10 +473,10 @@ func main() {
 				requestHandlers.friends.RejectRequest(
 					friendsController.UserId(tokenChecker.AccessToken(c)),
 					request,
-					func(status friends.HttpCode, response responses.VoidResponse) {
+					func(status httpserver.StatusCode, response responses.VoidResponse) {
 						c.JSON(int(status), response)
 					},
-					func(status friends.HttpCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -493,10 +493,10 @@ func main() {
 				requestHandlers.friends.RollbackRequest(
 					friendsController.UserId(tokenChecker.AccessToken(c)),
 					request,
-					func(status friends.HttpCode, response responses.VoidResponse) {
+					func(status httpserver.StatusCode, response responses.VoidResponse) {
 						c.JSON(int(status), response)
 					},
-					func(status friends.HttpCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -513,10 +513,10 @@ func main() {
 				requestHandlers.friends.SendRequest(
 					friendsController.UserId(tokenChecker.AccessToken(c)),
 					request,
-					func(status friends.HttpCode, response responses.VoidResponse) {
+					func(status httpserver.StatusCode, response responses.VoidResponse) {
 						c.JSON(int(status), response)
 					},
-					func(status friends.HttpCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -533,10 +533,10 @@ func main() {
 				requestHandlers.friends.Unfriend(
 					friendsController.UserId(tokenChecker.AccessToken(c)),
 					request,
-					func(status friends.HttpCode, response responses.VoidResponse) {
+					func(status httpserver.StatusCode, response responses.VoidResponse) {
 						c.JSON(int(status), response)
 					},
-					func(status friends.HttpCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)

@@ -19,12 +19,12 @@ type defaultRequestsHandler struct {
 }
 
 func (c *defaultRequestsHandler) AcceptRequest(
-	subject friendsController.UserId,
+	subject httpserver.UserId,
 	request AcceptFriendRequest,
-	success func(HttpCode, responses.VoidResponse),
-	failure func(HttpCode, responses.Response[responses.Error]),
+	success func(httpserver.StatusCode, responses.VoidResponse),
+	failure func(httpserver.StatusCode, responses.Response[responses.Error]),
 ) {
-	if err := c.controller.AcceptFriendRequest(friendsController.UserId(request.Sender), subject); err != nil {
+	if err := c.controller.AcceptFriendRequest(friendsController.UserId(request.Sender), friendsController.UserId(subject)); err != nil {
 		switch err.Code {
 		case friendsController.AcceptFriendRequestErrorNoSuchRequest:
 			failure(
@@ -54,14 +54,14 @@ func (c *defaultRequestsHandler) AcceptRequest(
 }
 
 func (c *defaultRequestsHandler) GetFriends(
-	subject friendsController.UserId,
+	subject httpserver.UserId,
 	request GetFriendsRequest,
-	success func(HttpCode, responses.Response[map[httpserver.FriendStatus][]httpserver.UserId]),
-	failure func(HttpCode, responses.Response[responses.Error]),
+	success func(httpserver.StatusCode, responses.Response[map[httpserver.FriendStatus][]httpserver.UserId]),
+	failure func(httpserver.StatusCode, responses.Response[responses.Error]),
 ) {
 	friends, err := c.controller.GetFriends(common.Map(request.Statuses, func(status httpserver.FriendStatus) friendsController.FriendStatus {
 		return friendsController.FriendStatus(status)
-	}), subject)
+	}), friendsController.UserId(subject))
 	if err != nil {
 		switch err.Code {
 		default:
@@ -88,12 +88,12 @@ func (c *defaultRequestsHandler) GetFriends(
 }
 
 func (c *defaultRequestsHandler) RejectRequest(
-	subject friendsController.UserId,
+	subject httpserver.UserId,
 	request RejectFriendRequest,
-	success func(HttpCode, responses.VoidResponse),
-	failure func(HttpCode, responses.Response[responses.Error]),
+	success func(httpserver.StatusCode, responses.VoidResponse),
+	failure func(httpserver.StatusCode, responses.Response[responses.Error]),
 ) {
-	if err := c.controller.RollbackFriendRequest(friendsController.UserId(request.Sender), subject); err != nil {
+	if err := c.controller.RollbackFriendRequest(friendsController.UserId(request.Sender), friendsController.UserId(subject)); err != nil {
 		switch err.Code {
 		case friendsController.RollbackFriendRequestErrorNoSuchRequest:
 			failure(
@@ -123,12 +123,12 @@ func (c *defaultRequestsHandler) RejectRequest(
 }
 
 func (c *defaultRequestsHandler) RollbackRequest(
-	subject friendsController.UserId,
+	subject httpserver.UserId,
 	request RollbackFriendRequest,
-	success func(HttpCode, responses.VoidResponse),
-	failure func(HttpCode, responses.Response[responses.Error]),
+	success func(httpserver.StatusCode, responses.VoidResponse),
+	failure func(httpserver.StatusCode, responses.Response[responses.Error]),
 ) {
-	if err := c.controller.RollbackFriendRequest(subject, friendsController.UserId(request.Target)); err != nil {
+	if err := c.controller.RollbackFriendRequest(friendsController.UserId(subject), friendsController.UserId(request.Target)); err != nil {
 		switch err.Code {
 		case friendsController.RollbackFriendRequestErrorNoSuchRequest:
 			failure(
@@ -158,12 +158,12 @@ func (c *defaultRequestsHandler) RollbackRequest(
 }
 
 func (c *defaultRequestsHandler) SendRequest(
-	subject friendsController.UserId,
+	subject httpserver.UserId,
 	request SendFriendRequest,
-	success func(HttpCode, responses.VoidResponse),
-	failure func(HttpCode, responses.Response[responses.Error]),
+	success func(httpserver.StatusCode, responses.VoidResponse),
+	failure func(httpserver.StatusCode, responses.Response[responses.Error]),
 ) {
-	if err := c.controller.SendFriendRequest(subject, friendsController.UserId(request.Target)); err != nil {
+	if err := c.controller.SendFriendRequest(friendsController.UserId(subject), friendsController.UserId(request.Target)); err != nil {
 		switch err.Code {
 		case friendsController.SendFriendRequestErrorAlreadySent:
 			failure(
@@ -213,12 +213,12 @@ func (c *defaultRequestsHandler) SendRequest(
 }
 
 func (c *defaultRequestsHandler) Unfriend(
-	subject friendsController.UserId,
+	subject httpserver.UserId,
 	request UnfriendRequest,
-	success func(HttpCode, responses.VoidResponse),
-	failure func(HttpCode, responses.Response[responses.Error]),
+	success func(httpserver.StatusCode, responses.VoidResponse),
+	failure func(httpserver.StatusCode, responses.Response[responses.Error]),
 ) {
-	if err := c.controller.Unfriend(subject, friendsController.UserId(request.Target)); err != nil {
+	if err := c.controller.Unfriend(friendsController.UserId(subject), friendsController.UserId(request.Target)); err != nil {
 		switch err.Code {
 		case friendsController.UnfriendErrorNotAFriend:
 			failure(

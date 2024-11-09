@@ -9,8 +9,6 @@ import (
 	"verni/internal/services/pushNotifications"
 )
 
-type HttpCode int
-
 type AddExpenseRequest struct {
 	Expense httpserver.Expense `json:"expense"`
 }
@@ -29,33 +27,33 @@ type GetExpenseRequest struct {
 
 type RequestsHandler interface {
 	AddExpense(
-		subject spendingsController.CounterpartyId,
+		subject httpserver.UserId,
 		request AddExpenseRequest,
-		success func(HttpCode, responses.Response[httpserver.IdentifiableExpense]),
-		failure func(HttpCode, responses.Response[responses.Error]),
+		success func(httpserver.StatusCode, responses.Response[httpserver.IdentifiableExpense]),
+		failure func(httpserver.StatusCode, responses.Response[responses.Error]),
 	)
 	RemoveExpense(
-		subject spendingsController.CounterpartyId,
+		subject httpserver.UserId,
 		request RemoveExpenseRequest,
-		success func(HttpCode, responses.Response[httpserver.IdentifiableExpense]),
-		failure func(HttpCode, responses.Response[responses.Error]),
+		success func(httpserver.StatusCode, responses.Response[httpserver.IdentifiableExpense]),
+		failure func(httpserver.StatusCode, responses.Response[responses.Error]),
 	)
 	GetBalance(
-		subject spendingsController.CounterpartyId,
-		success func(HttpCode, responses.Response[[]httpserver.Balance]),
-		failure func(HttpCode, responses.Response[responses.Error]),
+		subject httpserver.UserId,
+		success func(httpserver.StatusCode, responses.Response[[]httpserver.Balance]),
+		failure func(httpserver.StatusCode, responses.Response[responses.Error]),
 	)
 	GetExpenses(
-		subject spendingsController.CounterpartyId,
+		subject httpserver.UserId,
 		request GetExpensesRequest,
-		success func(HttpCode, responses.Response[[]httpserver.IdentifiableExpense]),
-		failure func(HttpCode, responses.Response[responses.Error]),
+		success func(httpserver.StatusCode, responses.Response[[]httpserver.IdentifiableExpense]),
+		failure func(httpserver.StatusCode, responses.Response[responses.Error]),
 	)
 	GetExpense(
-		subject spendingsController.CounterpartyId,
+		subject httpserver.UserId,
 		request GetExpenseRequest,
-		success func(HttpCode, responses.Response[httpserver.IdentifiableExpense]),
-		failure func(HttpCode, responses.Response[responses.Error]),
+		success func(httpserver.StatusCode, responses.Response[httpserver.IdentifiableExpense]),
+		failure func(httpserver.StatusCode, responses.Response[responses.Error]),
 	)
 }
 

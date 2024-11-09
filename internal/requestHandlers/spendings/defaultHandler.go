@@ -20,12 +20,12 @@ type defaultRequestsHandler struct {
 }
 
 func (c *defaultRequestsHandler) AddExpense(
-	subject spendingsController.CounterpartyId,
+	subject httpserver.UserId,
 	request AddExpenseRequest,
-	success func(HttpCode, responses.Response[httpserver.IdentifiableExpense]),
-	failure func(HttpCode, responses.Response[responses.Error]),
+	success func(httpserver.StatusCode, responses.Response[httpserver.IdentifiableExpense]),
+	failure func(httpserver.StatusCode, responses.Response[responses.Error]),
 ) {
-	expense, err := c.controller.AddExpense(mapHttpServerExpense(request.Expense), subject)
+	expense, err := c.controller.AddExpense(mapHttpServerExpense(request.Expense), spendingsController.CounterpartyId(subject))
 	if err != nil {
 		switch err.Code {
 		case spendingsController.AddExpenseErrorNoSuchUser:
@@ -78,12 +78,12 @@ func (c *defaultRequestsHandler) AddExpense(
 }
 
 func (c *defaultRequestsHandler) RemoveExpense(
-	subject spendingsController.CounterpartyId,
+	subject httpserver.UserId,
 	request RemoveExpenseRequest,
-	success func(HttpCode, responses.Response[httpserver.IdentifiableExpense]),
-	failure func(HttpCode, responses.Response[responses.Error]),
+	success func(httpserver.StatusCode, responses.Response[httpserver.IdentifiableExpense]),
+	failure func(httpserver.StatusCode, responses.Response[responses.Error]),
 ) {
-	expense, err := c.controller.RemoveExpense(spendingsController.ExpenseId(request.ExpenseId), subject)
+	expense, err := c.controller.RemoveExpense(spendingsController.ExpenseId(request.ExpenseId), spendingsController.CounterpartyId(subject))
 	if err != nil {
 		switch err.Code {
 		case spendingsController.RemoveExpenseErrorExpenseNotFound:
@@ -146,11 +146,11 @@ func (c *defaultRequestsHandler) RemoveExpense(
 }
 
 func (c *defaultRequestsHandler) GetBalance(
-	subject spendingsController.CounterpartyId,
-	success func(HttpCode, responses.Response[[]httpserver.Balance]),
-	failure func(HttpCode, responses.Response[responses.Error]),
+	subject httpserver.UserId,
+	success func(httpserver.StatusCode, responses.Response[[]httpserver.Balance]),
+	failure func(httpserver.StatusCode, responses.Response[responses.Error]),
 ) {
-	balance, err := c.controller.GetBalance(subject)
+	balance, err := c.controller.GetBalance(spendingsController.CounterpartyId(subject))
 	if err != nil {
 		switch err.Code {
 		default:
@@ -171,12 +171,12 @@ func (c *defaultRequestsHandler) GetBalance(
 }
 
 func (c *defaultRequestsHandler) GetExpenses(
-	subject spendingsController.CounterpartyId,
+	subject httpserver.UserId,
 	request GetExpensesRequest,
-	success func(HttpCode, responses.Response[[]httpserver.IdentifiableExpense]),
-	failure func(HttpCode, responses.Response[responses.Error]),
+	success func(httpserver.StatusCode, responses.Response[[]httpserver.IdentifiableExpense]),
+	failure func(httpserver.StatusCode, responses.Response[responses.Error]),
 ) {
-	expenses, err := c.controller.GetExpensesWith(spendingsController.CounterpartyId(request.Counterparty), subject)
+	expenses, err := c.controller.GetExpensesWith(spendingsController.CounterpartyId(request.Counterparty), spendingsController.CounterpartyId(subject))
 	if err != nil {
 		switch err.Code {
 		default:
@@ -197,12 +197,12 @@ func (c *defaultRequestsHandler) GetExpenses(
 }
 
 func (c *defaultRequestsHandler) GetExpense(
-	subject spendingsController.CounterpartyId,
+	subject httpserver.UserId,
 	request GetExpenseRequest,
-	success func(HttpCode, responses.Response[httpserver.IdentifiableExpense]),
-	failure func(HttpCode, responses.Response[responses.Error]),
+	success func(httpserver.StatusCode, responses.Response[httpserver.IdentifiableExpense]),
+	failure func(httpserver.StatusCode, responses.Response[responses.Error]),
 ) {
-	expense, err := c.controller.GetExpense(spendingsController.ExpenseId(request.Id), subject)
+	expense, err := c.controller.GetExpense(spendingsController.ExpenseId(request.Id), spendingsController.CounterpartyId(subject))
 	if err != nil {
 		switch err.Code {
 		case spendingsController.GetExpenseErrorExpenseNotFound:
