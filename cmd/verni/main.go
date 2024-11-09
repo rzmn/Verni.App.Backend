@@ -8,15 +8,16 @@ import (
 	"os"
 	"time"
 
+	"verni/internal/common"
 	"verni/internal/db"
+	httpserver "verni/internal/http-server"
 	"verni/internal/http-server/handlers/auth"
 	"verni/internal/http-server/handlers/avatars"
-	"verni/internal/http-server/handlers/friends"
 	"verni/internal/http-server/handlers/profile"
-	"verni/internal/http-server/handlers/spendings"
 	"verni/internal/http-server/handlers/users"
 	"verni/internal/http-server/longpoll"
 	"verni/internal/http-server/middleware"
+	"verni/internal/http-server/responses"
 	authRepository "verni/internal/repositories/auth"
 	friendsRepository "verni/internal/repositories/friends"
 	imagesRepository "verni/internal/repositories/images"
@@ -24,6 +25,8 @@ import (
 	spendingsRepository "verni/internal/repositories/spendings"
 	usersRepository "verni/internal/repositories/users"
 	verificationRepository "verni/internal/repositories/verification"
+	"verni/internal/requestHandlers/friends"
+	"verni/internal/requestHandlers/spendings"
 	"verni/internal/services/emailSender"
 	"verni/internal/services/formatValidation"
 	"verni/internal/services/jwt"
@@ -68,6 +71,11 @@ type Controllers struct {
 	spendings    spendingsController.Controller
 	users        usersController.Controller
 	verification verificationController.Controller
+}
+
+type RequestHandlers struct {
+	spendings spendings.RequestsHandler
+	friends   friends.RequestsHandler
 }
 
 func main() {
@@ -265,7 +273,6 @@ func main() {
 		),
 		spendings: spendingsController.DefaultController(
 			repositories.spendings,
-			services.push,
 			logger,
 		),
 		users: usersController.DefaultController(
@@ -307,12 +314,237 @@ func main() {
 
 			longpollService.RegisterRoutes()
 
+			requestHandlers := RequestHandlers{
+				spendings: spendings.DefaultHandler(
+					controllers.spendings,
+					services.push,
+					longpollService,
+					logger,
+				),
+				friends: friends.DefaultHandler(
+					controllers.friends,
+					services.push,
+					longpollService,
+					logger,
+				),
+			}
+			spendingsGroup := router.Group("/spendings", tokenChecker.Handler)
+			spendingsGroup.POST("/addExpense", func(c *gin.Context) {
+				var request spendings.AddExpenseRequest
+				if err := c.BindJSON(&request); err != nil {
+					c.AbortWithStatusJSON(
+						http.StatusBadRequest,
+						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+					)
+					return
+				}
+				requestHandlers.spendings.AddExpense(
+					spendingsController.CounterpartyId(tokenChecker.AccessToken(c)),
+					request,
+					func(status spendings.HttpCode, response responses.Response[httpserver.IdentifiableExpense]) {
+						c.JSON(int(status), response)
+					},
+					func(status spendings.HttpCode, response responses.Response[responses.Error]) {
+						c.AbortWithStatusJSON(int(status), response)
+					},
+				)
+			})
+			spendingsGroup.POST("/removeExpense", func(c *gin.Context) {
+				var request spendings.RemoveExpenseRequest
+				if err := c.BindJSON(&request); err != nil {
+					c.AbortWithStatusJSON(
+						http.StatusBadRequest,
+						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+					)
+					return
+				}
+				requestHandlers.spendings.RemoveExpense(
+					spendingsController.CounterpartyId(tokenChecker.AccessToken(c)),
+					request,
+					func(status spendings.HttpCode, response responses.Response[httpserver.IdentifiableExpense]) {
+						c.JSON(int(status), response)
+					},
+					func(status spendings.HttpCode, response responses.Response[responses.Error]) {
+						c.AbortWithStatusJSON(int(status), response)
+					},
+				)
+			})
+			spendingsGroup.GET("/getBalance", func(c *gin.Context) {
+				requestHandlers.spendings.GetBalance(
+					spendingsController.CounterpartyId(tokenChecker.AccessToken(c)),
+					func(status spendings.HttpCode, response responses.Response[[]httpserver.Balance]) {
+						c.JSON(int(status), response)
+					},
+					func(status spendings.HttpCode, response responses.Response[responses.Error]) {
+						c.AbortWithStatusJSON(int(status), response)
+					},
+				)
+			})
+			spendingsGroup.GET("/getExpenses", func(c *gin.Context) {
+				var request spendings.GetExpensesRequest
+				if err := c.BindJSON(&request); err != nil {
+					c.AbortWithStatusJSON(
+						http.StatusBadRequest,
+						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+					)
+					return
+				}
+				requestHandlers.spendings.GetExpenses(
+					spendingsController.CounterpartyId(tokenChecker.AccessToken(c)),
+					request,
+					func(status spendings.HttpCode, response responses.Response[[]httpserver.IdentifiableExpense]) {
+						c.JSON(int(status), response)
+					},
+					func(status spendings.HttpCode, response responses.Response[responses.Error]) {
+						c.AbortWithStatusJSON(int(status), response)
+					},
+				)
+			})
+			spendingsGroup.GET("/getExpense", func(c *gin.Context) {
+				var request spendings.GetExpenseRequest
+				if err := c.BindJSON(&request); err != nil {
+					c.AbortWithStatusJSON(
+						http.StatusBadRequest,
+						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+					)
+					return
+				}
+				requestHandlers.spendings.GetExpense(
+					spendingsController.CounterpartyId(tokenChecker.AccessToken(c)),
+					request,
+					func(status spendings.HttpCode, response responses.Response[httpserver.IdentifiableExpense]) {
+						c.JSON(int(status), response)
+					},
+					func(status spendings.HttpCode, response responses.Response[responses.Error]) {
+						c.AbortWithStatusJSON(int(status), response)
+					},
+				)
+			})
+			friendsGroup := router.Group("/friends", tokenChecker.Handler)
+			friendsGroup.POST("/acceptRequest", func(c *gin.Context) {
+				var request friends.AcceptFriendRequest
+				if err := c.BindJSON(&request); err != nil {
+					c.AbortWithStatusJSON(
+						http.StatusBadRequest,
+						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+					)
+					return
+				}
+				requestHandlers.friends.AcceptRequest(
+					friendsController.UserId(tokenChecker.AccessToken(c)),
+					request,
+					func(status friends.HttpCode, response responses.VoidResponse) {
+						c.JSON(int(status), response)
+					},
+					func(status friends.HttpCode, response responses.Response[responses.Error]) {
+						c.AbortWithStatusJSON(int(status), response)
+					},
+				)
+			})
+			friendsGroup.GET("/get", func(c *gin.Context) {
+				var request friends.GetFriendsRequest
+				if err := c.BindJSON(&request); err != nil {
+					c.AbortWithStatusJSON(
+						http.StatusBadRequest,
+						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+					)
+					return
+				}
+				requestHandlers.friends.GetFriends(
+					friendsController.UserId(tokenChecker.AccessToken(c)),
+					request,
+					func(status friends.HttpCode, response responses.Response[map[httpserver.FriendStatus][]httpserver.UserId]) {
+						c.JSON(int(status), response)
+					},
+					func(status friends.HttpCode, response responses.Response[responses.Error]) {
+						c.AbortWithStatusJSON(int(status), response)
+					},
+				)
+			})
+			friendsGroup.POST("/rejectRequest", func(c *gin.Context) {
+				var request friends.RejectFriendRequest
+				if err := c.BindJSON(&request); err != nil {
+					c.AbortWithStatusJSON(
+						http.StatusBadRequest,
+						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+					)
+					return
+				}
+				requestHandlers.friends.RejectRequest(
+					friendsController.UserId(tokenChecker.AccessToken(c)),
+					request,
+					func(status friends.HttpCode, response responses.VoidResponse) {
+						c.JSON(int(status), response)
+					},
+					func(status friends.HttpCode, response responses.Response[responses.Error]) {
+						c.AbortWithStatusJSON(int(status), response)
+					},
+				)
+			})
+			friendsGroup.POST("/rollbackRequest", func(c *gin.Context) {
+				var request friends.RollbackFriendRequest
+				if err := c.BindJSON(&request); err != nil {
+					c.AbortWithStatusJSON(
+						http.StatusBadRequest,
+						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+					)
+					return
+				}
+				requestHandlers.friends.RollbackRequest(
+					friendsController.UserId(tokenChecker.AccessToken(c)),
+					request,
+					func(status friends.HttpCode, response responses.VoidResponse) {
+						c.JSON(int(status), response)
+					},
+					func(status friends.HttpCode, response responses.Response[responses.Error]) {
+						c.AbortWithStatusJSON(int(status), response)
+					},
+				)
+			})
+			friendsGroup.POST("/sendRequest", func(c *gin.Context) {
+				var request friends.SendFriendRequest
+				if err := c.BindJSON(&request); err != nil {
+					c.AbortWithStatusJSON(
+						http.StatusBadRequest,
+						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+					)
+					return
+				}
+				requestHandlers.friends.SendRequest(
+					friendsController.UserId(tokenChecker.AccessToken(c)),
+					request,
+					func(status friends.HttpCode, response responses.VoidResponse) {
+						c.JSON(int(status), response)
+					},
+					func(status friends.HttpCode, response responses.Response[responses.Error]) {
+						c.AbortWithStatusJSON(int(status), response)
+					},
+				)
+			})
+			friendsGroup.POST("/unfriend", func(c *gin.Context) {
+				var request friends.UnfriendRequest
+				if err := c.BindJSON(&request); err != nil {
+					c.AbortWithStatusJSON(
+						http.StatusBadRequest,
+						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+					)
+					return
+				}
+				requestHandlers.friends.Unfriend(
+					friendsController.UserId(tokenChecker.AccessToken(c)),
+					request,
+					func(status friends.HttpCode, response responses.VoidResponse) {
+						c.JSON(int(status), response)
+					},
+					func(status friends.HttpCode, response responses.Response[responses.Error]) {
+						c.AbortWithStatusJSON(int(status), response)
+					},
+				)
+			})
 			auth.RegisterRoutes(router, logger, tokenChecker, controllers.auth)
 			profile.RegisterRoutes(router, logger, tokenChecker, controllers.profile)
 			avatars.RegisterRoutes(router, logger, controllers.avatars)
 			users.RegisterRoutes(router, logger, tokenChecker, controllers.users)
-			spendings.RegisterRoutes(router, logger, tokenChecker, controllers.spendings)
-			friends.RegisterRoutes(router, logger, tokenChecker, controllers.friends)
 
 			address := ":" + ginConfig.Port
 			return http.Server{

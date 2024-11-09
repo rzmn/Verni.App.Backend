@@ -39,9 +39,9 @@ func (c *defaultService) CounterpartiesUpdated(uid UserId) {
 	c.longPoll.Publish(key, payload)
 }
 
-func (c *defaultService) SpendingsUpdated(uid UserId) {
+func (c *defaultService) ExpensesUpdated(uid UserId, counterparty UserId) {
 	type Payload struct{}
-	key := fmt.Sprintf("spendings_%s", uid)
+	key := fmt.Sprintf("spendings_%s_%s", uid, counterparty)
 	payload := Payload{}
 	c.longPoll.Publish(key, payload)
 }

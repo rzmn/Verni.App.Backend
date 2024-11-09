@@ -13,7 +13,7 @@ type AuthRepository authRepository.Repository
 
 type Service interface {
 	CounterpartiesUpdated(uid UserId)
-	SpendingsUpdated(uid UserId)
+	ExpensesUpdated(uid UserId, counterparty UserId)
 	FriendsUpdated(uid UserId)
 	RegisterRoutes()
 }

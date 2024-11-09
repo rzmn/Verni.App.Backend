@@ -4,7 +4,6 @@ import (
 	"verni/internal/common"
 	spendingsRepository "verni/internal/repositories/spendings"
 	"verni/internal/services/logging"
-	"verni/internal/services/pushNotifications"
 )
 
 type CounterpartyId spendingsRepository.CounterpartyId
@@ -15,17 +14,16 @@ type Balance spendingsRepository.Balance
 type Repository spendingsRepository.Repository
 
 type Controller interface {
-	AddExpense(expense Expense, actor CounterpartyId) *common.CodeBasedError[AddExpenseErrorCode]
+	AddExpense(expense Expense, actor CounterpartyId) (IdentifiableExpense, *common.CodeBasedError[AddExpenseErrorCode])
 	RemoveExpense(expenseId ExpenseId, actor CounterpartyId) (IdentifiableExpense, *common.CodeBasedError[RemoveExpenseErrorCode])
 	GetExpense(expenseId ExpenseId, actor CounterpartyId) (IdentifiableExpense, *common.CodeBasedError[GetExpenseErrorCode])
 	GetExpensesWith(counterparty CounterpartyId, actor CounterpartyId) ([]IdentifiableExpense, *common.CodeBasedError[GetExpensesErrorCode])
 	GetBalance(actor CounterpartyId) ([]Balance, *common.CodeBasedError[GetBalanceErrorCode])
 }
 
-func DefaultController(repository Repository, pushNotifications pushNotifications.Service, logger logging.Service) Controller {
+func DefaultController(repository Repository, logger logging.Service) Controller {
 	return &defaultController{
-		repository:        repository,
-		pushNotifications: pushNotifications,
-		logger:            logger,
+		repository: repository,
+		logger:     logger,
 	}
 }

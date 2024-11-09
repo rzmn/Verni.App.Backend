@@ -2,19 +2,16 @@ package spendings
 
 import (
 	"verni/internal/common"
-	httpserver "verni/internal/http-server"
 	"verni/internal/repositories/spendings"
 	"verni/internal/services/logging"
-	"verni/internal/services/pushNotifications"
 )
 
 type defaultController struct {
-	repository        Repository
-	pushNotifications pushNotifications.Service
-	logger            logging.Service
+	repository Repository
+	logger     logging.Service
 }
 
-func (c *defaultController) AddExpense(expense Expense, actor CounterpartyId) *common.CodeBasedError[AddExpenseErrorCode] {
+func (c *defaultController) AddExpense(expense Expense, actor CounterpartyId) (IdentifiableExpense, *common.CodeBasedError[AddExpenseErrorCode]) {
 	const op = "spendings.defaultController.AddExpense"
 	c.logger.LogInfo("%s: start[actor=%s]", op, actor)
 	var isYourExpense bool
@@ -26,38 +23,19 @@ func (c *defaultController) AddExpense(expense Expense, actor CounterpartyId) *c
 	}
 	if !isYourExpense {
 		c.logger.LogInfo("%s: user %s is not found in expense %v shares", op, actor, expense)
-		return common.NewError(AddExpenseErrorNotYourExpense)
+		return IdentifiableExpense{}, common.NewError(AddExpenseErrorNotYourExpense)
 	}
 	transaction := c.repository.AddExpense(spendings.Expense(expense))
 	expenseId, err := transaction.Perform()
 	if err != nil {
 		c.logger.LogInfo("%s: cannot insert expense into db err: %v", op, err)
-		return common.NewErrorWithDescription(AddExpenseErrorInternal, err.Error())
-	}
-	for i := 0; i < len(expense.Shares); i++ {
-		spending := expense.Shares[i]
-		if spending.Counterparty == spendings.CounterpartyId(actor) {
-			continue
-		}
-		c.pushNotifications.NewExpenseReceived(pushNotifications.UserId(spending.Counterparty), pushNotifications.Expense{
-			Expense: httpserver.Expense{
-				Timestamp:   expense.Timestamp,
-				Details:     expense.Details,
-				Total:       httpserver.Cost(expense.Total),
-				Attachments: []httpserver.ExpenseAttachment{},
-				Currency:    httpserver.Currency(expense.Currency),
-				Shares: common.Map(expense.Shares, func(share spendings.ShareOfExpense) httpserver.ShareOfExpense {
-					return httpserver.ShareOfExpense{
-						UserId: httpserver.UserId(share.Counterparty),
-						Cost:   httpserver.Cost(share.Cost),
-					}
-				}),
-			},
-			Id: httpserver.ExpenseId(expenseId),
-		}, pushNotifications.UserId(actor))
+		return IdentifiableExpense{}, common.NewErrorWithDescription(AddExpenseErrorInternal, err.Error())
 	}
 	c.logger.LogInfo("%s: success[actor=%s]", op, actor)
-	return nil
+	return IdentifiableExpense{
+		Expense: spendings.Expense(expense),
+		Id:      expenseId,
+	}, nil
 }
 
 func (c *defaultController) RemoveExpense(expenseId ExpenseId, actor CounterpartyId) (IdentifiableExpense, *common.CodeBasedError[RemoveExpenseErrorCode]) {
