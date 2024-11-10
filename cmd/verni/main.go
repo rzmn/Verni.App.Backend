@@ -11,8 +11,6 @@ import (
 	"verni/internal/common"
 	"verni/internal/db"
 	httpserver "verni/internal/http-server"
-	"verni/internal/http-server/handlers/avatars"
-	"verni/internal/http-server/handlers/users"
 	"verni/internal/http-server/longpoll"
 	"verni/internal/http-server/middleware"
 	"verni/internal/http-server/responses"
@@ -24,9 +22,12 @@ import (
 	usersRepository "verni/internal/repositories/users"
 	verificationRepository "verni/internal/repositories/verification"
 	"verni/internal/requestHandlers/auth"
+	"verni/internal/requestHandlers/avatars"
 	"verni/internal/requestHandlers/friends"
 	"verni/internal/requestHandlers/profile"
 	"verni/internal/requestHandlers/spendings"
+	"verni/internal/requestHandlers/users"
+	"verni/internal/requestHandlers/verification"
 	"verni/internal/services/emailSender"
 	"verni/internal/services/formatValidation"
 	"verni/internal/services/jwt"
@@ -74,10 +75,13 @@ type Controllers struct {
 }
 
 type RequestHandlers struct {
-	spendings spendings.RequestsHandler
-	friends   friends.RequestsHandler
-	auth      auth.RequestsHandler
-	profile   profile.RequestsHandler
+	spendings    spendings.RequestsHandler
+	friends      friends.RequestsHandler
+	auth         auth.RequestsHandler
+	profile      profile.RequestsHandler
+	avatars      avatars.RequestsHandler
+	verification verification.RequestsHandler
+	users        users.RequestsHandler
 }
 
 func main() {
@@ -335,6 +339,18 @@ func main() {
 				),
 				profile: profile.DefaultHandler(
 					controllers.profile,
+					logger,
+				),
+				avatars: avatars.DefaultHandler(
+					controllers.avatars,
+					logger,
+				),
+				users: users.DefaultHandler(
+					controllers.users,
+					logger,
+				),
+				verification: verification.DefaultHandler(
+					controllers.verification,
 					logger,
 				),
 			}
@@ -731,9 +747,79 @@ func main() {
 					},
 				)
 			})
-			avatars.RegisterRoutes(router, logger, controllers.avatars)
-			users.RegisterRoutes(router, logger, tokenChecker, controllers.users)
-
+			verificationGroup := router.Group("/verification", tokenChecker.Handler)
+			verificationGroup.PUT("/confirmEmail", func(c *gin.Context) {
+				var request verification.ConfirmEmailRequest
+				if err := c.BindJSON(&request); err != nil {
+					c.AbortWithStatusJSON(
+						http.StatusBadRequest,
+						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+					)
+					return
+				}
+				requestHandlers.verification.ConfirmEmail(
+					httpserver.UserId(tokenChecker.AccessToken(c)),
+					request,
+					func(status httpserver.StatusCode, response responses.VoidResponse) {
+						c.JSON(int(status), response)
+					},
+					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+						c.AbortWithStatusJSON(int(status), response)
+					},
+				)
+			})
+			verificationGroup.PUT("/sendEmailConfirmationCode", func(c *gin.Context) {
+				requestHandlers.verification.SendEmailConfirmationCode(
+					httpserver.UserId(tokenChecker.AccessToken(c)),
+					func(status httpserver.StatusCode, response responses.VoidResponse) {
+						c.JSON(int(status), response)
+					},
+					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+						c.AbortWithStatusJSON(int(status), response)
+					},
+				)
+			})
+			usersGroup := router.Group("/users", tokenChecker.Handler)
+			usersGroup.GET("/get", func(c *gin.Context) {
+				var request users.GetUsersRequest
+				if err := c.BindJSON(&request); err != nil {
+					c.AbortWithStatusJSON(
+						http.StatusBadRequest,
+						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+					)
+					return
+				}
+				requestHandlers.users.GetUsers(
+					httpserver.UserId(tokenChecker.AccessToken(c)),
+					request,
+					func(status httpserver.StatusCode, response responses.Response[[]httpserver.User]) {
+						c.JSON(int(status), response)
+					},
+					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+						c.AbortWithStatusJSON(int(status), response)
+					},
+				)
+			})
+			avatarsGroup := router.Group("/avatars")
+			avatarsGroup.GET("/avatars/get", func(c *gin.Context) {
+				var request avatars.GetAvatarsRequest
+				if err := c.BindJSON(&request); err != nil {
+					c.AbortWithStatusJSON(
+						http.StatusBadRequest,
+						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+					)
+					return
+				}
+				requestHandlers.avatars.GetAvatars(
+					request,
+					func(status httpserver.StatusCode, response responses.Response[map[httpserver.ImageId]httpserver.Image]) {
+						c.JSON(int(status), response)
+					},
+					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+						c.AbortWithStatusJSON(int(status), response)
+					},
+				)
+			})
 			address := ":" + ginConfig.Port
 			return http.Server{
 				Addr:         address,

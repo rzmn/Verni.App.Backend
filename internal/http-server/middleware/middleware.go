@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	httpserver "verni/internal/http-server"
+	"verni/internal/common"
 	authRepository "verni/internal/repositories/auth"
 	"verni/internal/services/jwt"
 	"verni/internal/services/logging"
@@ -34,29 +34,77 @@ func JwsAccessTokenCheck(repository authRepository.Repository, jwtService jwt.Se
 				logger.LogInfo("%s: failed to validate token %v", op, err)
 				switch err.Code {
 				case jwt.CodeTokenExpired:
-					httpserver.Answer(c, err, http.StatusUnauthorized, responses.CodeTokenExpired)
+					c.AbortWithStatusJSON(
+						http.StatusUnauthorized,
+						responses.Failure(
+							common.NewErrorWithDescriptionValue(
+								responses.CodeTokenExpired,
+								err.Error(),
+							),
+						),
+					)
 				case jwt.CodeTokenInvalid:
-					httpserver.Answer(c, err, http.StatusUnprocessableEntity, responses.CodeWrongAccessToken)
+					c.AbortWithStatusJSON(
+						http.StatusUnprocessableEntity,
+						responses.Failure(
+							common.NewErrorWithDescriptionValue(
+								responses.CodeWrongAccessToken,
+								err.Error(),
+							),
+						),
+					)
 				default:
 					logger.LogError("jwt token validation failed %v", err)
-					httpserver.AnswerWithUnknownError(c, err)
+					c.AbortWithStatusJSON(
+						http.StatusInternalServerError,
+						responses.Failure(
+							common.NewErrorWithDescriptionValue(
+								responses.CodeInternal,
+								err.Error(),
+							),
+						),
+					)
 				}
 				return
 			}
 			subject, getSubjectError := jwtService.GetAccessTokenSubject(token)
 			if getSubjectError != nil {
 				logger.LogError("jwt token get subject failed %v", getSubjectError)
-				httpserver.AnswerWithUnknownError(c, getSubjectError)
+				c.AbortWithStatusJSON(
+					http.StatusInternalServerError,
+					responses.Failure(
+						common.NewErrorWithDescriptionValue(
+							responses.CodeInternal,
+							getSubjectError.Error(),
+						),
+					),
+				)
 				return
 			}
 			exists, err := repository.IsUserExists(authRepository.UserId(subject))
 			if err != nil {
 				logger.LogError("valid token with invalid subject - %v", err)
-				httpserver.AnswerWithUnknownError(c, err)
+				c.AbortWithStatusJSON(
+					http.StatusInternalServerError,
+					responses.Failure(
+						common.NewErrorWithDescriptionValue(
+							responses.CodeInternal,
+							err.Error(),
+						),
+					),
+				)
 				return
 			}
 			if !exists {
-				httpserver.Answer(c, err, http.StatusUnprocessableEntity, responses.CodeWrongAccessToken)
+				c.AbortWithStatusJSON(
+					http.StatusUnprocessableEntity,
+					responses.Failure(
+						common.NewErrorWithDescriptionValue(
+							responses.CodeWrongAccessToken,
+							"associated user is not exists",
+						),
+					),
+				)
 				return
 			}
 			logger.LogInfo("%s: access token ok", op)
