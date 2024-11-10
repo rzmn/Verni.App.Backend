@@ -4,7 +4,6 @@ import (
 	spendingsController "verni/internal/controllers/spendings"
 	httpserver "verni/internal/http-server"
 	"verni/internal/http-server/longpoll"
-	"verni/internal/http-server/responses"
 	"verni/internal/services/logging"
 	"verni/internal/services/pushNotifications"
 )
@@ -29,31 +28,31 @@ type RequestsHandler interface {
 	AddExpense(
 		subject httpserver.UserId,
 		request AddExpenseRequest,
-		success func(httpserver.StatusCode, responses.Response[httpserver.IdentifiableExpense]),
-		failure func(httpserver.StatusCode, responses.Response[responses.Error]),
+		success func(httpserver.StatusCode, httpserver.Response[httpserver.IdentifiableExpense]),
+		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
 	)
 	RemoveExpense(
 		subject httpserver.UserId,
 		request RemoveExpenseRequest,
-		success func(httpserver.StatusCode, responses.Response[httpserver.IdentifiableExpense]),
-		failure func(httpserver.StatusCode, responses.Response[responses.Error]),
+		success func(httpserver.StatusCode, httpserver.Response[httpserver.IdentifiableExpense]),
+		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
 	)
 	GetBalance(
 		subject httpserver.UserId,
-		success func(httpserver.StatusCode, responses.Response[[]httpserver.Balance]),
-		failure func(httpserver.StatusCode, responses.Response[responses.Error]),
+		success func(httpserver.StatusCode, httpserver.Response[[]httpserver.Balance]),
+		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
 	)
 	GetExpenses(
 		subject httpserver.UserId,
 		request GetExpensesRequest,
-		success func(httpserver.StatusCode, responses.Response[[]httpserver.IdentifiableExpense]),
-		failure func(httpserver.StatusCode, responses.Response[responses.Error]),
+		success func(httpserver.StatusCode, httpserver.Response[[]httpserver.IdentifiableExpense]),
+		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
 	)
 	GetExpense(
 		subject httpserver.UserId,
 		request GetExpenseRequest,
-		success func(httpserver.StatusCode, responses.Response[httpserver.IdentifiableExpense]),
-		failure func(httpserver.StatusCode, responses.Response[responses.Error]),
+		success func(httpserver.StatusCode, httpserver.Response[httpserver.IdentifiableExpense]),
+		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
 	)
 }
 

@@ -3,7 +3,6 @@ package profile
 import (
 	profileController "verni/internal/controllers/profile"
 	httpserver "verni/internal/http-server"
-	"verni/internal/http-server/responses"
 	"verni/internal/services/logging"
 )
 
@@ -18,20 +17,20 @@ type SetDisplayNameRequest struct {
 type RequestsHandler interface {
 	GetInfo(
 		subject httpserver.UserId,
-		success func(httpserver.StatusCode, responses.Response[httpserver.Profile]),
-		failure func(httpserver.StatusCode, responses.Response[responses.Error]),
+		success func(httpserver.StatusCode, httpserver.Response[httpserver.Profile]),
+		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
 	)
 	SetAvatar(
 		subject httpserver.UserId,
 		request SetAvatarRequest,
-		success func(httpserver.StatusCode, responses.Response[httpserver.ImageId]),
-		failure func(httpserver.StatusCode, responses.Response[responses.Error]),
+		success func(httpserver.StatusCode, httpserver.Response[httpserver.ImageId]),
+		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
 	)
 	SetDisplayName(
 		subject httpserver.UserId,
 		request SetDisplayNameRequest,
-		success func(httpserver.StatusCode, responses.VoidResponse),
-		failure func(httpserver.StatusCode, responses.Response[responses.Error]),
+		success func(httpserver.StatusCode, httpserver.VoidResponse),
+		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
 	)
 }
 

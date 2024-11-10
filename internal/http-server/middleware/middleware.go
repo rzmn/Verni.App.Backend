@@ -7,11 +7,10 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"verni/internal/common"
+	httpserver "verni/internal/http-server"
 	authRepository "verni/internal/repositories/auth"
 	"verni/internal/services/jwt"
 	"verni/internal/services/logging"
-
-	"verni/internal/http-server/responses"
 )
 
 type UserId string
@@ -36,9 +35,9 @@ func JwsAccessTokenCheck(repository authRepository.Repository, jwtService jwt.Se
 				case jwt.CodeTokenExpired:
 					c.AbortWithStatusJSON(
 						http.StatusUnauthorized,
-						responses.Failure(
+						httpserver.Failure(
 							common.NewErrorWithDescriptionValue(
-								responses.CodeTokenExpired,
+								httpserver.CodeTokenExpired,
 								err.Error(),
 							),
 						),
@@ -46,9 +45,9 @@ func JwsAccessTokenCheck(repository authRepository.Repository, jwtService jwt.Se
 				case jwt.CodeTokenInvalid:
 					c.AbortWithStatusJSON(
 						http.StatusUnprocessableEntity,
-						responses.Failure(
+						httpserver.Failure(
 							common.NewErrorWithDescriptionValue(
-								responses.CodeWrongAccessToken,
+								httpserver.CodeWrongAccessToken,
 								err.Error(),
 							),
 						),
@@ -57,9 +56,9 @@ func JwsAccessTokenCheck(repository authRepository.Repository, jwtService jwt.Se
 					logger.LogError("jwt token validation failed %v", err)
 					c.AbortWithStatusJSON(
 						http.StatusInternalServerError,
-						responses.Failure(
+						httpserver.Failure(
 							common.NewErrorWithDescriptionValue(
-								responses.CodeInternal,
+								httpserver.CodeInternal,
 								err.Error(),
 							),
 						),
@@ -72,9 +71,9 @@ func JwsAccessTokenCheck(repository authRepository.Repository, jwtService jwt.Se
 				logger.LogError("jwt token get subject failed %v", getSubjectError)
 				c.AbortWithStatusJSON(
 					http.StatusInternalServerError,
-					responses.Failure(
+					httpserver.Failure(
 						common.NewErrorWithDescriptionValue(
-							responses.CodeInternal,
+							httpserver.CodeInternal,
 							getSubjectError.Error(),
 						),
 					),
@@ -86,9 +85,9 @@ func JwsAccessTokenCheck(repository authRepository.Repository, jwtService jwt.Se
 				logger.LogError("valid token with invalid subject - %v", err)
 				c.AbortWithStatusJSON(
 					http.StatusInternalServerError,
-					responses.Failure(
+					httpserver.Failure(
 						common.NewErrorWithDescriptionValue(
-							responses.CodeInternal,
+							httpserver.CodeInternal,
 							err.Error(),
 						),
 					),
@@ -98,9 +97,9 @@ func JwsAccessTokenCheck(repository authRepository.Repository, jwtService jwt.Se
 			if !exists {
 				c.AbortWithStatusJSON(
 					http.StatusUnprocessableEntity,
-					responses.Failure(
+					httpserver.Failure(
 						common.NewErrorWithDescriptionValue(
-							responses.CodeWrongAccessToken,
+							httpserver.CodeWrongAccessToken,
 							"associated user is not exists",
 						),
 					),

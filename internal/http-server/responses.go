@@ -1,4 +1,4 @@
-package responses
+package httpserver
 
 import (
 	"fmt"

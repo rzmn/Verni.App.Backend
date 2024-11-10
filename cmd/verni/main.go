@@ -13,7 +13,6 @@ import (
 	httpserver "verni/internal/http-server"
 	"verni/internal/http-server/longpoll"
 	"verni/internal/http-server/middleware"
-	"verni/internal/http-server/responses"
 	authRepository "verni/internal/repositories/auth"
 	friendsRepository "verni/internal/repositories/friends"
 	imagesRepository "verni/internal/repositories/images"
@@ -360,17 +359,17 @@ func main() {
 				if err := c.BindJSON(&request); err != nil {
 					c.AbortWithStatusJSON(
 						http.StatusBadRequest,
-						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+						httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
 					)
 					return
 				}
 				requestHandlers.spendings.AddExpense(
 					httpserver.UserId(tokenChecker.AccessToken(c)),
 					request,
-					func(status httpserver.StatusCode, response responses.Response[httpserver.IdentifiableExpense]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.IdentifiableExpense]) {
 						c.JSON(int(status), response)
 					},
-					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -380,17 +379,17 @@ func main() {
 				if err := c.BindJSON(&request); err != nil {
 					c.AbortWithStatusJSON(
 						http.StatusBadRequest,
-						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+						httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
 					)
 					return
 				}
 				requestHandlers.spendings.RemoveExpense(
 					httpserver.UserId(tokenChecker.AccessToken(c)),
 					request,
-					func(status httpserver.StatusCode, response responses.Response[httpserver.IdentifiableExpense]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.IdentifiableExpense]) {
 						c.JSON(int(status), response)
 					},
-					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -398,10 +397,10 @@ func main() {
 			spendingsGroup.GET("/getBalance", func(c *gin.Context) {
 				requestHandlers.spendings.GetBalance(
 					httpserver.UserId(tokenChecker.AccessToken(c)),
-					func(status httpserver.StatusCode, response responses.Response[[]httpserver.Balance]) {
+					func(status httpserver.StatusCode, response httpserver.Response[[]httpserver.Balance]) {
 						c.JSON(int(status), response)
 					},
-					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -411,17 +410,17 @@ func main() {
 				if err := c.BindJSON(&request); err != nil {
 					c.AbortWithStatusJSON(
 						http.StatusBadRequest,
-						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+						httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
 					)
 					return
 				}
 				requestHandlers.spendings.GetExpenses(
 					httpserver.UserId(tokenChecker.AccessToken(c)),
 					request,
-					func(status httpserver.StatusCode, response responses.Response[[]httpserver.IdentifiableExpense]) {
+					func(status httpserver.StatusCode, response httpserver.Response[[]httpserver.IdentifiableExpense]) {
 						c.JSON(int(status), response)
 					},
-					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -431,17 +430,17 @@ func main() {
 				if err := c.BindJSON(&request); err != nil {
 					c.AbortWithStatusJSON(
 						http.StatusBadRequest,
-						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+						httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
 					)
 					return
 				}
 				requestHandlers.spendings.GetExpense(
 					httpserver.UserId(tokenChecker.AccessToken(c)),
 					request,
-					func(status httpserver.StatusCode, response responses.Response[httpserver.IdentifiableExpense]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.IdentifiableExpense]) {
 						c.JSON(int(status), response)
 					},
-					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -452,17 +451,17 @@ func main() {
 				if err := c.BindJSON(&request); err != nil {
 					c.AbortWithStatusJSON(
 						http.StatusBadRequest,
-						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+						httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
 					)
 					return
 				}
 				requestHandlers.friends.AcceptRequest(
 					httpserver.UserId(tokenChecker.AccessToken(c)),
 					request,
-					func(status httpserver.StatusCode, response responses.VoidResponse) {
+					func(status httpserver.StatusCode, response httpserver.VoidResponse) {
 						c.JSON(int(status), response)
 					},
-					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -472,17 +471,17 @@ func main() {
 				if err := c.BindJSON(&request); err != nil {
 					c.AbortWithStatusJSON(
 						http.StatusBadRequest,
-						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+						httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
 					)
 					return
 				}
 				requestHandlers.friends.GetFriends(
 					httpserver.UserId(tokenChecker.AccessToken(c)),
 					request,
-					func(status httpserver.StatusCode, response responses.Response[map[httpserver.FriendStatus][]httpserver.UserId]) {
+					func(status httpserver.StatusCode, response httpserver.Response[map[httpserver.FriendStatus][]httpserver.UserId]) {
 						c.JSON(int(status), response)
 					},
-					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -492,17 +491,17 @@ func main() {
 				if err := c.BindJSON(&request); err != nil {
 					c.AbortWithStatusJSON(
 						http.StatusBadRequest,
-						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+						httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
 					)
 					return
 				}
 				requestHandlers.friends.RejectRequest(
 					httpserver.UserId(tokenChecker.AccessToken(c)),
 					request,
-					func(status httpserver.StatusCode, response responses.VoidResponse) {
+					func(status httpserver.StatusCode, response httpserver.VoidResponse) {
 						c.JSON(int(status), response)
 					},
-					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -512,17 +511,17 @@ func main() {
 				if err := c.BindJSON(&request); err != nil {
 					c.AbortWithStatusJSON(
 						http.StatusBadRequest,
-						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+						httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
 					)
 					return
 				}
 				requestHandlers.friends.RollbackRequest(
 					httpserver.UserId(tokenChecker.AccessToken(c)),
 					request,
-					func(status httpserver.StatusCode, response responses.VoidResponse) {
+					func(status httpserver.StatusCode, response httpserver.VoidResponse) {
 						c.JSON(int(status), response)
 					},
-					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -532,17 +531,17 @@ func main() {
 				if err := c.BindJSON(&request); err != nil {
 					c.AbortWithStatusJSON(
 						http.StatusBadRequest,
-						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+						httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
 					)
 					return
 				}
 				requestHandlers.friends.SendRequest(
 					httpserver.UserId(tokenChecker.AccessToken(c)),
 					request,
-					func(status httpserver.StatusCode, response responses.VoidResponse) {
+					func(status httpserver.StatusCode, response httpserver.VoidResponse) {
 						c.JSON(int(status), response)
 					},
-					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -552,17 +551,17 @@ func main() {
 				if err := c.BindJSON(&request); err != nil {
 					c.AbortWithStatusJSON(
 						http.StatusBadRequest,
-						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+						httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
 					)
 					return
 				}
 				requestHandlers.friends.Unfriend(
 					httpserver.UserId(tokenChecker.AccessToken(c)),
 					request,
-					func(status httpserver.StatusCode, response responses.VoidResponse) {
+					func(status httpserver.StatusCode, response httpserver.VoidResponse) {
 						c.JSON(int(status), response)
 					},
-					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -572,16 +571,16 @@ func main() {
 				if err := c.BindJSON(&request); err != nil {
 					c.AbortWithStatusJSON(
 						http.StatusBadRequest,
-						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+						httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
 					)
 					return
 				}
 				requestHandlers.auth.Signup(
 					request,
-					func(status httpserver.StatusCode, response responses.Response[httpserver.Session]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.Session]) {
 						c.JSON(int(status), response)
 					},
-					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -591,16 +590,16 @@ func main() {
 				if err := c.BindJSON(&request); err != nil {
 					c.AbortWithStatusJSON(
 						http.StatusBadRequest,
-						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+						httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
 					)
 					return
 				}
 				requestHandlers.auth.Login(
 					request,
-					func(status httpserver.StatusCode, response responses.Response[httpserver.Session]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.Session]) {
 						c.JSON(int(status), response)
 					},
-					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -610,16 +609,16 @@ func main() {
 				if err := c.BindJSON(&request); err != nil {
 					c.AbortWithStatusJSON(
 						http.StatusBadRequest,
-						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+						httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
 					)
 					return
 				}
 				requestHandlers.auth.Refresh(
 					request,
-					func(status httpserver.StatusCode, response responses.Response[httpserver.Session]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.Session]) {
 						c.JSON(int(status), response)
 					},
-					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -629,17 +628,17 @@ func main() {
 				if err := c.BindJSON(&request); err != nil {
 					c.AbortWithStatusJSON(
 						http.StatusBadRequest,
-						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+						httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
 					)
 					return
 				}
 				requestHandlers.auth.UpdateEmail(
 					httpserver.UserId(tokenChecker.AccessToken(c)),
 					request,
-					func(status httpserver.StatusCode, response responses.Response[httpserver.Session]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.Session]) {
 						c.JSON(int(status), response)
 					},
-					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -649,17 +648,17 @@ func main() {
 				if err := c.BindJSON(&request); err != nil {
 					c.AbortWithStatusJSON(
 						http.StatusBadRequest,
-						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+						httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
 					)
 					return
 				}
 				requestHandlers.auth.UpdatePassword(
 					httpserver.UserId(tokenChecker.AccessToken(c)),
 					request,
-					func(status httpserver.StatusCode, response responses.Response[httpserver.Session]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.Session]) {
 						c.JSON(int(status), response)
 					},
-					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -667,10 +666,10 @@ func main() {
 			router.DELETE("/auth/logout", tokenChecker.Handler, func(c *gin.Context) {
 				requestHandlers.auth.Logout(
 					httpserver.UserId(tokenChecker.AccessToken(c)),
-					func(status httpserver.StatusCode, response responses.VoidResponse) {
+					func(status httpserver.StatusCode, response httpserver.VoidResponse) {
 						c.JSON(int(status), response)
 					},
-					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -680,17 +679,17 @@ func main() {
 				if err := c.BindJSON(&request); err != nil {
 					c.AbortWithStatusJSON(
 						http.StatusBadRequest,
-						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+						httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
 					)
 					return
 				}
 				requestHandlers.auth.RegisterForPushNotifications(
 					httpserver.UserId(tokenChecker.AccessToken(c)),
 					request,
-					func(status httpserver.StatusCode, response responses.VoidResponse) {
+					func(status httpserver.StatusCode, response httpserver.VoidResponse) {
 						c.JSON(int(status), response)
 					},
-					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -699,10 +698,10 @@ func main() {
 			profileGroup.GET("/getInfo", func(c *gin.Context) {
 				requestHandlers.profile.GetInfo(
 					httpserver.UserId(tokenChecker.AccessToken(c)),
-					func(status httpserver.StatusCode, response responses.Response[httpserver.Profile]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.Profile]) {
 						c.JSON(int(status), response)
 					},
-					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -712,17 +711,17 @@ func main() {
 				if err := c.BindJSON(&request); err != nil {
 					c.AbortWithStatusJSON(
 						http.StatusBadRequest,
-						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+						httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
 					)
 					return
 				}
 				requestHandlers.profile.SetAvatar(
 					httpserver.UserId(tokenChecker.AccessToken(c)),
 					request,
-					func(status httpserver.StatusCode, response responses.Response[httpserver.ImageId]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.ImageId]) {
 						c.JSON(int(status), response)
 					},
-					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -732,17 +731,17 @@ func main() {
 				if err := c.BindJSON(&request); err != nil {
 					c.AbortWithStatusJSON(
 						http.StatusBadRequest,
-						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+						httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
 					)
 					return
 				}
 				requestHandlers.profile.SetDisplayName(
 					httpserver.UserId(tokenChecker.AccessToken(c)),
 					request,
-					func(status httpserver.StatusCode, response responses.VoidResponse) {
+					func(status httpserver.StatusCode, response httpserver.VoidResponse) {
 						c.JSON(int(status), response)
 					},
-					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -753,17 +752,17 @@ func main() {
 				if err := c.BindJSON(&request); err != nil {
 					c.AbortWithStatusJSON(
 						http.StatusBadRequest,
-						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+						httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
 					)
 					return
 				}
 				requestHandlers.verification.ConfirmEmail(
 					httpserver.UserId(tokenChecker.AccessToken(c)),
 					request,
-					func(status httpserver.StatusCode, response responses.VoidResponse) {
+					func(status httpserver.StatusCode, response httpserver.VoidResponse) {
 						c.JSON(int(status), response)
 					},
-					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -771,10 +770,10 @@ func main() {
 			verificationGroup.PUT("/sendEmailConfirmationCode", func(c *gin.Context) {
 				requestHandlers.verification.SendEmailConfirmationCode(
 					httpserver.UserId(tokenChecker.AccessToken(c)),
-					func(status httpserver.StatusCode, response responses.VoidResponse) {
+					func(status httpserver.StatusCode, response httpserver.VoidResponse) {
 						c.JSON(int(status), response)
 					},
-					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -785,17 +784,17 @@ func main() {
 				if err := c.BindJSON(&request); err != nil {
 					c.AbortWithStatusJSON(
 						http.StatusBadRequest,
-						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+						httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
 					)
 					return
 				}
 				requestHandlers.users.GetUsers(
 					httpserver.UserId(tokenChecker.AccessToken(c)),
 					request,
-					func(status httpserver.StatusCode, response responses.Response[[]httpserver.User]) {
+					func(status httpserver.StatusCode, response httpserver.Response[[]httpserver.User]) {
 						c.JSON(int(status), response)
 					},
-					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)
@@ -806,16 +805,16 @@ func main() {
 				if err := c.BindJSON(&request); err != nil {
 					c.AbortWithStatusJSON(
 						http.StatusBadRequest,
-						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+						httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
 					)
 					return
 				}
 				requestHandlers.avatars.GetAvatars(
 					request,
-					func(status httpserver.StatusCode, response responses.Response[map[httpserver.ImageId]httpserver.Image]) {
+					func(status httpserver.StatusCode, response httpserver.Response[map[httpserver.ImageId]httpserver.Image]) {
 						c.JSON(int(status), response)
 					},
-					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+					func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
 						c.AbortWithStatusJSON(int(status), response)
 					},
 				)

@@ -5,7 +5,6 @@ import (
 	"verni/internal/common"
 	avatarsController "verni/internal/controllers/avatars"
 	httpserver "verni/internal/http-server"
-	"verni/internal/http-server/responses"
 	"verni/internal/services/logging"
 )
 
@@ -16,8 +15,8 @@ type defaultRequestsHandler struct {
 
 func (c *defaultRequestsHandler) GetAvatars(
 	request GetAvatarsRequest,
-	success func(httpserver.StatusCode, responses.Response[map[httpserver.ImageId]httpserver.Image]),
-	failure func(httpserver.StatusCode, responses.Response[responses.Error]),
+	success func(httpserver.StatusCode, httpserver.Response[map[httpserver.ImageId]httpserver.Image]),
+	failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
 ) {
 	info, err := c.controller.GetAvatars(common.Map(request.Ids, func(id httpserver.ImageId) avatarsController.AvatarId {
 		return avatarsController.AvatarId(id)
@@ -28,9 +27,9 @@ func (c *defaultRequestsHandler) GetAvatars(
 			c.logger.LogError("getAvatars request %v failed with unknown err: %v", request, err)
 			failure(
 				http.StatusInternalServerError,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeInternal,
+						httpserver.CodeInternal,
 						err.Error(),
 					),
 				),
@@ -45,5 +44,5 @@ func (c *defaultRequestsHandler) GetAvatars(
 			Base64Data: avatar.Base64,
 		}
 	}
-	success(http.StatusOK, responses.Success(response))
+	success(http.StatusOK, httpserver.Success(response))
 }

@@ -5,7 +5,6 @@ import (
 	"verni/internal/common"
 	verificationController "verni/internal/controllers/verification"
 	httpserver "verni/internal/http-server"
-	"verni/internal/http-server/responses"
 	"verni/internal/services/logging"
 )
 
@@ -17,17 +16,17 @@ type defaultRequestsHandler struct {
 func (c *defaultRequestsHandler) ConfirmEmail(
 	subject httpserver.UserId,
 	request ConfirmEmailRequest,
-	success func(httpserver.StatusCode, responses.VoidResponse),
-	failure func(httpserver.StatusCode, responses.Response[responses.Error]),
+	success func(httpserver.StatusCode, httpserver.VoidResponse),
+	failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
 ) {
 	if err := c.controller.ConfirmEmail(verificationController.UserId(subject), request.Code); err != nil {
 		switch err.Code {
 		case verificationController.ConfirmEmailErrorWrongConfirmationCode:
 			failure(
 				http.StatusConflict,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeIncorrectCredentials,
+						httpserver.CodeIncorrectCredentials,
 						err.Error(),
 					),
 				),
@@ -36,22 +35,22 @@ func (c *defaultRequestsHandler) ConfirmEmail(
 			c.logger.LogError("confirmEmail request %v failed with unknown err: %v", request, err)
 			failure(
 				http.StatusInternalServerError,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeInternal,
+						httpserver.CodeInternal,
 						err.Error(),
 					),
 				),
 			)
 		}
 	}
-	success(http.StatusOK, responses.OK())
+	success(http.StatusOK, httpserver.OK())
 }
 
 func (c *defaultRequestsHandler) SendEmailConfirmationCode(
 	subject httpserver.UserId,
-	success func(httpserver.StatusCode, responses.VoidResponse),
-	failure func(httpserver.StatusCode, responses.Response[responses.Error]),
+	success func(httpserver.StatusCode, httpserver.VoidResponse),
+	failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
 ) {
 	if err := c.controller.SendConfirmationCode(verificationController.UserId(subject)); err != nil {
 		switch err.Code {
@@ -59,14 +58,14 @@ func (c *defaultRequestsHandler) SendEmailConfirmationCode(
 			c.logger.LogError("sendEmailConfirmationCode request failed with unknown err: %v", err)
 			failure(
 				http.StatusInternalServerError,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeInternal,
+						httpserver.CodeInternal,
 						err.Error(),
 					),
 				),
 			)
 		}
 	}
-	success(http.StatusOK, responses.OK())
+	success(http.StatusOK, httpserver.OK())
 }

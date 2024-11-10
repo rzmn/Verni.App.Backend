@@ -5,7 +5,6 @@ import (
 	"verni/internal/common"
 	usersController "verni/internal/controllers/users"
 	httpserver "verni/internal/http-server"
-	"verni/internal/http-server/responses"
 	"verni/internal/services/logging"
 )
 
@@ -17,8 +16,8 @@ type defaultRequestsHandler struct {
 func (c *defaultRequestsHandler) GetUsers(
 	subject httpserver.UserId,
 	request GetUsersRequest,
-	success func(httpserver.StatusCode, responses.Response[[]httpserver.User]),
-	failure func(httpserver.StatusCode, responses.Response[responses.Error]),
+	success func(httpserver.StatusCode, httpserver.Response[[]httpserver.User]),
+	failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
 ) {
 	users, err := c.controller.Get(common.Map(request.Ids, func(id httpserver.UserId) usersController.UserId {
 		return usersController.UserId(id)
@@ -29,9 +28,9 @@ func (c *defaultRequestsHandler) GetUsers(
 			c.logger.LogError("getUsers request %v failed with unknown err: %v", request, err)
 			failure(
 				http.StatusInternalServerError,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeInternal,
+						httpserver.CodeInternal,
 						err.Error(),
 					),
 				),
@@ -39,7 +38,7 @@ func (c *defaultRequestsHandler) GetUsers(
 		}
 		return
 	}
-	success(http.StatusOK, responses.Success(common.Map(users, mapUser)))
+	success(http.StatusOK, httpserver.Success(common.Map(users, mapUser)))
 }
 
 func mapUser(user usersController.User) httpserver.User {

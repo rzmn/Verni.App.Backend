@@ -6,7 +6,6 @@ import (
 	spendingsController "verni/internal/controllers/spendings"
 	httpserver "verni/internal/http-server"
 	"verni/internal/http-server/longpoll"
-	"verni/internal/http-server/responses"
 	spendingsRepository "verni/internal/repositories/spendings"
 	"verni/internal/services/logging"
 	"verni/internal/services/pushNotifications"
@@ -22,8 +21,8 @@ type defaultRequestsHandler struct {
 func (c *defaultRequestsHandler) AddExpense(
 	subject httpserver.UserId,
 	request AddExpenseRequest,
-	success func(httpserver.StatusCode, responses.Response[httpserver.IdentifiableExpense]),
-	failure func(httpserver.StatusCode, responses.Response[responses.Error]),
+	success func(httpserver.StatusCode, httpserver.Response[httpserver.IdentifiableExpense]),
+	failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
 ) {
 	expense, err := c.controller.AddExpense(mapHttpServerExpense(request.Expense), spendingsController.CounterpartyId(subject))
 	if err != nil {
@@ -31,9 +30,9 @@ func (c *defaultRequestsHandler) AddExpense(
 		case spendingsController.AddExpenseErrorNoSuchUser:
 			failure(
 				http.StatusConflict,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeNoSuchUser,
+						httpserver.CodeNoSuchUser,
 						err.Error(),
 					),
 				),
@@ -41,9 +40,9 @@ func (c *defaultRequestsHandler) AddExpense(
 		case spendingsController.AddExpenseErrorNotYourExpense:
 			failure(
 				http.StatusConflict,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeIsNotYourExpense,
+						httpserver.CodeIsNotYourExpense,
 						err.Error(),
 					),
 				),
@@ -52,9 +51,9 @@ func (c *defaultRequestsHandler) AddExpense(
 			c.logger.LogError("addExpense request %v failed with unknown err: %v", request, err)
 			failure(
 				http.StatusInternalServerError,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeInternal,
+						httpserver.CodeInternal,
 						err.Error(),
 					),
 				),
@@ -74,14 +73,14 @@ func (c *defaultRequestsHandler) AddExpense(
 		c.pollingService.ExpensesUpdated(longpoll.UserId(share.Counterparty), longpoll.UserId(subject))
 		c.pollingService.CounterpartiesUpdated(longpoll.UserId(share.Counterparty))
 	}
-	success(http.StatusOK, responses.Success(mapIdentifiableExpense(expense)))
+	success(http.StatusOK, httpserver.Success(mapIdentifiableExpense(expense)))
 }
 
 func (c *defaultRequestsHandler) RemoveExpense(
 	subject httpserver.UserId,
 	request RemoveExpenseRequest,
-	success func(httpserver.StatusCode, responses.Response[httpserver.IdentifiableExpense]),
-	failure func(httpserver.StatusCode, responses.Response[responses.Error]),
+	success func(httpserver.StatusCode, httpserver.Response[httpserver.IdentifiableExpense]),
+	failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
 ) {
 	expense, err := c.controller.RemoveExpense(spendingsController.ExpenseId(request.ExpenseId), spendingsController.CounterpartyId(subject))
 	if err != nil {
@@ -89,9 +88,9 @@ func (c *defaultRequestsHandler) RemoveExpense(
 		case spendingsController.RemoveExpenseErrorExpenseNotFound:
 			failure(
 				http.StatusConflict,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeExpenseNotFound,
+						httpserver.CodeExpenseNotFound,
 						err.Error(),
 					),
 				),
@@ -99,9 +98,9 @@ func (c *defaultRequestsHandler) RemoveExpense(
 		case spendingsController.RemoveExpenseErrorNotAFriend:
 			failure(
 				http.StatusConflict,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeNotAFriend,
+						httpserver.CodeNotAFriend,
 						err.Error(),
 					),
 				),
@@ -109,9 +108,9 @@ func (c *defaultRequestsHandler) RemoveExpense(
 		case spendingsController.RemoveExpenseErrorNotYourExpense:
 			failure(
 				http.StatusConflict,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeIsNotYourExpense,
+						httpserver.CodeIsNotYourExpense,
 						err.Error(),
 					),
 				),
@@ -120,9 +119,9 @@ func (c *defaultRequestsHandler) RemoveExpense(
 			c.logger.LogError("removeExpense request %v failed with unknown err: %v", request, err)
 			failure(
 				http.StatusInternalServerError,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeInternal,
+						httpserver.CodeInternal,
 						err.Error(),
 					),
 				),
@@ -142,13 +141,13 @@ func (c *defaultRequestsHandler) RemoveExpense(
 		c.pollingService.ExpensesUpdated(longpoll.UserId(share.Counterparty), longpoll.UserId(subject))
 		c.pollingService.CounterpartiesUpdated(longpoll.UserId(share.Counterparty))
 	}
-	success(http.StatusOK, responses.Success(mapIdentifiableExpense(expense)))
+	success(http.StatusOK, httpserver.Success(mapIdentifiableExpense(expense)))
 }
 
 func (c *defaultRequestsHandler) GetBalance(
 	subject httpserver.UserId,
-	success func(httpserver.StatusCode, responses.Response[[]httpserver.Balance]),
-	failure func(httpserver.StatusCode, responses.Response[responses.Error]),
+	success func(httpserver.StatusCode, httpserver.Response[[]httpserver.Balance]),
+	failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
 ) {
 	balance, err := c.controller.GetBalance(spendingsController.CounterpartyId(subject))
 	if err != nil {
@@ -157,9 +156,9 @@ func (c *defaultRequestsHandler) GetBalance(
 			c.logger.LogError("getBalance request failed with unknown err: %v", err)
 			failure(
 				http.StatusInternalServerError,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeInternal,
+						httpserver.CodeInternal,
 						err.Error(),
 					),
 				),
@@ -167,14 +166,14 @@ func (c *defaultRequestsHandler) GetBalance(
 		}
 		return
 	}
-	success(http.StatusOK, responses.Success(common.Map(balance, mapBalance)))
+	success(http.StatusOK, httpserver.Success(common.Map(balance, mapBalance)))
 }
 
 func (c *defaultRequestsHandler) GetExpenses(
 	subject httpserver.UserId,
 	request GetExpensesRequest,
-	success func(httpserver.StatusCode, responses.Response[[]httpserver.IdentifiableExpense]),
-	failure func(httpserver.StatusCode, responses.Response[responses.Error]),
+	success func(httpserver.StatusCode, httpserver.Response[[]httpserver.IdentifiableExpense]),
+	failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
 ) {
 	expenses, err := c.controller.GetExpensesWith(spendingsController.CounterpartyId(request.Counterparty), spendingsController.CounterpartyId(subject))
 	if err != nil {
@@ -183,9 +182,9 @@ func (c *defaultRequestsHandler) GetExpenses(
 			c.logger.LogError("getExpenses request %v failed with unknown err: %v", request, err)
 			failure(
 				http.StatusInternalServerError,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeInternal,
+						httpserver.CodeInternal,
 						err.Error(),
 					),
 				),
@@ -193,14 +192,14 @@ func (c *defaultRequestsHandler) GetExpenses(
 		}
 		return
 	}
-	success(http.StatusOK, responses.Success(common.Map(expenses, mapIdentifiableExpense)))
+	success(http.StatusOK, httpserver.Success(common.Map(expenses, mapIdentifiableExpense)))
 }
 
 func (c *defaultRequestsHandler) GetExpense(
 	subject httpserver.UserId,
 	request GetExpenseRequest,
-	success func(httpserver.StatusCode, responses.Response[httpserver.IdentifiableExpense]),
-	failure func(httpserver.StatusCode, responses.Response[responses.Error]),
+	success func(httpserver.StatusCode, httpserver.Response[httpserver.IdentifiableExpense]),
+	failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
 ) {
 	expense, err := c.controller.GetExpense(spendingsController.ExpenseId(request.Id), spendingsController.CounterpartyId(subject))
 	if err != nil {
@@ -208,9 +207,9 @@ func (c *defaultRequestsHandler) GetExpense(
 		case spendingsController.GetExpenseErrorExpenseNotFound:
 			failure(
 				http.StatusConflict,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeExpenseNotFound,
+						httpserver.CodeExpenseNotFound,
 						err.Error(),
 					),
 				),
@@ -218,9 +217,9 @@ func (c *defaultRequestsHandler) GetExpense(
 		case spendingsController.GetExpenseErrorNotYourExpense:
 			failure(
 				http.StatusConflict,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeIsNotYourExpense,
+						httpserver.CodeIsNotYourExpense,
 						err.Error(),
 					),
 				),
@@ -229,9 +228,9 @@ func (c *defaultRequestsHandler) GetExpense(
 			c.logger.LogError("getExpense request %v failed with unknown err: %v", request, err)
 			failure(
 				http.StatusInternalServerError,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeInternal,
+						httpserver.CodeInternal,
 						err.Error(),
 					),
 				),
@@ -239,7 +238,7 @@ func (c *defaultRequestsHandler) GetExpense(
 		}
 		return
 	}
-	success(http.StatusOK, responses.Success(mapIdentifiableExpense(expense)))
+	success(http.StatusOK, httpserver.Success(mapIdentifiableExpense(expense)))
 }
 
 func mapHttpServerExpense(expense httpserver.Expense) spendingsController.Expense {

@@ -3,7 +3,6 @@ package users
 import (
 	usersController "verni/internal/controllers/users"
 	httpserver "verni/internal/http-server"
-	"verni/internal/http-server/responses"
 	"verni/internal/services/logging"
 )
 
@@ -15,8 +14,8 @@ type RequestsHandler interface {
 	GetUsers(
 		subject httpserver.UserId,
 		request GetUsersRequest,
-		success func(httpserver.StatusCode, responses.Response[[]httpserver.User]),
-		failure func(httpserver.StatusCode, responses.Response[responses.Error]),
+		success func(httpserver.StatusCode, httpserver.Response[[]httpserver.User]),
+		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
 	)
 }
 

@@ -5,7 +5,6 @@ import (
 	"verni/internal/common"
 	authController "verni/internal/controllers/auth"
 	httpserver "verni/internal/http-server"
-	"verni/internal/http-server/responses"
 	"verni/internal/services/logging"
 )
 
@@ -16,8 +15,8 @@ type defaultRequestsHandler struct {
 
 func (c *defaultRequestsHandler) Signup(
 	request SignupRequest,
-	success func(httpserver.StatusCode, responses.Response[httpserver.Session]),
-	failure func(httpserver.StatusCode, responses.Response[responses.Error]),
+	success func(httpserver.StatusCode, httpserver.Response[httpserver.Session]),
+	failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
 ) {
 	session, err := c.controller.Signup(request.Credentials.Email, request.Credentials.Password)
 	if err != nil {
@@ -25,9 +24,9 @@ func (c *defaultRequestsHandler) Signup(
 		case authController.SignupErrorAlreadyTaken:
 			failure(
 				http.StatusConflict,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeAlreadyTaken,
+						httpserver.CodeAlreadyTaken,
 						err.Error(),
 					),
 				),
@@ -35,9 +34,9 @@ func (c *defaultRequestsHandler) Signup(
 		case authController.SignupErrorWrongFormat:
 			failure(
 				http.StatusUnprocessableEntity,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeWrongFormat,
+						httpserver.CodeWrongFormat,
 						err.Error(),
 					),
 				),
@@ -46,9 +45,9 @@ func (c *defaultRequestsHandler) Signup(
 			c.logger.LogError("signup request %v failed with unknown err: %v", request, err)
 			failure(
 				http.StatusInternalServerError,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeInternal,
+						httpserver.CodeInternal,
 						err.Error(),
 					),
 				),
@@ -56,13 +55,13 @@ func (c *defaultRequestsHandler) Signup(
 		}
 		return
 	}
-	success(http.StatusOK, responses.Success(mapSession(session)))
+	success(http.StatusOK, httpserver.Success(mapSession(session)))
 }
 
 func (c *defaultRequestsHandler) Login(
 	request LoginRequest,
-	success func(httpserver.StatusCode, responses.Response[httpserver.Session]),
-	failure func(httpserver.StatusCode, responses.Response[responses.Error]),
+	success func(httpserver.StatusCode, httpserver.Response[httpserver.Session]),
+	failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
 ) {
 	session, err := c.controller.Login(request.Credentials.Email, request.Credentials.Password)
 	if err != nil {
@@ -70,9 +69,9 @@ func (c *defaultRequestsHandler) Login(
 		case authController.LoginErrorWrongCredentials:
 			failure(
 				http.StatusConflict,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeIncorrectCredentials,
+						httpserver.CodeIncorrectCredentials,
 						err.Error(),
 					),
 				),
@@ -81,9 +80,9 @@ func (c *defaultRequestsHandler) Login(
 			c.logger.LogError("login request %v failed with unknown err: %v", request, err)
 			failure(
 				http.StatusInternalServerError,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeInternal,
+						httpserver.CodeInternal,
 						err.Error(),
 					),
 				),
@@ -91,13 +90,13 @@ func (c *defaultRequestsHandler) Login(
 		}
 		return
 	}
-	success(http.StatusOK, responses.Success(mapSession(session)))
+	success(http.StatusOK, httpserver.Success(mapSession(session)))
 }
 
 func (c *defaultRequestsHandler) Refresh(
 	request RefreshRequest,
-	success func(httpserver.StatusCode, responses.Response[httpserver.Session]),
-	failure func(httpserver.StatusCode, responses.Response[responses.Error]),
+	success func(httpserver.StatusCode, httpserver.Response[httpserver.Session]),
+	failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
 ) {
 	session, err := c.controller.Refresh(request.RefreshToken)
 	if err != nil {
@@ -105,9 +104,9 @@ func (c *defaultRequestsHandler) Refresh(
 		case authController.RefreshErrorTokenExpired:
 			failure(
 				http.StatusUnauthorized,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeTokenExpired,
+						httpserver.CodeTokenExpired,
 						err.Error(),
 					),
 				),
@@ -115,9 +114,9 @@ func (c *defaultRequestsHandler) Refresh(
 		case authController.RefreshErrorTokenIsWrong:
 			failure(
 				http.StatusConflict,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeWrongAccessToken,
+						httpserver.CodeWrongAccessToken,
 						err.Error(),
 					),
 				),
@@ -126,9 +125,9 @@ func (c *defaultRequestsHandler) Refresh(
 			c.logger.LogError("refresh request %v failed with unknown err: %v", request, err)
 			failure(
 				http.StatusInternalServerError,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeInternal,
+						httpserver.CodeInternal,
 						err.Error(),
 					),
 				),
@@ -136,14 +135,14 @@ func (c *defaultRequestsHandler) Refresh(
 		}
 		return
 	}
-	success(http.StatusOK, responses.Success(mapSession(session)))
+	success(http.StatusOK, httpserver.Success(mapSession(session)))
 }
 
 func (c *defaultRequestsHandler) UpdateEmail(
 	subject httpserver.UserId,
 	request UpdateEmailRequest,
-	success func(httpserver.StatusCode, responses.Response[httpserver.Session]),
-	failure func(httpserver.StatusCode, responses.Response[responses.Error]),
+	success func(httpserver.StatusCode, httpserver.Response[httpserver.Session]),
+	failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
 ) {
 	session, err := c.controller.UpdateEmail(request.Email, authController.UserId(subject))
 	if err != nil {
@@ -151,9 +150,9 @@ func (c *defaultRequestsHandler) UpdateEmail(
 		case authController.UpdateEmailErrorAlreadyTaken:
 			failure(
 				http.StatusConflict,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeAlreadyTaken,
+						httpserver.CodeAlreadyTaken,
 						err.Error(),
 					),
 				),
@@ -161,9 +160,9 @@ func (c *defaultRequestsHandler) UpdateEmail(
 		case authController.UpdateEmailErrorWrongFormat:
 			failure(
 				http.StatusUnprocessableEntity,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeWrongFormat,
+						httpserver.CodeWrongFormat,
 						err.Error(),
 					),
 				),
@@ -172,9 +171,9 @@ func (c *defaultRequestsHandler) UpdateEmail(
 			c.logger.LogError("updateEmail request %v failed with unknown err: %v", request, err)
 			failure(
 				http.StatusInternalServerError,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeInternal,
+						httpserver.CodeInternal,
 						err.Error(),
 					),
 				),
@@ -182,14 +181,14 @@ func (c *defaultRequestsHandler) UpdateEmail(
 		}
 		return
 	}
-	success(http.StatusOK, responses.Success(mapSession(session)))
+	success(http.StatusOK, httpserver.Success(mapSession(session)))
 }
 
 func (c *defaultRequestsHandler) UpdatePassword(
 	subject httpserver.UserId,
 	request UpdatePasswordRequest,
-	success func(httpserver.StatusCode, responses.Response[httpserver.Session]),
-	failure func(httpserver.StatusCode, responses.Response[responses.Error]),
+	success func(httpserver.StatusCode, httpserver.Response[httpserver.Session]),
+	failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
 ) {
 	session, err := c.controller.UpdatePassword(request.OldPassword, request.NewPassword, authController.UserId(subject))
 	if err != nil {
@@ -197,9 +196,9 @@ func (c *defaultRequestsHandler) UpdatePassword(
 		case authController.UpdatePasswordErrorOldPasswordIsWrong:
 			failure(
 				http.StatusConflict,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeIncorrectCredentials,
+						httpserver.CodeIncorrectCredentials,
 						err.Error(),
 					),
 				),
@@ -208,9 +207,9 @@ func (c *defaultRequestsHandler) UpdatePassword(
 			c.logger.LogError("updatePassword request %v failed with unknown err: %v", request, err)
 			failure(
 				http.StatusInternalServerError,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeInternal,
+						httpserver.CodeInternal,
 						err.Error(),
 					),
 				),
@@ -218,14 +217,14 @@ func (c *defaultRequestsHandler) UpdatePassword(
 		}
 		return
 	}
-	success(http.StatusOK, responses.Success(mapSession(session)))
+	success(http.StatusOK, httpserver.Success(mapSession(session)))
 }
 
 func (c *defaultRequestsHandler) RegisterForPushNotifications(
 	subject httpserver.UserId,
 	request RegisterForPushNotificationsRequest,
-	success func(httpserver.StatusCode, responses.VoidResponse),
-	failure func(httpserver.StatusCode, responses.Response[responses.Error]),
+	success func(httpserver.StatusCode, httpserver.VoidResponse),
+	failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
 ) {
 	err := c.controller.RegisterForPushNotifications(request.Token, authController.UserId(subject))
 	if err != nil {
@@ -234,9 +233,9 @@ func (c *defaultRequestsHandler) RegisterForPushNotifications(
 			c.logger.LogError("registerForPushNotifications request %v failed with unknown err: %v", request, err)
 			failure(
 				http.StatusInternalServerError,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeInternal,
+						httpserver.CodeInternal,
 						err.Error(),
 					),
 				),
@@ -244,13 +243,13 @@ func (c *defaultRequestsHandler) RegisterForPushNotifications(
 		}
 		return
 	}
-	success(http.StatusOK, responses.OK())
+	success(http.StatusOK, httpserver.OK())
 }
 
 func (c *defaultRequestsHandler) Logout(
 	subject httpserver.UserId,
-	success func(httpserver.StatusCode, responses.VoidResponse),
-	failure func(httpserver.StatusCode, responses.Response[responses.Error]),
+	success func(httpserver.StatusCode, httpserver.VoidResponse),
+	failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
 ) {
 	err := c.controller.Logout(authController.UserId(subject))
 	if err != nil {
@@ -259,9 +258,9 @@ func (c *defaultRequestsHandler) Logout(
 			c.logger.LogError("logout request failed with unknown err: %v", err)
 			failure(
 				http.StatusInternalServerError,
-				responses.Failure(
+				httpserver.Failure(
 					common.NewErrorWithDescriptionValue(
-						responses.CodeInternal,
+						httpserver.CodeInternal,
 						err.Error(),
 					),
 				),
@@ -269,7 +268,7 @@ func (c *defaultRequestsHandler) Logout(
 		}
 		return
 	}
-	success(http.StatusOK, responses.OK())
+	success(http.StatusOK, httpserver.OK())
 }
 
 func mapSession(session authController.Session) httpserver.Session {
