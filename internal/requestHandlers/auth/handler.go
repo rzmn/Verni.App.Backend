@@ -1,8 +1,10 @@
 package auth
 
 import (
+	authController "verni/internal/controllers/auth"
 	httpserver "verni/internal/http-server"
 	"verni/internal/http-server/responses"
+	"verni/internal/services/logging"
 )
 
 type SignupRequest struct {
@@ -71,6 +73,12 @@ type RequestsHandler interface {
 	)
 }
 
-func DefaultHandler() RequestsHandler {
-	return &defaultRequestsHandler{}
+func DefaultHandler(
+	controller authController.Controller,
+	logger logging.Service,
+) RequestsHandler {
+	return &defaultRequestsHandler{
+		controller: controller,
+		logger:     logger,
+	}
 }

@@ -11,7 +11,6 @@ import (
 	"verni/internal/common"
 	"verni/internal/db"
 	httpserver "verni/internal/http-server"
-	"verni/internal/http-server/handlers/auth"
 	"verni/internal/http-server/handlers/avatars"
 	"verni/internal/http-server/handlers/profile"
 	"verni/internal/http-server/handlers/users"
@@ -25,6 +24,7 @@ import (
 	spendingsRepository "verni/internal/repositories/spendings"
 	usersRepository "verni/internal/repositories/users"
 	verificationRepository "verni/internal/repositories/verification"
+	"verni/internal/requestHandlers/auth"
 	"verni/internal/requestHandlers/friends"
 	"verni/internal/requestHandlers/spendings"
 	"verni/internal/services/emailSender"
@@ -76,6 +76,7 @@ type Controllers struct {
 type RequestHandlers struct {
 	spendings spendings.RequestsHandler
 	friends   friends.RequestsHandler
+	auth      auth.RequestsHandler
 }
 
 func main() {
@@ -327,6 +328,10 @@ func main() {
 					longpollService,
 					logger,
 				),
+				auth: auth.DefaultHandler(
+					controllers.auth,
+					logger,
+				),
 			}
 			spendingsGroup := router.Group("/spendings", tokenChecker.Handler)
 			spendingsGroup.POST("/addExpense", func(c *gin.Context) {
@@ -339,7 +344,7 @@ func main() {
 					return
 				}
 				requestHandlers.spendings.AddExpense(
-					spendingsController.CounterpartyId(tokenChecker.AccessToken(c)),
+					httpserver.UserId(tokenChecker.AccessToken(c)),
 					request,
 					func(status httpserver.StatusCode, response responses.Response[httpserver.IdentifiableExpense]) {
 						c.JSON(int(status), response)
@@ -359,7 +364,7 @@ func main() {
 					return
 				}
 				requestHandlers.spendings.RemoveExpense(
-					spendingsController.CounterpartyId(tokenChecker.AccessToken(c)),
+					httpserver.UserId(tokenChecker.AccessToken(c)),
 					request,
 					func(status httpserver.StatusCode, response responses.Response[httpserver.IdentifiableExpense]) {
 						c.JSON(int(status), response)
@@ -371,7 +376,7 @@ func main() {
 			})
 			spendingsGroup.GET("/getBalance", func(c *gin.Context) {
 				requestHandlers.spendings.GetBalance(
-					spendingsController.CounterpartyId(tokenChecker.AccessToken(c)),
+					httpserver.UserId(tokenChecker.AccessToken(c)),
 					func(status httpserver.StatusCode, response responses.Response[[]httpserver.Balance]) {
 						c.JSON(int(status), response)
 					},
@@ -390,7 +395,7 @@ func main() {
 					return
 				}
 				requestHandlers.spendings.GetExpenses(
-					spendingsController.CounterpartyId(tokenChecker.AccessToken(c)),
+					httpserver.UserId(tokenChecker.AccessToken(c)),
 					request,
 					func(status httpserver.StatusCode, response responses.Response[[]httpserver.IdentifiableExpense]) {
 						c.JSON(int(status), response)
@@ -410,7 +415,7 @@ func main() {
 					return
 				}
 				requestHandlers.spendings.GetExpense(
-					spendingsController.CounterpartyId(tokenChecker.AccessToken(c)),
+					httpserver.UserId(tokenChecker.AccessToken(c)),
 					request,
 					func(status httpserver.StatusCode, response responses.Response[httpserver.IdentifiableExpense]) {
 						c.JSON(int(status), response)
@@ -431,7 +436,7 @@ func main() {
 					return
 				}
 				requestHandlers.friends.AcceptRequest(
-					friendsController.UserId(tokenChecker.AccessToken(c)),
+					httpserver.UserId(tokenChecker.AccessToken(c)),
 					request,
 					func(status httpserver.StatusCode, response responses.VoidResponse) {
 						c.JSON(int(status), response)
@@ -451,7 +456,7 @@ func main() {
 					return
 				}
 				requestHandlers.friends.GetFriends(
-					friendsController.UserId(tokenChecker.AccessToken(c)),
+					httpserver.UserId(tokenChecker.AccessToken(c)),
 					request,
 					func(status httpserver.StatusCode, response responses.Response[map[httpserver.FriendStatus][]httpserver.UserId]) {
 						c.JSON(int(status), response)
@@ -471,7 +476,7 @@ func main() {
 					return
 				}
 				requestHandlers.friends.RejectRequest(
-					friendsController.UserId(tokenChecker.AccessToken(c)),
+					httpserver.UserId(tokenChecker.AccessToken(c)),
 					request,
 					func(status httpserver.StatusCode, response responses.VoidResponse) {
 						c.JSON(int(status), response)
@@ -491,7 +496,7 @@ func main() {
 					return
 				}
 				requestHandlers.friends.RollbackRequest(
-					friendsController.UserId(tokenChecker.AccessToken(c)),
+					httpserver.UserId(tokenChecker.AccessToken(c)),
 					request,
 					func(status httpserver.StatusCode, response responses.VoidResponse) {
 						c.JSON(int(status), response)
@@ -511,7 +516,7 @@ func main() {
 					return
 				}
 				requestHandlers.friends.SendRequest(
-					friendsController.UserId(tokenChecker.AccessToken(c)),
+					httpserver.UserId(tokenChecker.AccessToken(c)),
 					request,
 					func(status httpserver.StatusCode, response responses.VoidResponse) {
 						c.JSON(int(status), response)
@@ -531,7 +536,7 @@ func main() {
 					return
 				}
 				requestHandlers.friends.Unfriend(
-					friendsController.UserId(tokenChecker.AccessToken(c)),
+					httpserver.UserId(tokenChecker.AccessToken(c)),
 					request,
 					func(status httpserver.StatusCode, response responses.VoidResponse) {
 						c.JSON(int(status), response)
@@ -541,7 +546,134 @@ func main() {
 					},
 				)
 			})
-			auth.RegisterRoutes(router, logger, tokenChecker, controllers.auth)
+			router.PUT("/auth/signup", func(c *gin.Context) {
+				var request auth.SignupRequest
+				if err := c.BindJSON(&request); err != nil {
+					c.AbortWithStatusJSON(
+						http.StatusBadRequest,
+						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+					)
+					return
+				}
+				requestHandlers.auth.Signup(
+					request,
+					func(status httpserver.StatusCode, response responses.Response[httpserver.Session]) {
+						c.JSON(int(status), response)
+					},
+					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+						c.AbortWithStatusJSON(int(status), response)
+					},
+				)
+			})
+			router.PUT("/auth/login", func(c *gin.Context) {
+				var request auth.LoginRequest
+				if err := c.BindJSON(&request); err != nil {
+					c.AbortWithStatusJSON(
+						http.StatusBadRequest,
+						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+					)
+					return
+				}
+				requestHandlers.auth.Login(
+					request,
+					func(status httpserver.StatusCode, response responses.Response[httpserver.Session]) {
+						c.JSON(int(status), response)
+					},
+					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+						c.AbortWithStatusJSON(int(status), response)
+					},
+				)
+			})
+			router.PUT("/auth/refresh", tokenChecker.Handler, func(c *gin.Context) {
+				var request auth.RefreshRequest
+				if err := c.BindJSON(&request); err != nil {
+					c.AbortWithStatusJSON(
+						http.StatusBadRequest,
+						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+					)
+					return
+				}
+				requestHandlers.auth.Refresh(
+					request,
+					func(status httpserver.StatusCode, response responses.Response[httpserver.Session]) {
+						c.JSON(int(status), response)
+					},
+					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+						c.AbortWithStatusJSON(int(status), response)
+					},
+				)
+			})
+			router.PUT("/auth/updateEmail", tokenChecker.Handler, func(c *gin.Context) {
+				var request auth.UpdateEmailRequest
+				if err := c.BindJSON(&request); err != nil {
+					c.AbortWithStatusJSON(
+						http.StatusBadRequest,
+						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+					)
+					return
+				}
+				requestHandlers.auth.UpdateEmail(
+					httpserver.UserId(tokenChecker.AccessToken(c)),
+					request,
+					func(status httpserver.StatusCode, response responses.Response[httpserver.Session]) {
+						c.JSON(int(status), response)
+					},
+					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+						c.AbortWithStatusJSON(int(status), response)
+					},
+				)
+			})
+			router.PUT("/auth/updatePassword", tokenChecker.Handler, func(c *gin.Context) {
+				var request auth.UpdatePasswordRequest
+				if err := c.BindJSON(&request); err != nil {
+					c.AbortWithStatusJSON(
+						http.StatusBadRequest,
+						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+					)
+					return
+				}
+				requestHandlers.auth.UpdatePassword(
+					httpserver.UserId(tokenChecker.AccessToken(c)),
+					request,
+					func(status httpserver.StatusCode, response responses.Response[httpserver.Session]) {
+						c.JSON(int(status), response)
+					},
+					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+						c.AbortWithStatusJSON(int(status), response)
+					},
+				)
+			})
+			router.DELETE("/auth/logout", tokenChecker.Handler, func(c *gin.Context) {
+				requestHandlers.auth.Logout(
+					httpserver.UserId(tokenChecker.AccessToken(c)),
+					func(status httpserver.StatusCode, response responses.VoidResponse) {
+						c.JSON(int(status), response)
+					},
+					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+						c.AbortWithStatusJSON(int(status), response)
+					},
+				)
+			})
+			router.PUT("/auth/registerForPushNotifications", tokenChecker.Handler, func(c *gin.Context) {
+				var request auth.RegisterForPushNotificationsRequest
+				if err := c.BindJSON(&request); err != nil {
+					c.AbortWithStatusJSON(
+						http.StatusBadRequest,
+						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+					)
+					return
+				}
+				requestHandlers.auth.RegisterForPushNotifications(
+					httpserver.UserId(tokenChecker.AccessToken(c)),
+					request,
+					func(status httpserver.StatusCode, response responses.VoidResponse) {
+						c.JSON(int(status), response)
+					},
+					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+						c.AbortWithStatusJSON(int(status), response)
+					},
+				)
+			})
 			profile.RegisterRoutes(router, logger, tokenChecker, controllers.profile)
 			avatars.RegisterRoutes(router, logger, controllers.avatars)
 			users.RegisterRoutes(router, logger, tokenChecker, controllers.users)
