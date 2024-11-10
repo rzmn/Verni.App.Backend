@@ -12,7 +12,6 @@ import (
 	"verni/internal/db"
 	httpserver "verni/internal/http-server"
 	"verni/internal/http-server/handlers/avatars"
-	"verni/internal/http-server/handlers/profile"
 	"verni/internal/http-server/handlers/users"
 	"verni/internal/http-server/longpoll"
 	"verni/internal/http-server/middleware"
@@ -26,6 +25,7 @@ import (
 	verificationRepository "verni/internal/repositories/verification"
 	"verni/internal/requestHandlers/auth"
 	"verni/internal/requestHandlers/friends"
+	"verni/internal/requestHandlers/profile"
 	"verni/internal/requestHandlers/spendings"
 	"verni/internal/services/emailSender"
 	"verni/internal/services/formatValidation"
@@ -77,6 +77,7 @@ type RequestHandlers struct {
 	spendings spendings.RequestsHandler
 	friends   friends.RequestsHandler
 	auth      auth.RequestsHandler
+	profile   profile.RequestsHandler
 }
 
 func main() {
@@ -330,6 +331,10 @@ func main() {
 				),
 				auth: auth.DefaultHandler(
 					controllers.auth,
+					logger,
+				),
+				profile: profile.DefaultHandler(
+					controllers.profile,
 					logger,
 				),
 			}
@@ -674,7 +679,58 @@ func main() {
 					},
 				)
 			})
-			profile.RegisterRoutes(router, logger, tokenChecker, controllers.profile)
+			profileGroup := router.Group("/profile", tokenChecker.Handler)
+			profileGroup.GET("/getInfo", func(c *gin.Context) {
+				requestHandlers.profile.GetInfo(
+					httpserver.UserId(tokenChecker.AccessToken(c)),
+					func(status httpserver.StatusCode, response responses.Response[httpserver.Profile]) {
+						c.JSON(int(status), response)
+					},
+					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+						c.AbortWithStatusJSON(int(status), response)
+					},
+				)
+			})
+			profileGroup.PUT("/setAvatar", func(c *gin.Context) {
+				var request profile.SetAvatarRequest
+				if err := c.BindJSON(&request); err != nil {
+					c.AbortWithStatusJSON(
+						http.StatusBadRequest,
+						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+					)
+					return
+				}
+				requestHandlers.profile.SetAvatar(
+					httpserver.UserId(tokenChecker.AccessToken(c)),
+					request,
+					func(status httpserver.StatusCode, response responses.Response[httpserver.ImageId]) {
+						c.JSON(int(status), response)
+					},
+					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+						c.AbortWithStatusJSON(int(status), response)
+					},
+				)
+			})
+			profileGroup.PUT("/setDisplayName", func(c *gin.Context) {
+				var request profile.SetDisplayNameRequest
+				if err := c.BindJSON(&request); err != nil {
+					c.AbortWithStatusJSON(
+						http.StatusBadRequest,
+						responses.Failure(common.NewErrorWithDescriptionValue(responses.CodeBadRequest, err.Error())),
+					)
+					return
+				}
+				requestHandlers.profile.SetDisplayName(
+					httpserver.UserId(tokenChecker.AccessToken(c)),
+					request,
+					func(status httpserver.StatusCode, response responses.VoidResponse) {
+						c.JSON(int(status), response)
+					},
+					func(status httpserver.StatusCode, response responses.Response[responses.Error]) {
+						c.AbortWithStatusJSON(int(status), response)
+					},
+				)
+			})
 			avatars.RegisterRoutes(router, logger, controllers.avatars)
 			users.RegisterRoutes(router, logger, tokenChecker, controllers.users)
 

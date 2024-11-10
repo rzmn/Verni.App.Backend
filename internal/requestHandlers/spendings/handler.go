@@ -63,5 +63,10 @@ func DefaultHandler(
 	pollingService longpoll.Service,
 	logger logging.Service,
 ) RequestsHandler {
-	return &defaultRequestsHandler{}
+	return &defaultRequestsHandler{
+		controller:     controller,
+		pushService:    pushService,
+		pollingService: pollingService,
+		logger:         logger,
+	}
 }
