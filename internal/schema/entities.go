@@ -1,4 +1,4 @@
-package httpserver
+package schema
 
 type UserId string
 type ExpenseId string

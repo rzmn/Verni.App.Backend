@@ -3,19 +3,20 @@ package pushNotifications
 import (
 	"encoding/json"
 	"os"
-	httpserver "verni/internal/http-server"
 	pushNotificationsRepository "verni/internal/repositories/pushNotifications"
 	"verni/internal/services/logging"
 	"verni/internal/services/pathProvider"
+
+	"verni/internal/schema"
 
 	"github.com/sideshow/apns2"
 	"github.com/sideshow/apns2/certificate"
 )
 
-type UserId httpserver.UserId
-type Expense httpserver.IdentifiableExpense
-type ExpenseId httpserver.ExpenseId
-type Cost httpserver.Cost
+type UserId schema.UserId
+type Expense schema.IdentifiableExpense
+type ExpenseId schema.ExpenseId
+type Cost schema.Cost
 type Repository pushNotificationsRepository.Repository
 
 type Service interface {

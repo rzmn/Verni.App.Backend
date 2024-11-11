@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"time"
 	"verni/internal/common"
-	httpserver "verni/internal/http-server"
 	"verni/internal/requestHandlers/accessToken"
 	"verni/internal/requestHandlers/auth"
 	"verni/internal/requestHandlers/avatars"
@@ -13,6 +12,7 @@ import (
 	"verni/internal/requestHandlers/spendings"
 	"verni/internal/requestHandlers/users"
 	"verni/internal/requestHandlers/verification"
+	"verni/internal/schema"
 	"verni/internal/services/logging"
 	"verni/internal/services/longpoll"
 
@@ -42,17 +42,17 @@ func createGinServer(
 		handler: func(c *gin.Context) {
 			accessTokenChecker.CheckToken(
 				c.Request.Header.Get("Authorization"),
-				func(code httpserver.StatusCode, response httpserver.Response[httpserver.UserId]) {
+				func(code schema.StatusCode, response schema.Response[schema.UserId]) {
 					c.Request.Header.Set(accessTokenSubjectKey, string(response.Response))
 					c.Next()
 				},
-				func(code httpserver.StatusCode, error httpserver.Response[httpserver.Error]) {
+				func(code schema.StatusCode, error schema.Response[schema.Error]) {
 					c.AbortWithStatusJSON(int(code), error)
 				},
 			)
 		},
-		accessToken: func(c *gin.Context) httpserver.UserId {
-			return httpserver.UserId(c.Request.Header.Get(accessTokenSubjectKey))
+		accessToken: func(c *gin.Context) schema.UserId {
+			return schema.UserId(c.Request.Header.Get(accessTokenSubjectKey))
 		},
 	}
 	longpollService := longpoll.GinService(router, logger, tokenChecker.handler)
@@ -81,16 +81,16 @@ func registerRoutesAuth(router *gin.Engine, tokenChecker ginAccessTokenChecker, 
 		if err := c.BindJSON(&request); err != nil {
 			c.AbortWithStatusJSON(
 				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
+				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
 			)
 			return
 		}
 		handler.Signup(
 			request,
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Session]) {
+			func(status schema.StatusCode, response schema.Response[schema.Session]) {
 				c.JSON(int(status), response)
 			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
+			func(status schema.StatusCode, response schema.Response[schema.Error]) {
 				c.AbortWithStatusJSON(int(status), response)
 			},
 		)
@@ -100,16 +100,16 @@ func registerRoutesAuth(router *gin.Engine, tokenChecker ginAccessTokenChecker, 
 		if err := c.BindJSON(&request); err != nil {
 			c.AbortWithStatusJSON(
 				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
+				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
 			)
 			return
 		}
 		handler.Login(
 			request,
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Session]) {
+			func(status schema.StatusCode, response schema.Response[schema.Session]) {
 				c.JSON(int(status), response)
 			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
+			func(status schema.StatusCode, response schema.Response[schema.Error]) {
 				c.AbortWithStatusJSON(int(status), response)
 			},
 		)
@@ -119,16 +119,16 @@ func registerRoutesAuth(router *gin.Engine, tokenChecker ginAccessTokenChecker, 
 		if err := c.BindJSON(&request); err != nil {
 			c.AbortWithStatusJSON(
 				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
+				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
 			)
 			return
 		}
 		handler.Refresh(
 			request,
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Session]) {
+			func(status schema.StatusCode, response schema.Response[schema.Session]) {
 				c.JSON(int(status), response)
 			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
+			func(status schema.StatusCode, response schema.Response[schema.Error]) {
 				c.AbortWithStatusJSON(int(status), response)
 			},
 		)
@@ -138,17 +138,17 @@ func registerRoutesAuth(router *gin.Engine, tokenChecker ginAccessTokenChecker, 
 		if err := c.BindJSON(&request); err != nil {
 			c.AbortWithStatusJSON(
 				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
+				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
 			)
 			return
 		}
 		handler.UpdateEmail(
-			httpserver.UserId(tokenChecker.accessToken(c)),
+			schema.UserId(tokenChecker.accessToken(c)),
 			request,
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Session]) {
+			func(status schema.StatusCode, response schema.Response[schema.Session]) {
 				c.JSON(int(status), response)
 			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
+			func(status schema.StatusCode, response schema.Response[schema.Error]) {
 				c.AbortWithStatusJSON(int(status), response)
 			},
 		)
@@ -158,28 +158,28 @@ func registerRoutesAuth(router *gin.Engine, tokenChecker ginAccessTokenChecker, 
 		if err := c.BindJSON(&request); err != nil {
 			c.AbortWithStatusJSON(
 				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
+				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
 			)
 			return
 		}
 		handler.UpdatePassword(
-			httpserver.UserId(tokenChecker.accessToken(c)),
+			schema.UserId(tokenChecker.accessToken(c)),
 			request,
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Session]) {
+			func(status schema.StatusCode, response schema.Response[schema.Session]) {
 				c.JSON(int(status), response)
 			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
+			func(status schema.StatusCode, response schema.Response[schema.Error]) {
 				c.AbortWithStatusJSON(int(status), response)
 			},
 		)
 	})
 	router.DELETE("/auth/logout", tokenChecker.handler, func(c *gin.Context) {
 		handler.Logout(
-			httpserver.UserId(tokenChecker.accessToken(c)),
-			func(status httpserver.StatusCode, response httpserver.VoidResponse) {
+			schema.UserId(tokenChecker.accessToken(c)),
+			func(status schema.StatusCode, response schema.VoidResponse) {
 				c.JSON(int(status), response)
 			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
+			func(status schema.StatusCode, response schema.Response[schema.Error]) {
 				c.AbortWithStatusJSON(int(status), response)
 			},
 		)
@@ -189,17 +189,17 @@ func registerRoutesAuth(router *gin.Engine, tokenChecker ginAccessTokenChecker, 
 		if err := c.BindJSON(&request); err != nil {
 			c.AbortWithStatusJSON(
 				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
+				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
 			)
 			return
 		}
 		handler.RegisterForPushNotifications(
-			httpserver.UserId(tokenChecker.accessToken(c)),
+			schema.UserId(tokenChecker.accessToken(c)),
 			request,
-			func(status httpserver.StatusCode, response httpserver.VoidResponse) {
+			func(status schema.StatusCode, response schema.VoidResponse) {
 				c.JSON(int(status), response)
 			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
+			func(status schema.StatusCode, response schema.Response[schema.Error]) {
 				c.AbortWithStatusJSON(int(status), response)
 			},
 		)
@@ -213,17 +213,17 @@ func registerRoutesSpendings(router *gin.Engine, tokenChecker ginAccessTokenChec
 		if err := c.BindJSON(&request); err != nil {
 			c.AbortWithStatusJSON(
 				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
+				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
 			)
 			return
 		}
 		handler.AddExpense(
-			httpserver.UserId(tokenChecker.accessToken(c)),
+			schema.UserId(tokenChecker.accessToken(c)),
 			request,
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.IdentifiableExpense]) {
+			func(status schema.StatusCode, response schema.Response[schema.IdentifiableExpense]) {
 				c.JSON(int(status), response)
 			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
+			func(status schema.StatusCode, response schema.Response[schema.Error]) {
 				c.AbortWithStatusJSON(int(status), response)
 			},
 		)
@@ -233,28 +233,28 @@ func registerRoutesSpendings(router *gin.Engine, tokenChecker ginAccessTokenChec
 		if err := c.BindJSON(&request); err != nil {
 			c.AbortWithStatusJSON(
 				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
+				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
 			)
 			return
 		}
 		handler.RemoveExpense(
-			httpserver.UserId(tokenChecker.accessToken(c)),
+			schema.UserId(tokenChecker.accessToken(c)),
 			request,
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.IdentifiableExpense]) {
+			func(status schema.StatusCode, response schema.Response[schema.IdentifiableExpense]) {
 				c.JSON(int(status), response)
 			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
+			func(status schema.StatusCode, response schema.Response[schema.Error]) {
 				c.AbortWithStatusJSON(int(status), response)
 			},
 		)
 	})
 	spendingsGroup.GET("/getBalance", func(c *gin.Context) {
 		handler.GetBalance(
-			httpserver.UserId(tokenChecker.accessToken(c)),
-			func(status httpserver.StatusCode, response httpserver.Response[[]httpserver.Balance]) {
+			schema.UserId(tokenChecker.accessToken(c)),
+			func(status schema.StatusCode, response schema.Response[[]schema.Balance]) {
 				c.JSON(int(status), response)
 			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
+			func(status schema.StatusCode, response schema.Response[schema.Error]) {
 				c.AbortWithStatusJSON(int(status), response)
 			},
 		)
@@ -264,17 +264,17 @@ func registerRoutesSpendings(router *gin.Engine, tokenChecker ginAccessTokenChec
 		if err := c.BindJSON(&request); err != nil {
 			c.AbortWithStatusJSON(
 				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
+				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
 			)
 			return
 		}
 		handler.GetExpenses(
-			httpserver.UserId(tokenChecker.accessToken(c)),
+			schema.UserId(tokenChecker.accessToken(c)),
 			request,
-			func(status httpserver.StatusCode, response httpserver.Response[[]httpserver.IdentifiableExpense]) {
+			func(status schema.StatusCode, response schema.Response[[]schema.IdentifiableExpense]) {
 				c.JSON(int(status), response)
 			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
+			func(status schema.StatusCode, response schema.Response[schema.Error]) {
 				c.AbortWithStatusJSON(int(status), response)
 			},
 		)
@@ -284,17 +284,17 @@ func registerRoutesSpendings(router *gin.Engine, tokenChecker ginAccessTokenChec
 		if err := c.BindJSON(&request); err != nil {
 			c.AbortWithStatusJSON(
 				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
+				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
 			)
 			return
 		}
 		handler.GetExpense(
-			httpserver.UserId(tokenChecker.accessToken(c)),
+			schema.UserId(tokenChecker.accessToken(c)),
 			request,
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.IdentifiableExpense]) {
+			func(status schema.StatusCode, response schema.Response[schema.IdentifiableExpense]) {
 				c.JSON(int(status), response)
 			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
+			func(status schema.StatusCode, response schema.Response[schema.Error]) {
 				c.AbortWithStatusJSON(int(status), response)
 			},
 		)
@@ -308,17 +308,17 @@ func registerRoutesFriends(router *gin.Engine, tokenChecker ginAccessTokenChecke
 		if err := c.BindJSON(&request); err != nil {
 			c.AbortWithStatusJSON(
 				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
+				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
 			)
 			return
 		}
 		handler.AcceptRequest(
-			httpserver.UserId(tokenChecker.accessToken(c)),
+			schema.UserId(tokenChecker.accessToken(c)),
 			request,
-			func(status httpserver.StatusCode, response httpserver.VoidResponse) {
+			func(status schema.StatusCode, response schema.VoidResponse) {
 				c.JSON(int(status), response)
 			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
+			func(status schema.StatusCode, response schema.Response[schema.Error]) {
 				c.AbortWithStatusJSON(int(status), response)
 			},
 		)
@@ -328,17 +328,17 @@ func registerRoutesFriends(router *gin.Engine, tokenChecker ginAccessTokenChecke
 		if err := c.BindJSON(&request); err != nil {
 			c.AbortWithStatusJSON(
 				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
+				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
 			)
 			return
 		}
 		handler.GetFriends(
-			httpserver.UserId(tokenChecker.accessToken(c)),
+			schema.UserId(tokenChecker.accessToken(c)),
 			request,
-			func(status httpserver.StatusCode, response httpserver.Response[map[httpserver.FriendStatus][]httpserver.UserId]) {
+			func(status schema.StatusCode, response schema.Response[map[schema.FriendStatus][]schema.UserId]) {
 				c.JSON(int(status), response)
 			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
+			func(status schema.StatusCode, response schema.Response[schema.Error]) {
 				c.AbortWithStatusJSON(int(status), response)
 			},
 		)
@@ -348,17 +348,17 @@ func registerRoutesFriends(router *gin.Engine, tokenChecker ginAccessTokenChecke
 		if err := c.BindJSON(&request); err != nil {
 			c.AbortWithStatusJSON(
 				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
+				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
 			)
 			return
 		}
 		handler.RejectRequest(
-			httpserver.UserId(tokenChecker.accessToken(c)),
+			schema.UserId(tokenChecker.accessToken(c)),
 			request,
-			func(status httpserver.StatusCode, response httpserver.VoidResponse) {
+			func(status schema.StatusCode, response schema.VoidResponse) {
 				c.JSON(int(status), response)
 			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
+			func(status schema.StatusCode, response schema.Response[schema.Error]) {
 				c.AbortWithStatusJSON(int(status), response)
 			},
 		)
@@ -368,17 +368,17 @@ func registerRoutesFriends(router *gin.Engine, tokenChecker ginAccessTokenChecke
 		if err := c.BindJSON(&request); err != nil {
 			c.AbortWithStatusJSON(
 				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
+				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
 			)
 			return
 		}
 		handler.RollbackRequest(
-			httpserver.UserId(tokenChecker.accessToken(c)),
+			schema.UserId(tokenChecker.accessToken(c)),
 			request,
-			func(status httpserver.StatusCode, response httpserver.VoidResponse) {
+			func(status schema.StatusCode, response schema.VoidResponse) {
 				c.JSON(int(status), response)
 			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
+			func(status schema.StatusCode, response schema.Response[schema.Error]) {
 				c.AbortWithStatusJSON(int(status), response)
 			},
 		)
@@ -388,17 +388,17 @@ func registerRoutesFriends(router *gin.Engine, tokenChecker ginAccessTokenChecke
 		if err := c.BindJSON(&request); err != nil {
 			c.AbortWithStatusJSON(
 				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
+				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
 			)
 			return
 		}
 		handler.SendRequest(
-			httpserver.UserId(tokenChecker.accessToken(c)),
+			schema.UserId(tokenChecker.accessToken(c)),
 			request,
-			func(status httpserver.StatusCode, response httpserver.VoidResponse) {
+			func(status schema.StatusCode, response schema.VoidResponse) {
 				c.JSON(int(status), response)
 			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
+			func(status schema.StatusCode, response schema.Response[schema.Error]) {
 				c.AbortWithStatusJSON(int(status), response)
 			},
 		)
@@ -408,17 +408,17 @@ func registerRoutesFriends(router *gin.Engine, tokenChecker ginAccessTokenChecke
 		if err := c.BindJSON(&request); err != nil {
 			c.AbortWithStatusJSON(
 				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
+				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
 			)
 			return
 		}
 		handler.Unfriend(
-			httpserver.UserId(tokenChecker.accessToken(c)),
+			schema.UserId(tokenChecker.accessToken(c)),
 			request,
-			func(status httpserver.StatusCode, response httpserver.VoidResponse) {
+			func(status schema.StatusCode, response schema.VoidResponse) {
 				c.JSON(int(status), response)
 			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
+			func(status schema.StatusCode, response schema.Response[schema.Error]) {
 				c.AbortWithStatusJSON(int(status), response)
 			},
 		)
@@ -429,11 +429,11 @@ func registerRoutesProfile(router *gin.Engine, tokenChecker ginAccessTokenChecke
 	profileGroup := router.Group("/profile", tokenChecker.handler)
 	profileGroup.GET("/getInfo", func(c *gin.Context) {
 		handler.GetInfo(
-			httpserver.UserId(tokenChecker.accessToken(c)),
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Profile]) {
+			schema.UserId(tokenChecker.accessToken(c)),
+			func(status schema.StatusCode, response schema.Response[schema.Profile]) {
 				c.JSON(int(status), response)
 			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
+			func(status schema.StatusCode, response schema.Response[schema.Error]) {
 				c.AbortWithStatusJSON(int(status), response)
 			},
 		)
@@ -443,17 +443,17 @@ func registerRoutesProfile(router *gin.Engine, tokenChecker ginAccessTokenChecke
 		if err := c.BindJSON(&request); err != nil {
 			c.AbortWithStatusJSON(
 				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
+				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
 			)
 			return
 		}
 		handler.SetAvatar(
-			httpserver.UserId(tokenChecker.accessToken(c)),
+			schema.UserId(tokenChecker.accessToken(c)),
 			request,
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.ImageId]) {
+			func(status schema.StatusCode, response schema.Response[schema.ImageId]) {
 				c.JSON(int(status), response)
 			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
+			func(status schema.StatusCode, response schema.Response[schema.Error]) {
 				c.AbortWithStatusJSON(int(status), response)
 			},
 		)
@@ -463,17 +463,17 @@ func registerRoutesProfile(router *gin.Engine, tokenChecker ginAccessTokenChecke
 		if err := c.BindJSON(&request); err != nil {
 			c.AbortWithStatusJSON(
 				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
+				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
 			)
 			return
 		}
 		handler.SetDisplayName(
-			httpserver.UserId(tokenChecker.accessToken(c)),
+			schema.UserId(tokenChecker.accessToken(c)),
 			request,
-			func(status httpserver.StatusCode, response httpserver.VoidResponse) {
+			func(status schema.StatusCode, response schema.VoidResponse) {
 				c.JSON(int(status), response)
 			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
+			func(status schema.StatusCode, response schema.Response[schema.Error]) {
 				c.AbortWithStatusJSON(int(status), response)
 			},
 		)
@@ -487,28 +487,28 @@ func registerRoutesVerification(router *gin.Engine, tokenChecker ginAccessTokenC
 		if err := c.BindJSON(&request); err != nil {
 			c.AbortWithStatusJSON(
 				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
+				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
 			)
 			return
 		}
 		handler.ConfirmEmail(
-			httpserver.UserId(tokenChecker.accessToken(c)),
+			schema.UserId(tokenChecker.accessToken(c)),
 			request,
-			func(status httpserver.StatusCode, response httpserver.VoidResponse) {
+			func(status schema.StatusCode, response schema.VoidResponse) {
 				c.JSON(int(status), response)
 			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
+			func(status schema.StatusCode, response schema.Response[schema.Error]) {
 				c.AbortWithStatusJSON(int(status), response)
 			},
 		)
 	})
 	verificationGroup.PUT("/sendEmailConfirmationCode", func(c *gin.Context) {
 		handler.SendEmailConfirmationCode(
-			httpserver.UserId(tokenChecker.accessToken(c)),
-			func(status httpserver.StatusCode, response httpserver.VoidResponse) {
+			schema.UserId(tokenChecker.accessToken(c)),
+			func(status schema.StatusCode, response schema.VoidResponse) {
 				c.JSON(int(status), response)
 			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
+			func(status schema.StatusCode, response schema.Response[schema.Error]) {
 				c.AbortWithStatusJSON(int(status), response)
 			},
 		)
@@ -522,17 +522,17 @@ func registerRoutesUsers(router *gin.Engine, tokenChecker ginAccessTokenChecker,
 		if err := c.BindJSON(&request); err != nil {
 			c.AbortWithStatusJSON(
 				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
+				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
 			)
 			return
 		}
 		handler.GetUsers(
-			httpserver.UserId(tokenChecker.accessToken(c)),
+			schema.UserId(tokenChecker.accessToken(c)),
 			request,
-			func(status httpserver.StatusCode, response httpserver.Response[[]httpserver.User]) {
+			func(status schema.StatusCode, response schema.Response[[]schema.User]) {
 				c.JSON(int(status), response)
 			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
+			func(status schema.StatusCode, response schema.Response[schema.Error]) {
 				c.AbortWithStatusJSON(int(status), response)
 			},
 		)
@@ -546,16 +546,16 @@ func registerRoutesAvatars(router *gin.Engine, handler avatars.RequestsHandler) 
 		if err := c.BindJSON(&request); err != nil {
 			c.AbortWithStatusJSON(
 				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
+				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
 			)
 			return
 		}
 		handler.GetAvatars(
 			request,
-			func(status httpserver.StatusCode, response httpserver.Response[map[httpserver.ImageId]httpserver.Image]) {
+			func(status schema.StatusCode, response schema.Response[map[schema.ImageId]schema.Image]) {
 				c.JSON(int(status), response)
 			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
+			func(status schema.StatusCode, response schema.Response[schema.Error]) {
 				c.AbortWithStatusJSON(int(status), response)
 			},
 		)

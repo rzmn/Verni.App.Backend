@@ -1,8 +1,8 @@
 package accessToken
 
 import (
-	httpserver "verni/internal/http-server"
 	authRepository "verni/internal/repositories/auth"
+	"verni/internal/schema"
 	"verni/internal/services/jwt"
 	"verni/internal/services/logging"
 )
@@ -10,8 +10,8 @@ import (
 type RequestHandler interface {
 	CheckToken(
 		authorizationHeaderValue string,
-		success func(httpserver.StatusCode, httpserver.Response[httpserver.UserId]),
-		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+		success func(schema.StatusCode, schema.Response[schema.UserId]),
+		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
 }
 

@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"verni/internal/common"
 	spendingsController "verni/internal/controllers/spendings"
-	httpserver "verni/internal/http-server"
 	spendingsRepository "verni/internal/repositories/spendings"
+	"verni/internal/schema"
 	"verni/internal/services/logging"
 	"verni/internal/services/longpoll"
 	"verni/internal/services/pushNotifications"
@@ -19,10 +19,10 @@ type defaultRequestsHandler struct {
 }
 
 func (c *defaultRequestsHandler) AddExpense(
-	subject httpserver.UserId,
+	subject schema.UserId,
 	request AddExpenseRequest,
-	success func(httpserver.StatusCode, httpserver.Response[httpserver.IdentifiableExpense]),
-	failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+	success func(schema.StatusCode, schema.Response[schema.IdentifiableExpense]),
+	failure func(schema.StatusCode, schema.Response[schema.Error]),
 ) {
 	expense, err := c.controller.AddExpense(mapHttpServerExpense(request.Expense), spendingsController.CounterpartyId(subject))
 	if err != nil {
@@ -30,9 +30,9 @@ func (c *defaultRequestsHandler) AddExpense(
 		case spendingsController.AddExpenseErrorNoSuchUser:
 			failure(
 				http.StatusConflict,
-				httpserver.Failure(
+				schema.Failure(
 					common.NewErrorWithDescriptionValue(
-						httpserver.CodeNoSuchUser,
+						schema.CodeNoSuchUser,
 						err.Error(),
 					),
 				),
@@ -40,9 +40,9 @@ func (c *defaultRequestsHandler) AddExpense(
 		case spendingsController.AddExpenseErrorNotYourExpense:
 			failure(
 				http.StatusConflict,
-				httpserver.Failure(
+				schema.Failure(
 					common.NewErrorWithDescriptionValue(
-						httpserver.CodeIsNotYourExpense,
+						schema.CodeIsNotYourExpense,
 						err.Error(),
 					),
 				),
@@ -51,9 +51,9 @@ func (c *defaultRequestsHandler) AddExpense(
 			c.logger.LogError("addExpense request %v failed with unknown err: %v", request, err)
 			failure(
 				http.StatusInternalServerError,
-				httpserver.Failure(
+				schema.Failure(
 					common.NewErrorWithDescriptionValue(
-						httpserver.CodeInternal,
+						schema.CodeInternal,
 						err.Error(),
 					),
 				),
@@ -73,14 +73,14 @@ func (c *defaultRequestsHandler) AddExpense(
 		c.pollingService.ExpensesUpdated(longpoll.UserId(share.Counterparty), longpoll.UserId(subject))
 		c.pollingService.CounterpartiesUpdated(longpoll.UserId(share.Counterparty))
 	}
-	success(http.StatusOK, httpserver.Success(mapIdentifiableExpense(expense)))
+	success(http.StatusOK, schema.Success(mapIdentifiableExpense(expense)))
 }
 
 func (c *defaultRequestsHandler) RemoveExpense(
-	subject httpserver.UserId,
+	subject schema.UserId,
 	request RemoveExpenseRequest,
-	success func(httpserver.StatusCode, httpserver.Response[httpserver.IdentifiableExpense]),
-	failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+	success func(schema.StatusCode, schema.Response[schema.IdentifiableExpense]),
+	failure func(schema.StatusCode, schema.Response[schema.Error]),
 ) {
 	expense, err := c.controller.RemoveExpense(spendingsController.ExpenseId(request.ExpenseId), spendingsController.CounterpartyId(subject))
 	if err != nil {
@@ -88,9 +88,9 @@ func (c *defaultRequestsHandler) RemoveExpense(
 		case spendingsController.RemoveExpenseErrorExpenseNotFound:
 			failure(
 				http.StatusConflict,
-				httpserver.Failure(
+				schema.Failure(
 					common.NewErrorWithDescriptionValue(
-						httpserver.CodeExpenseNotFound,
+						schema.CodeExpenseNotFound,
 						err.Error(),
 					),
 				),
@@ -98,9 +98,9 @@ func (c *defaultRequestsHandler) RemoveExpense(
 		case spendingsController.RemoveExpenseErrorNotAFriend:
 			failure(
 				http.StatusConflict,
-				httpserver.Failure(
+				schema.Failure(
 					common.NewErrorWithDescriptionValue(
-						httpserver.CodeNotAFriend,
+						schema.CodeNotAFriend,
 						err.Error(),
 					),
 				),
@@ -108,9 +108,9 @@ func (c *defaultRequestsHandler) RemoveExpense(
 		case spendingsController.RemoveExpenseErrorNotYourExpense:
 			failure(
 				http.StatusConflict,
-				httpserver.Failure(
+				schema.Failure(
 					common.NewErrorWithDescriptionValue(
-						httpserver.CodeIsNotYourExpense,
+						schema.CodeIsNotYourExpense,
 						err.Error(),
 					),
 				),
@@ -119,9 +119,9 @@ func (c *defaultRequestsHandler) RemoveExpense(
 			c.logger.LogError("removeExpense request %v failed with unknown err: %v", request, err)
 			failure(
 				http.StatusInternalServerError,
-				httpserver.Failure(
+				schema.Failure(
 					common.NewErrorWithDescriptionValue(
-						httpserver.CodeInternal,
+						schema.CodeInternal,
 						err.Error(),
 					),
 				),
@@ -141,13 +141,13 @@ func (c *defaultRequestsHandler) RemoveExpense(
 		c.pollingService.ExpensesUpdated(longpoll.UserId(share.Counterparty), longpoll.UserId(subject))
 		c.pollingService.CounterpartiesUpdated(longpoll.UserId(share.Counterparty))
 	}
-	success(http.StatusOK, httpserver.Success(mapIdentifiableExpense(expense)))
+	success(http.StatusOK, schema.Success(mapIdentifiableExpense(expense)))
 }
 
 func (c *defaultRequestsHandler) GetBalance(
-	subject httpserver.UserId,
-	success func(httpserver.StatusCode, httpserver.Response[[]httpserver.Balance]),
-	failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+	subject schema.UserId,
+	success func(schema.StatusCode, schema.Response[[]schema.Balance]),
+	failure func(schema.StatusCode, schema.Response[schema.Error]),
 ) {
 	balance, err := c.controller.GetBalance(spendingsController.CounterpartyId(subject))
 	if err != nil {
@@ -156,9 +156,9 @@ func (c *defaultRequestsHandler) GetBalance(
 			c.logger.LogError("getBalance request failed with unknown err: %v", err)
 			failure(
 				http.StatusInternalServerError,
-				httpserver.Failure(
+				schema.Failure(
 					common.NewErrorWithDescriptionValue(
-						httpserver.CodeInternal,
+						schema.CodeInternal,
 						err.Error(),
 					),
 				),
@@ -166,14 +166,14 @@ func (c *defaultRequestsHandler) GetBalance(
 		}
 		return
 	}
-	success(http.StatusOK, httpserver.Success(common.Map(balance, mapBalance)))
+	success(http.StatusOK, schema.Success(common.Map(balance, mapBalance)))
 }
 
 func (c *defaultRequestsHandler) GetExpenses(
-	subject httpserver.UserId,
+	subject schema.UserId,
 	request GetExpensesRequest,
-	success func(httpserver.StatusCode, httpserver.Response[[]httpserver.IdentifiableExpense]),
-	failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+	success func(schema.StatusCode, schema.Response[[]schema.IdentifiableExpense]),
+	failure func(schema.StatusCode, schema.Response[schema.Error]),
 ) {
 	expenses, err := c.controller.GetExpensesWith(spendingsController.CounterpartyId(request.Counterparty), spendingsController.CounterpartyId(subject))
 	if err != nil {
@@ -182,9 +182,9 @@ func (c *defaultRequestsHandler) GetExpenses(
 			c.logger.LogError("getExpenses request %v failed with unknown err: %v", request, err)
 			failure(
 				http.StatusInternalServerError,
-				httpserver.Failure(
+				schema.Failure(
 					common.NewErrorWithDescriptionValue(
-						httpserver.CodeInternal,
+						schema.CodeInternal,
 						err.Error(),
 					),
 				),
@@ -192,14 +192,14 @@ func (c *defaultRequestsHandler) GetExpenses(
 		}
 		return
 	}
-	success(http.StatusOK, httpserver.Success(common.Map(expenses, mapIdentifiableExpense)))
+	success(http.StatusOK, schema.Success(common.Map(expenses, mapIdentifiableExpense)))
 }
 
 func (c *defaultRequestsHandler) GetExpense(
-	subject httpserver.UserId,
+	subject schema.UserId,
 	request GetExpenseRequest,
-	success func(httpserver.StatusCode, httpserver.Response[httpserver.IdentifiableExpense]),
-	failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+	success func(schema.StatusCode, schema.Response[schema.IdentifiableExpense]),
+	failure func(schema.StatusCode, schema.Response[schema.Error]),
 ) {
 	expense, err := c.controller.GetExpense(spendingsController.ExpenseId(request.Id), spendingsController.CounterpartyId(subject))
 	if err != nil {
@@ -207,9 +207,9 @@ func (c *defaultRequestsHandler) GetExpense(
 		case spendingsController.GetExpenseErrorExpenseNotFound:
 			failure(
 				http.StatusConflict,
-				httpserver.Failure(
+				schema.Failure(
 					common.NewErrorWithDescriptionValue(
-						httpserver.CodeExpenseNotFound,
+						schema.CodeExpenseNotFound,
 						err.Error(),
 					),
 				),
@@ -217,9 +217,9 @@ func (c *defaultRequestsHandler) GetExpense(
 		case spendingsController.GetExpenseErrorNotYourExpense:
 			failure(
 				http.StatusConflict,
-				httpserver.Failure(
+				schema.Failure(
 					common.NewErrorWithDescriptionValue(
-						httpserver.CodeIsNotYourExpense,
+						schema.CodeIsNotYourExpense,
 						err.Error(),
 					),
 				),
@@ -228,9 +228,9 @@ func (c *defaultRequestsHandler) GetExpense(
 			c.logger.LogError("getExpense request %v failed with unknown err: %v", request, err)
 			failure(
 				http.StatusInternalServerError,
-				httpserver.Failure(
+				schema.Failure(
 					common.NewErrorWithDescriptionValue(
-						httpserver.CodeInternal,
+						schema.CodeInternal,
 						err.Error(),
 					),
 				),
@@ -238,16 +238,16 @@ func (c *defaultRequestsHandler) GetExpense(
 		}
 		return
 	}
-	success(http.StatusOK, httpserver.Success(mapIdentifiableExpense(expense)))
+	success(http.StatusOK, schema.Success(mapIdentifiableExpense(expense)))
 }
 
-func mapHttpServerExpense(expense httpserver.Expense) spendingsController.Expense {
+func mapHttpServerExpense(expense schema.Expense) spendingsController.Expense {
 	return spendingsController.Expense{
 		Timestamp: expense.Timestamp,
 		Details:   expense.Details,
 		Total:     spendingsRepository.Cost(expense.Total),
 		Currency:  spendingsRepository.Currency(expense.Currency),
-		Shares: common.Map(expense.Shares, func(share httpserver.ShareOfExpense) spendingsRepository.ShareOfExpense {
+		Shares: common.Map(expense.Shares, func(share schema.ShareOfExpense) spendingsRepository.ShareOfExpense {
 			return spendingsRepository.ShareOfExpense{
 				Counterparty: spendingsRepository.CounterpartyId(share.UserId),
 				Cost:         spendingsRepository.Cost(share.Cost),
@@ -256,37 +256,37 @@ func mapHttpServerExpense(expense httpserver.Expense) spendingsController.Expens
 	}
 }
 
-func mapIdentifiableExpense(expense spendingsController.IdentifiableExpense) httpserver.IdentifiableExpense {
-	return httpserver.IdentifiableExpense{
-		Id:      httpserver.ExpenseId(expense.Id),
+func mapIdentifiableExpense(expense spendingsController.IdentifiableExpense) schema.IdentifiableExpense {
+	return schema.IdentifiableExpense{
+		Id:      schema.ExpenseId(expense.Id),
 		Expense: mapExpense(spendingsController.Expense(expense.Expense)),
 	}
 }
 
-func mapExpense(expense spendingsController.Expense) httpserver.Expense {
-	return httpserver.Expense{
+func mapExpense(expense spendingsController.Expense) schema.Expense {
+	return schema.Expense{
 		Timestamp:   expense.Timestamp,
 		Details:     expense.Details,
-		Total:       httpserver.Cost(expense.Total),
-		Attachments: []httpserver.ExpenseAttachment{},
-		Currency:    httpserver.Currency(expense.Currency),
+		Total:       schema.Cost(expense.Total),
+		Attachments: []schema.ExpenseAttachment{},
+		Currency:    schema.Currency(expense.Currency),
 		Shares:      common.Map(expense.Shares, mapShareOfExpense),
 	}
 }
 
-func mapShareOfExpense(share spendingsRepository.ShareOfExpense) httpserver.ShareOfExpense {
-	return httpserver.ShareOfExpense{
-		UserId: httpserver.UserId(share.Counterparty),
-		Cost:   httpserver.Cost(share.Cost),
+func mapShareOfExpense(share spendingsRepository.ShareOfExpense) schema.ShareOfExpense {
+	return schema.ShareOfExpense{
+		UserId: schema.UserId(share.Counterparty),
+		Cost:   schema.Cost(share.Cost),
 	}
 }
 
-func mapBalance(balance spendingsController.Balance) httpserver.Balance {
-	currencies := map[httpserver.Currency]httpserver.Cost{}
+func mapBalance(balance spendingsController.Balance) schema.Balance {
+	currencies := map[schema.Currency]schema.Cost{}
 	for currency, cost := range balance.Currencies {
-		currencies[httpserver.Currency(currency)] = httpserver.Cost(cost)
+		currencies[schema.Currency(currency)] = schema.Cost(cost)
 	}
-	return httpserver.Balance{
+	return schema.Balance{
 		Counterparty: string(balance.Counterparty),
 		Currencies:   currencies,
 	}

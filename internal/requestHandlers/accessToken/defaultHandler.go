@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strings"
 	"verni/internal/common"
-	httpserver "verni/internal/http-server"
 	authRepository "verni/internal/repositories/auth"
+	"verni/internal/schema"
 	"verni/internal/services/jwt"
 	"verni/internal/services/logging"
 )
@@ -18,8 +18,8 @@ type defaultRequestsHandler struct {
 
 func (c *defaultRequestsHandler) CheckToken(
 	authorizationHeaderValue string,
-	success func(httpserver.StatusCode, httpserver.Response[httpserver.UserId]),
-	failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+	success func(schema.StatusCode, schema.Response[schema.UserId]),
+	failure func(schema.StatusCode, schema.Response[schema.Error]),
 ) {
 	const op = "requestHandlers.accessToken.defaultRequestsHandler.CheckToken"
 	c.logger.LogInfo("%s: validating access token", op)
@@ -39,9 +39,9 @@ func (c *defaultRequestsHandler) CheckToken(
 		case jwt.CodeTokenExpired:
 			failure(
 				http.StatusUnauthorized,
-				httpserver.Failure(
+				schema.Failure(
 					common.NewErrorWithDescriptionValue(
-						httpserver.CodeTokenExpired,
+						schema.CodeTokenExpired,
 						err.Error(),
 					),
 				),
@@ -49,9 +49,9 @@ func (c *defaultRequestsHandler) CheckToken(
 		case jwt.CodeTokenInvalid:
 			failure(
 				http.StatusUnprocessableEntity,
-				httpserver.Failure(
+				schema.Failure(
 					common.NewErrorWithDescriptionValue(
-						httpserver.CodeWrongAccessToken,
+						schema.CodeWrongAccessToken,
 						err.Error(),
 					),
 				),
@@ -60,9 +60,9 @@ func (c *defaultRequestsHandler) CheckToken(
 			c.logger.LogError("jwt token validation failed %v", err)
 			failure(
 				http.StatusInternalServerError,
-				httpserver.Failure(
+				schema.Failure(
 					common.NewErrorWithDescriptionValue(
-						httpserver.CodeInternal,
+						schema.CodeInternal,
 						err.Error(),
 					),
 				),
@@ -75,9 +75,9 @@ func (c *defaultRequestsHandler) CheckToken(
 		c.logger.LogError("jwt token get subject failed %v", getSubjectError)
 		failure(
 			http.StatusInternalServerError,
-			httpserver.Failure(
+			schema.Failure(
 				common.NewErrorWithDescriptionValue(
-					httpserver.CodeInternal,
+					schema.CodeInternal,
 					getSubjectError.Error(),
 				),
 			),
@@ -89,9 +89,9 @@ func (c *defaultRequestsHandler) CheckToken(
 		c.logger.LogError("valid token with invalid subject - %v", err)
 		failure(
 			http.StatusInternalServerError,
-			httpserver.Failure(
+			schema.Failure(
 				common.NewErrorWithDescriptionValue(
-					httpserver.CodeInternal,
+					schema.CodeInternal,
 					err.Error(),
 				),
 			),
@@ -101,9 +101,9 @@ func (c *defaultRequestsHandler) CheckToken(
 	if !exists {
 		failure(
 			http.StatusUnprocessableEntity,
-			httpserver.Failure(
+			schema.Failure(
 				common.NewErrorWithDescriptionValue(
-					httpserver.CodeWrongAccessToken,
+					schema.CodeWrongAccessToken,
 					"associated user is not exists",
 				),
 			),
@@ -111,5 +111,5 @@ func (c *defaultRequestsHandler) CheckToken(
 		return
 	}
 	c.logger.LogInfo("%s: access token ok", op)
-	success(http.StatusOK, httpserver.Success(httpserver.UserId(subject)))
+	success(http.StatusOK, schema.Success(schema.UserId(subject)))
 }

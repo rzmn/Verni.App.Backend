@@ -2,20 +2,20 @@ package users
 
 import (
 	usersController "verni/internal/controllers/users"
-	httpserver "verni/internal/http-server"
+	"verni/internal/schema"
 	"verni/internal/services/logging"
 )
 
 type GetUsersRequest struct {
-	Ids []httpserver.UserId `json:"ids"`
+	Ids []schema.UserId `json:"ids"`
 }
 
 type RequestsHandler interface {
 	GetUsers(
-		subject httpserver.UserId,
+		subject schema.UserId,
 		request GetUsersRequest,
-		success func(httpserver.StatusCode, httpserver.Response[[]httpserver.User]),
-		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+		success func(schema.StatusCode, schema.Response[[]schema.User]),
+		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
 }
 

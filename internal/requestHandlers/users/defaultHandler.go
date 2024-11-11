@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"verni/internal/common"
 	usersController "verni/internal/controllers/users"
-	httpserver "verni/internal/http-server"
+	"verni/internal/schema"
 	"verni/internal/services/logging"
 )
 
@@ -14,12 +14,12 @@ type defaultRequestsHandler struct {
 }
 
 func (c *defaultRequestsHandler) GetUsers(
-	subject httpserver.UserId,
+	subject schema.UserId,
 	request GetUsersRequest,
-	success func(httpserver.StatusCode, httpserver.Response[[]httpserver.User]),
-	failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+	success func(schema.StatusCode, schema.Response[[]schema.User]),
+	failure func(schema.StatusCode, schema.Response[schema.Error]),
 ) {
-	users, err := c.controller.Get(common.Map(request.Ids, func(id httpserver.UserId) usersController.UserId {
+	users, err := c.controller.Get(common.Map(request.Ids, func(id schema.UserId) usersController.UserId {
 		return usersController.UserId(id)
 	}), usersController.UserId(subject))
 	if err != nil {
@@ -28,9 +28,9 @@ func (c *defaultRequestsHandler) GetUsers(
 			c.logger.LogError("getUsers request %v failed with unknown err: %v", request, err)
 			failure(
 				http.StatusInternalServerError,
-				httpserver.Failure(
+				schema.Failure(
 					common.NewErrorWithDescriptionValue(
-						httpserver.CodeInternal,
+						schema.CodeInternal,
 						err.Error(),
 					),
 				),
@@ -38,14 +38,14 @@ func (c *defaultRequestsHandler) GetUsers(
 		}
 		return
 	}
-	success(http.StatusOK, httpserver.Success(common.Map(users, mapUser)))
+	success(http.StatusOK, schema.Success(common.Map(users, mapUser)))
 }
 
-func mapUser(user usersController.User) httpserver.User {
-	return httpserver.User{
-		Id:           httpserver.UserId(user.Id),
+func mapUser(user usersController.User) schema.User {
+	return schema.User{
+		Id:           schema.UserId(user.Id),
 		DisplayName:  user.DisplayName,
-		AvatarId:     (*httpserver.ImageId)(user.AvatarId),
-		FriendStatus: httpserver.FriendStatus(user.FriendStatus),
+		AvatarId:     (*schema.ImageId)(user.AvatarId),
+		FriendStatus: schema.FriendStatus(user.FriendStatus),
 	}
 }

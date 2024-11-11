@@ -2,57 +2,57 @@ package spendings
 
 import (
 	spendingsController "verni/internal/controllers/spendings"
-	httpserver "verni/internal/http-server"
+	"verni/internal/schema"
 	"verni/internal/services/logging"
 	"verni/internal/services/longpoll"
 	"verni/internal/services/pushNotifications"
 )
 
 type AddExpenseRequest struct {
-	Expense httpserver.Expense `json:"expense"`
+	Expense schema.Expense `json:"expense"`
 }
 
 type RemoveExpenseRequest struct {
-	ExpenseId httpserver.ExpenseId `json:"expenseId"`
+	ExpenseId schema.ExpenseId `json:"expenseId"`
 }
 
 type GetExpensesRequest struct {
-	Counterparty httpserver.UserId `json:"counterparty"`
+	Counterparty schema.UserId `json:"counterparty"`
 }
 
 type GetExpenseRequest struct {
-	Id httpserver.ExpenseId `json:"id"`
+	Id schema.ExpenseId `json:"id"`
 }
 
 type RequestsHandler interface {
 	AddExpense(
-		subject httpserver.UserId,
+		subject schema.UserId,
 		request AddExpenseRequest,
-		success func(httpserver.StatusCode, httpserver.Response[httpserver.IdentifiableExpense]),
-		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+		success func(schema.StatusCode, schema.Response[schema.IdentifiableExpense]),
+		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
 	RemoveExpense(
-		subject httpserver.UserId,
+		subject schema.UserId,
 		request RemoveExpenseRequest,
-		success func(httpserver.StatusCode, httpserver.Response[httpserver.IdentifiableExpense]),
-		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+		success func(schema.StatusCode, schema.Response[schema.IdentifiableExpense]),
+		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
 	GetBalance(
-		subject httpserver.UserId,
-		success func(httpserver.StatusCode, httpserver.Response[[]httpserver.Balance]),
-		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+		subject schema.UserId,
+		success func(schema.StatusCode, schema.Response[[]schema.Balance]),
+		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
 	GetExpenses(
-		subject httpserver.UserId,
+		subject schema.UserId,
 		request GetExpensesRequest,
-		success func(httpserver.StatusCode, httpserver.Response[[]httpserver.IdentifiableExpense]),
-		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+		success func(schema.StatusCode, schema.Response[[]schema.IdentifiableExpense]),
+		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
 	GetExpense(
-		subject httpserver.UserId,
+		subject schema.UserId,
 		request GetExpenseRequest,
-		success func(httpserver.StatusCode, httpserver.Response[httpserver.IdentifiableExpense]),
-		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+		success func(schema.StatusCode, schema.Response[schema.IdentifiableExpense]),
+		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
 }
 

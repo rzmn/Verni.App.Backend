@@ -2,16 +2,16 @@ package auth
 
 import (
 	authController "verni/internal/controllers/auth"
-	httpserver "verni/internal/http-server"
+	"verni/internal/schema"
 	"verni/internal/services/logging"
 )
 
 type SignupRequest struct {
-	Credentials httpserver.Credentials `json:"credentials"`
+	Credentials schema.Credentials `json:"credentials"`
 }
 
 type LoginRequest struct {
-	Credentials httpserver.Credentials `json:"credentials"`
+	Credentials schema.Credentials `json:"credentials"`
 }
 
 type RefreshRequest struct {
@@ -34,41 +34,41 @@ type RegisterForPushNotificationsRequest struct {
 type RequestsHandler interface {
 	Signup(
 		request SignupRequest,
-		success func(httpserver.StatusCode, httpserver.Response[httpserver.Session]),
-		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+		success func(schema.StatusCode, schema.Response[schema.Session]),
+		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
 	Login(
 		request LoginRequest,
-		success func(httpserver.StatusCode, httpserver.Response[httpserver.Session]),
-		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+		success func(schema.StatusCode, schema.Response[schema.Session]),
+		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
 	Refresh(
 		request RefreshRequest,
-		success func(httpserver.StatusCode, httpserver.Response[httpserver.Session]),
-		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+		success func(schema.StatusCode, schema.Response[schema.Session]),
+		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
 	UpdateEmail(
-		subject httpserver.UserId,
+		subject schema.UserId,
 		request UpdateEmailRequest,
-		success func(httpserver.StatusCode, httpserver.Response[httpserver.Session]),
-		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+		success func(schema.StatusCode, schema.Response[schema.Session]),
+		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
 	UpdatePassword(
-		subject httpserver.UserId,
+		subject schema.UserId,
 		request UpdatePasswordRequest,
-		success func(httpserver.StatusCode, httpserver.Response[httpserver.Session]),
-		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+		success func(schema.StatusCode, schema.Response[schema.Session]),
+		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
 	RegisterForPushNotifications(
-		subject httpserver.UserId,
+		subject schema.UserId,
 		request RegisterForPushNotificationsRequest,
-		success func(httpserver.StatusCode, httpserver.VoidResponse),
-		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+		success func(schema.StatusCode, schema.VoidResponse),
+		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
 	Logout(
-		subject httpserver.UserId,
-		success func(httpserver.StatusCode, httpserver.VoidResponse),
-		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+		subject schema.UserId,
+		success func(schema.StatusCode, schema.VoidResponse),
+		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
 }
 

@@ -2,72 +2,72 @@ package friends
 
 import (
 	friendsController "verni/internal/controllers/friends"
-	httpserver "verni/internal/http-server"
+	"verni/internal/schema"
 	"verni/internal/services/logging"
 	"verni/internal/services/longpoll"
 	"verni/internal/services/pushNotifications"
 )
 
 type AcceptFriendRequest struct {
-	Sender httpserver.UserId `json:"sender"`
+	Sender schema.UserId `json:"sender"`
 }
 
 type GetFriendsRequest struct {
-	Statuses []httpserver.FriendStatus `json:"statuses"`
+	Statuses []schema.FriendStatus `json:"statuses"`
 }
 
 type RejectFriendRequest struct {
-	Sender httpserver.UserId `json:"sender"`
+	Sender schema.UserId `json:"sender"`
 }
 
 type RollbackFriendRequest struct {
-	Target httpserver.UserId `json:"target"`
+	Target schema.UserId `json:"target"`
 }
 
 type SendFriendRequest struct {
-	Target httpserver.UserId `json:"target"`
+	Target schema.UserId `json:"target"`
 }
 
 type UnfriendRequest struct {
-	Target httpserver.UserId `json:"target"`
+	Target schema.UserId `json:"target"`
 }
 
 type RequestsHandler interface {
 	AcceptRequest(
-		subject httpserver.UserId,
+		subject schema.UserId,
 		request AcceptFriendRequest,
-		success func(httpserver.StatusCode, httpserver.VoidResponse),
-		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+		success func(schema.StatusCode, schema.VoidResponse),
+		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
 	GetFriends(
-		subject httpserver.UserId,
+		subject schema.UserId,
 		request GetFriendsRequest,
-		success func(httpserver.StatusCode, httpserver.Response[map[httpserver.FriendStatus][]httpserver.UserId]),
-		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+		success func(schema.StatusCode, schema.Response[map[schema.FriendStatus][]schema.UserId]),
+		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
 	RejectRequest(
-		subject httpserver.UserId,
+		subject schema.UserId,
 		request RejectFriendRequest,
-		success func(httpserver.StatusCode, httpserver.VoidResponse),
-		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+		success func(schema.StatusCode, schema.VoidResponse),
+		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
 	RollbackRequest(
-		subject httpserver.UserId,
+		subject schema.UserId,
 		request RollbackFriendRequest,
-		success func(httpserver.StatusCode, httpserver.VoidResponse),
-		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+		success func(schema.StatusCode, schema.VoidResponse),
+		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
 	SendRequest(
-		subject httpserver.UserId,
+		subject schema.UserId,
 		request SendFriendRequest,
-		success func(httpserver.StatusCode, httpserver.VoidResponse),
-		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+		success func(schema.StatusCode, schema.VoidResponse),
+		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
 	Unfriend(
-		subject httpserver.UserId,
+		subject schema.UserId,
 		request UnfriendRequest,
-		success func(httpserver.StatusCode, httpserver.VoidResponse),
-		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+		success func(schema.StatusCode, schema.VoidResponse),
+		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
 }
 

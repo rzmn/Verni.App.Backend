@@ -1,7 +1,6 @@
 package server
 
 import (
-	httpserver "verni/internal/http-server"
 	"verni/internal/requestHandlers/accessToken"
 	"verni/internal/requestHandlers/auth"
 	"verni/internal/requestHandlers/avatars"
@@ -10,6 +9,7 @@ import (
 	"verni/internal/requestHandlers/spendings"
 	"verni/internal/requestHandlers/users"
 	"verni/internal/requestHandlers/verification"
+	"verni/internal/schema"
 	"verni/internal/services/logging"
 	"verni/internal/services/longpoll"
 
@@ -39,7 +39,7 @@ type GinConfig struct {
 
 type ginAccessTokenChecker struct {
 	handler     gin.HandlerFunc
-	accessToken func(c *gin.Context) httpserver.UserId
+	accessToken func(c *gin.Context) schema.UserId
 }
 
 const (

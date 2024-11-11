@@ -2,19 +2,19 @@ package avatars
 
 import (
 	avatarsController "verni/internal/controllers/avatars"
-	httpserver "verni/internal/http-server"
+	"verni/internal/schema"
 	"verni/internal/services/logging"
 )
 
 type GetAvatarsRequest struct {
-	Ids []httpserver.ImageId `json:"ids"`
+	Ids []schema.ImageId `json:"ids"`
 }
 
 type RequestsHandler interface {
 	GetAvatars(
 		request GetAvatarsRequest,
-		success func(httpserver.StatusCode, httpserver.Response[map[httpserver.ImageId]httpserver.Image]),
-		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+		success func(schema.StatusCode, schema.Response[map[schema.ImageId]schema.Image]),
+		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
 }
 

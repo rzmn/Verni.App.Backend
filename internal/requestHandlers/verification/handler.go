@@ -2,7 +2,7 @@ package verification
 
 import (
 	verificationController "verni/internal/controllers/verification"
-	httpserver "verni/internal/http-server"
+	"verni/internal/schema"
 	"verni/internal/services/logging"
 )
 
@@ -12,15 +12,15 @@ type ConfirmEmailRequest struct {
 
 type RequestsHandler interface {
 	ConfirmEmail(
-		subject httpserver.UserId,
+		subject schema.UserId,
 		request ConfirmEmailRequest,
-		success func(httpserver.StatusCode, httpserver.VoidResponse),
-		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+		success func(schema.StatusCode, schema.VoidResponse),
+		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
 	SendEmailConfirmationCode(
-		subject httpserver.UserId,
-		success func(httpserver.StatusCode, httpserver.VoidResponse),
-		failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+		subject schema.UserId,
+		success func(schema.StatusCode, schema.VoidResponse),
+		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
 }
 

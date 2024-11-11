@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"verni/internal/common"
 	profileController "verni/internal/controllers/profile"
-	httpserver "verni/internal/http-server"
+	"verni/internal/schema"
 	"verni/internal/services/logging"
 )
 
@@ -14,9 +14,9 @@ type defaultRequestsHandler struct {
 }
 
 func (c *defaultRequestsHandler) GetInfo(
-	subject httpserver.UserId,
-	success func(httpserver.StatusCode, httpserver.Response[httpserver.Profile]),
-	failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+	subject schema.UserId,
+	success func(schema.StatusCode, schema.Response[schema.Profile]),
+	failure func(schema.StatusCode, schema.Response[schema.Error]),
 ) {
 	info, err := c.controller.GetProfileInfo(profileController.UserId(subject))
 	if err != nil {
@@ -24,9 +24,9 @@ func (c *defaultRequestsHandler) GetInfo(
 		case profileController.GetInfoErrorNotFound:
 			failure(
 				http.StatusConflict,
-				httpserver.Failure(
+				schema.Failure(
 					common.NewErrorWithDescriptionValue(
-						httpserver.CodeNoSuchUser,
+						schema.CodeNoSuchUser,
 						err.Error(),
 					),
 				),
@@ -35,9 +35,9 @@ func (c *defaultRequestsHandler) GetInfo(
 			c.logger.LogError("getProfile request failed with unknown err: %v", err)
 			failure(
 				http.StatusInternalServerError,
-				httpserver.Failure(
+				schema.Failure(
 					common.NewErrorWithDescriptionValue(
-						httpserver.CodeInternal,
+						schema.CodeInternal,
 						err.Error(),
 					),
 				),
@@ -45,14 +45,14 @@ func (c *defaultRequestsHandler) GetInfo(
 		}
 		return
 	}
-	success(http.StatusOK, httpserver.Success(mapProfile(info)))
+	success(http.StatusOK, schema.Success(mapProfile(info)))
 }
 
 func (c *defaultRequestsHandler) SetAvatar(
-	subject httpserver.UserId,
+	subject schema.UserId,
 	request SetAvatarRequest,
-	success func(httpserver.StatusCode, httpserver.Response[httpserver.ImageId]),
-	failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+	success func(schema.StatusCode, schema.Response[schema.ImageId]),
+	failure func(schema.StatusCode, schema.Response[schema.Error]),
 ) {
 	aid, err := c.controller.UpdateAvatar(request.DataBase64, profileController.UserId(subject))
 	if err != nil {
@@ -61,9 +61,9 @@ func (c *defaultRequestsHandler) SetAvatar(
 			c.logger.LogError("setAvatar request %v failed with unknown err: %v", request, err)
 			failure(
 				http.StatusInternalServerError,
-				httpserver.Failure(
+				schema.Failure(
 					common.NewErrorWithDescriptionValue(
-						httpserver.CodeInternal,
+						schema.CodeInternal,
 						err.Error(),
 					),
 				),
@@ -71,23 +71,23 @@ func (c *defaultRequestsHandler) SetAvatar(
 		}
 		return
 	}
-	success(http.StatusOK, httpserver.Success(httpserver.ImageId(aid)))
+	success(http.StatusOK, schema.Success(schema.ImageId(aid)))
 }
 
 func (c *defaultRequestsHandler) SetDisplayName(
-	subject httpserver.UserId,
+	subject schema.UserId,
 	request SetDisplayNameRequest,
-	success func(httpserver.StatusCode, httpserver.VoidResponse),
-	failure func(httpserver.StatusCode, httpserver.Response[httpserver.Error]),
+	success func(schema.StatusCode, schema.VoidResponse),
+	failure func(schema.StatusCode, schema.Response[schema.Error]),
 ) {
 	if err := c.controller.UpdateDisplayName(request.DisplayName, profileController.UserId(subject)); err != nil {
 		switch err.Code {
 		case profileController.UpdateDisplayNameErrorNotFound:
 			failure(
 				http.StatusConflict,
-				httpserver.Failure(
+				schema.Failure(
 					common.NewErrorWithDescriptionValue(
-						httpserver.CodeNoSuchUser,
+						schema.CodeNoSuchUser,
 						err.Error(),
 					),
 				),
@@ -95,9 +95,9 @@ func (c *defaultRequestsHandler) SetDisplayName(
 		case profileController.UpdateDisplayNameErrorWrongFormat:
 			failure(
 				http.StatusUnprocessableEntity,
-				httpserver.Failure(
+				schema.Failure(
 					common.NewErrorWithDescriptionValue(
-						httpserver.CodeWrongFormat,
+						schema.CodeWrongFormat,
 						err.Error(),
 					),
 				),
@@ -106,9 +106,9 @@ func (c *defaultRequestsHandler) SetDisplayName(
 			c.logger.LogError("setDisplayName request %v failed with unknown err: %v", request, err)
 			failure(
 				http.StatusInternalServerError,
-				httpserver.Failure(
+				schema.Failure(
 					common.NewErrorWithDescriptionValue(
-						httpserver.CodeInternal,
+						schema.CodeInternal,
 						err.Error(),
 					),
 				),
@@ -116,16 +116,16 @@ func (c *defaultRequestsHandler) SetDisplayName(
 		}
 		return
 	}
-	success(http.StatusOK, httpserver.OK())
+	success(http.StatusOK, schema.OK())
 }
 
-func mapProfile(profile profileController.ProfileInfo) httpserver.Profile {
-	return httpserver.Profile{
-		User: httpserver.User{
-			Id:           httpserver.UserId(profile.Id),
+func mapProfile(profile profileController.ProfileInfo) schema.Profile {
+	return schema.Profile{
+		User: schema.User{
+			Id:           schema.UserId(profile.Id),
 			DisplayName:  profile.DisplayName,
-			AvatarId:     (*httpserver.ImageId)(profile.AvatarId),
-			FriendStatus: httpserver.FriendStatusMe,
+			AvatarId:     (*schema.ImageId)(profile.AvatarId),
+			FriendStatus: schema.FriendStatusMe,
 		},
 		Email:         profile.Email,
 		EmailVerified: profile.EmailVerified,
