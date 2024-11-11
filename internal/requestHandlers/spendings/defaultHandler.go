@@ -5,9 +5,9 @@ import (
 	"verni/internal/common"
 	spendingsController "verni/internal/controllers/spendings"
 	httpserver "verni/internal/http-server"
-	"verni/internal/http-server/longpoll"
 	spendingsRepository "verni/internal/repositories/spendings"
 	"verni/internal/services/logging"
+	"verni/internal/services/longpoll"
 	"verni/internal/services/pushNotifications"
 )
 

@@ -4,15 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"time"
 
-	"verni/internal/common"
 	"verni/internal/db"
-	httpserver "verni/internal/http-server"
-	"verni/internal/http-server/longpoll"
-	"verni/internal/http-server/middleware"
 	authRepository "verni/internal/repositories/auth"
 	friendsRepository "verni/internal/repositories/friends"
 	imagesRepository "verni/internal/repositories/images"
@@ -20,6 +15,7 @@ import (
 	spendingsRepository "verni/internal/repositories/spendings"
 	usersRepository "verni/internal/repositories/users"
 	verificationRepository "verni/internal/repositories/verification"
+	"verni/internal/requestHandlers/accessToken"
 	"verni/internal/requestHandlers/auth"
 	"verni/internal/requestHandlers/avatars"
 	"verni/internal/requestHandlers/friends"
@@ -27,10 +23,12 @@ import (
 	"verni/internal/requestHandlers/spendings"
 	"verni/internal/requestHandlers/users"
 	"verni/internal/requestHandlers/verification"
+	"verni/internal/server"
 	"verni/internal/services/emailSender"
 	"verni/internal/services/formatValidation"
 	"verni/internal/services/jwt"
 	"verni/internal/services/logging"
+	"verni/internal/services/longpoll"
 	"verni/internal/services/pathProvider"
 	"verni/internal/services/pushNotifications"
 	"verni/internal/services/watchdog"
@@ -42,8 +40,6 @@ import (
 	spendingsController "verni/internal/controllers/spendings"
 	usersController "verni/internal/controllers/users"
 	verificationController "verni/internal/controllers/verification"
-
-	"github.com/gin-gonic/gin"
 )
 
 type Repositories struct {
@@ -282,562 +278,65 @@ func main() {
 			logger,
 		),
 	}
-	server := func() http.Server {
+	server := func() server.Server {
 		switch config.Server.Type {
 		case "gin":
-			type GinConfig struct {
-				TimeoutSec     int    `json:"timeoutSec"`
-				IdleTimeoutSec int    `json:"idleTimeoutSec"`
-				RunMode        string `json:"runMode"`
-				Port           string `json:"port"`
-			}
 			data, err := json.Marshal(config.Server.Config)
 			if err != nil {
 				logger.LogFatal("failed to serialize default server config err: %v", err)
 			}
-			var ginConfig GinConfig
+			var ginConfig server.GinConfig
 			json.Unmarshal(data, &ginConfig)
 			logger.LogInfo("creating gin server with config %v", ginConfig)
-			gin.SetMode(ginConfig.RunMode)
-			router := gin.New()
-			tokenChecker := middleware.JwsAccessTokenCheck(
-				repositories.auth,
-				services.jwt,
+			return server.GinServer(
+				ginConfig,
+				accessToken.DefaultHandler(
+					repositories.auth,
+					services.jwt,
+					logger,
+				),
+				func(longpoll longpoll.Service) server.RequestHandlers {
+					return server.RequestHandlers{
+						Auth: auth.DefaultHandler(
+							controllers.auth,
+							logger,
+						),
+						Spendings: spendings.DefaultHandler(
+							controllers.spendings,
+							services.push,
+							longpoll,
+							logger,
+						),
+						Friends: friends.DefaultHandler(
+							controllers.friends,
+							services.push,
+							longpoll,
+							logger,
+						),
+						Profile: profile.DefaultHandler(
+							controllers.profile,
+							logger,
+						),
+						Verification: verification.DefaultHandler(
+							controllers.verification,
+							logger,
+						),
+						Users: users.DefaultHandler(
+							controllers.users,
+							logger,
+						),
+						Avatars: avatars.DefaultHandler(
+							controllers.avatars,
+							logger,
+						),
+					}
+				},
 				logger,
 			)
-			longpollService := longpoll.DefaultService(router, logger, tokenChecker)
-			longpollService.RegisterRoutes()
-			registerRoutesAuth(router, tokenChecker, auth.DefaultHandler(
-				controllers.auth,
-				logger,
-			))
-			registerRoutesSpendings(router, tokenChecker, spendings.DefaultHandler(
-				controllers.spendings,
-				services.push,
-				longpollService,
-				logger,
-			))
-			registerRoutesFriends(router, tokenChecker, friends.DefaultHandler(
-				controllers.friends,
-				services.push,
-				longpollService,
-				logger,
-			))
-			registerRoutesProfile(router, tokenChecker, profile.DefaultHandler(
-				controllers.profile,
-				logger,
-			))
-			registerRoutesVerification(router, tokenChecker, verification.DefaultHandler(
-				controllers.verification,
-				logger,
-			))
-			registerRoutesUsers(router, tokenChecker, users.DefaultHandler(
-				controllers.users,
-				logger,
-			))
-			registerRoutesAvatars(router, avatars.DefaultHandler(
-				controllers.avatars,
-				logger,
-			))
-			address := ":" + ginConfig.Port
-			return http.Server{
-				Addr:         address,
-				Handler:      router,
-				ReadTimeout:  time.Second * time.Duration(ginConfig.IdleTimeoutSec),
-				WriteTimeout: time.Second * time.Duration(ginConfig.IdleTimeoutSec),
-			}
 		default:
 			logger.LogFatal("unknown server type %s", config.Server.Type)
-			return http.Server{}
+			return nil
 		}
 	}()
-	logger.LogInfo("[info] start http server listening %s", server.Addr)
 	server.ListenAndServe()
-}
-
-func registerRoutesAuth(router *gin.Engine, tokenChecker middleware.AccessTokenChecker, handler auth.RequestsHandler) {
-	router.PUT("/auth/signup", func(c *gin.Context) {
-		var request auth.SignupRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.Signup(
-			request,
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Session]) {
-				c.JSON(int(status), response)
-			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	router.PUT("/auth/login", func(c *gin.Context) {
-		var request auth.LoginRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.Login(
-			request,
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Session]) {
-				c.JSON(int(status), response)
-			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	router.PUT("/auth/refresh", tokenChecker.Handler, func(c *gin.Context) {
-		var request auth.RefreshRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.Refresh(
-			request,
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Session]) {
-				c.JSON(int(status), response)
-			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	router.PUT("/auth/updateEmail", tokenChecker.Handler, func(c *gin.Context) {
-		var request auth.UpdateEmailRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.UpdateEmail(
-			httpserver.UserId(tokenChecker.AccessToken(c)),
-			request,
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Session]) {
-				c.JSON(int(status), response)
-			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	router.PUT("/auth/updatePassword", tokenChecker.Handler, func(c *gin.Context) {
-		var request auth.UpdatePasswordRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.UpdatePassword(
-			httpserver.UserId(tokenChecker.AccessToken(c)),
-			request,
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Session]) {
-				c.JSON(int(status), response)
-			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	router.DELETE("/auth/logout", tokenChecker.Handler, func(c *gin.Context) {
-		handler.Logout(
-			httpserver.UserId(tokenChecker.AccessToken(c)),
-			func(status httpserver.StatusCode, response httpserver.VoidResponse) {
-				c.JSON(int(status), response)
-			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	router.PUT("/auth/registerForPushNotifications", tokenChecker.Handler, func(c *gin.Context) {
-		var request auth.RegisterForPushNotificationsRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.RegisterForPushNotifications(
-			httpserver.UserId(tokenChecker.AccessToken(c)),
-			request,
-			func(status httpserver.StatusCode, response httpserver.VoidResponse) {
-				c.JSON(int(status), response)
-			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-}
-
-func registerRoutesSpendings(router *gin.Engine, tokenChecker middleware.AccessTokenChecker, handler spendings.RequestsHandler) {
-	spendingsGroup := router.Group("/spendings", tokenChecker.Handler)
-	spendingsGroup.POST("/addExpense", func(c *gin.Context) {
-		var request spendings.AddExpenseRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.AddExpense(
-			httpserver.UserId(tokenChecker.AccessToken(c)),
-			request,
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.IdentifiableExpense]) {
-				c.JSON(int(status), response)
-			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	spendingsGroup.POST("/removeExpense", func(c *gin.Context) {
-		var request spendings.RemoveExpenseRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.RemoveExpense(
-			httpserver.UserId(tokenChecker.AccessToken(c)),
-			request,
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.IdentifiableExpense]) {
-				c.JSON(int(status), response)
-			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	spendingsGroup.GET("/getBalance", func(c *gin.Context) {
-		handler.GetBalance(
-			httpserver.UserId(tokenChecker.AccessToken(c)),
-			func(status httpserver.StatusCode, response httpserver.Response[[]httpserver.Balance]) {
-				c.JSON(int(status), response)
-			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	spendingsGroup.GET("/getExpenses", func(c *gin.Context) {
-		var request spendings.GetExpensesRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.GetExpenses(
-			httpserver.UserId(tokenChecker.AccessToken(c)),
-			request,
-			func(status httpserver.StatusCode, response httpserver.Response[[]httpserver.IdentifiableExpense]) {
-				c.JSON(int(status), response)
-			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	spendingsGroup.GET("/getExpense", func(c *gin.Context) {
-		var request spendings.GetExpenseRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.GetExpense(
-			httpserver.UserId(tokenChecker.AccessToken(c)),
-			request,
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.IdentifiableExpense]) {
-				c.JSON(int(status), response)
-			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-}
-
-func registerRoutesFriends(router *gin.Engine, tokenChecker middleware.AccessTokenChecker, handler friends.RequestsHandler) {
-	friendsGroup := router.Group("/friends", tokenChecker.Handler)
-	friendsGroup.POST("/acceptRequest", func(c *gin.Context) {
-		var request friends.AcceptFriendRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.AcceptRequest(
-			httpserver.UserId(tokenChecker.AccessToken(c)),
-			request,
-			func(status httpserver.StatusCode, response httpserver.VoidResponse) {
-				c.JSON(int(status), response)
-			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	friendsGroup.GET("/get", func(c *gin.Context) {
-		var request friends.GetFriendsRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.GetFriends(
-			httpserver.UserId(tokenChecker.AccessToken(c)),
-			request,
-			func(status httpserver.StatusCode, response httpserver.Response[map[httpserver.FriendStatus][]httpserver.UserId]) {
-				c.JSON(int(status), response)
-			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	friendsGroup.POST("/rejectRequest", func(c *gin.Context) {
-		var request friends.RejectFriendRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.RejectRequest(
-			httpserver.UserId(tokenChecker.AccessToken(c)),
-			request,
-			func(status httpserver.StatusCode, response httpserver.VoidResponse) {
-				c.JSON(int(status), response)
-			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	friendsGroup.POST("/rollbackRequest", func(c *gin.Context) {
-		var request friends.RollbackFriendRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.RollbackRequest(
-			httpserver.UserId(tokenChecker.AccessToken(c)),
-			request,
-			func(status httpserver.StatusCode, response httpserver.VoidResponse) {
-				c.JSON(int(status), response)
-			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	friendsGroup.POST("/sendRequest", func(c *gin.Context) {
-		var request friends.SendFriendRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.SendRequest(
-			httpserver.UserId(tokenChecker.AccessToken(c)),
-			request,
-			func(status httpserver.StatusCode, response httpserver.VoidResponse) {
-				c.JSON(int(status), response)
-			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	friendsGroup.POST("/unfriend", func(c *gin.Context) {
-		var request friends.UnfriendRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.Unfriend(
-			httpserver.UserId(tokenChecker.AccessToken(c)),
-			request,
-			func(status httpserver.StatusCode, response httpserver.VoidResponse) {
-				c.JSON(int(status), response)
-			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-}
-
-func registerRoutesProfile(router *gin.Engine, tokenChecker middleware.AccessTokenChecker, handler profile.RequestsHandler) {
-	profileGroup := router.Group("/profile", tokenChecker.Handler)
-	profileGroup.GET("/getInfo", func(c *gin.Context) {
-		handler.GetInfo(
-			httpserver.UserId(tokenChecker.AccessToken(c)),
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Profile]) {
-				c.JSON(int(status), response)
-			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	profileGroup.PUT("/setAvatar", func(c *gin.Context) {
-		var request profile.SetAvatarRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.SetAvatar(
-			httpserver.UserId(tokenChecker.AccessToken(c)),
-			request,
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.ImageId]) {
-				c.JSON(int(status), response)
-			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	profileGroup.PUT("/setDisplayName", func(c *gin.Context) {
-		var request profile.SetDisplayNameRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.SetDisplayName(
-			httpserver.UserId(tokenChecker.AccessToken(c)),
-			request,
-			func(status httpserver.StatusCode, response httpserver.VoidResponse) {
-				c.JSON(int(status), response)
-			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-}
-
-func registerRoutesVerification(router *gin.Engine, tokenChecker middleware.AccessTokenChecker, handler verification.RequestsHandler) {
-	verificationGroup := router.Group("/verification", tokenChecker.Handler)
-	verificationGroup.PUT("/confirmEmail", func(c *gin.Context) {
-		var request verification.ConfirmEmailRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.ConfirmEmail(
-			httpserver.UserId(tokenChecker.AccessToken(c)),
-			request,
-			func(status httpserver.StatusCode, response httpserver.VoidResponse) {
-				c.JSON(int(status), response)
-			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	verificationGroup.PUT("/sendEmailConfirmationCode", func(c *gin.Context) {
-		handler.SendEmailConfirmationCode(
-			httpserver.UserId(tokenChecker.AccessToken(c)),
-			func(status httpserver.StatusCode, response httpserver.VoidResponse) {
-				c.JSON(int(status), response)
-			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-}
-
-func registerRoutesUsers(router *gin.Engine, tokenChecker middleware.AccessTokenChecker, handler users.RequestsHandler) {
-	usersGroup := router.Group("/users", tokenChecker.Handler)
-	usersGroup.GET("/get", func(c *gin.Context) {
-		var request users.GetUsersRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.GetUsers(
-			httpserver.UserId(tokenChecker.AccessToken(c)),
-			request,
-			func(status httpserver.StatusCode, response httpserver.Response[[]httpserver.User]) {
-				c.JSON(int(status), response)
-			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-}
-
-func registerRoutesAvatars(router *gin.Engine, handler avatars.RequestsHandler) {
-	avatarsGroup := router.Group("/avatars")
-	avatarsGroup.GET("/avatars/get", func(c *gin.Context) {
-		var request avatars.GetAvatarsRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				httpserver.Failure(common.NewErrorWithDescriptionValue(httpserver.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.GetAvatars(
-			request,
-			func(status httpserver.StatusCode, response httpserver.Response[map[httpserver.ImageId]httpserver.Image]) {
-				c.JSON(int(status), response)
-			},
-			func(status httpserver.StatusCode, response httpserver.Response[httpserver.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
 }

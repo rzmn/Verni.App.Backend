@@ -5,8 +5,8 @@ import (
 	"verni/internal/common"
 	friendsController "verni/internal/controllers/friends"
 	httpserver "verni/internal/http-server"
-	"verni/internal/http-server/longpoll"
 	"verni/internal/services/logging"
+	"verni/internal/services/longpoll"
 	"verni/internal/services/pushNotifications"
 )
 
