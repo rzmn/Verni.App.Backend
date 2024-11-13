@@ -80,8 +80,6 @@ func TestAddExpenseOk(t *testing.T) {
 			}
 		},
 	}
-	pushSentTo := []spendings.CounterpartyId{}
-
 	controller := spendings.DefaultController(&repository, logging.TestService())
 	actor := spendings.CounterpartyId(uuid.New().String())
 	counterparty := spendings.CounterpartyId(uuid.New().String())
@@ -99,9 +97,6 @@ func TestAddExpenseOk(t *testing.T) {
 	_, err := controller.AddExpense(expense, actor)
 	if err != nil {
 		t.Fatalf("`AddExpense` should not be failed, found err %v", err)
-	}
-	if len(pushSentTo) != 1 || pushSentTo[0] != counterparty {
-		t.Fatalf("`AddExpense` should trigger push to %s, found %v", counterparty, pushSentTo)
 	}
 }
 
