@@ -1,9 +1,9 @@
 package accessToken
 
 import (
+	"errors"
 	"net/http"
 	"strings"
-	"verni/internal/common"
 	authRepository "verni/internal/repositories/auth"
 	"verni/internal/schema"
 	"verni/internal/services/jwt"
@@ -37,77 +37,30 @@ func (c *defaultRequestsHandler) CheckToken(
 		c.logger.LogInfo("%s: failed to validate token %v", op, err)
 		switch err.Code {
 		case jwt.CodeTokenExpired:
-			failure(
-				http.StatusUnauthorized,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeTokenExpired,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusUnauthorized, schema.Failure(err, schema.CodeTokenExpired))
 		case jwt.CodeTokenInvalid:
-			failure(
-				http.StatusUnprocessableEntity,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeWrongAccessToken,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusUnprocessableEntity, schema.Failure(err, schema.CodeWrongAccessToken))
 		default:
-			c.logger.LogError("jwt token validation failed %v", err)
-			failure(
-				http.StatusInternalServerError,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeInternal,
-						err.Error(),
-					),
-				),
-			)
+			c.logger.LogError("%s: jwt token validation failed %v", op, err)
+			failure(http.StatusInternalServerError, schema.Failure(err, schema.CodeInternal))
 		}
 		return
 	}
 	subject, getSubjectError := c.jwtService.GetAccessTokenSubject(token)
 	if getSubjectError != nil {
-		c.logger.LogError("jwt token get subject failed %v", getSubjectError)
-		failure(
-			http.StatusInternalServerError,
-			schema.Failure(
-				common.NewErrorWithDescriptionValue(
-					schema.CodeInternal,
-					getSubjectError.Error(),
-				),
-			),
-		)
+		c.logger.LogError("%s: jwt token get subject failed %v", op, getSubjectError)
+		failure(http.StatusInternalServerError, schema.Failure(getSubjectError, schema.CodeInternal))
 		return
 	}
 	exists, err := c.repository.IsUserExists(authRepository.UserId(subject))
 	if err != nil {
-		c.logger.LogError("valid token with invalid subject - %v", err)
-		failure(
-			http.StatusInternalServerError,
-			schema.Failure(
-				common.NewErrorWithDescriptionValue(
-					schema.CodeInternal,
-					err.Error(),
-				),
-			),
-		)
+		c.logger.LogError("%s: valid token with invalid subject - %v", op, err)
+		failure(http.StatusInternalServerError, schema.Failure(err, schema.CodeInternal))
 		return
 	}
 	if !exists {
-		failure(
-			http.StatusUnprocessableEntity,
-			schema.Failure(
-				common.NewErrorWithDescriptionValue(
-					schema.CodeWrongAccessToken,
-					"associated user is not exists",
-				),
-			),
-		)
+		c.logger.LogError("%s: associated user is not exists", op)
+		failure(http.StatusUnprocessableEntity, schema.Failure(errors.New("associated user is not exists"), schema.CodeWrongAccessToken))
 		return
 	}
 	c.logger.LogInfo("%s: access token ok", op)

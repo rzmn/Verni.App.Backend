@@ -2,7 +2,6 @@ package schema
 
 import (
 	"fmt"
-	"verni/internal/common"
 )
 
 type Code int
@@ -42,14 +41,23 @@ func Success[T any](result T) Response[T] {
 	}
 }
 
-func Failure(error common.CodeBasedError[Code]) Response[Error] {
-	description := error.Error()
-	return Response[Error]{
-		Status: "failed",
-		Response: Error{
-			Code:        error.Code,
-			Description: &description,
-		},
+func Failure(underlying error, code Code) Response[Error] {
+	if underlying != nil {
+		description := underlying.Error()
+		return Response[Error]{
+			Status: "failed",
+			Response: Error{
+				Code:        code,
+				Description: &description,
+			},
+		}
+	} else {
+		return Response[Error]{
+			Status: "failed",
+			Response: Error{
+				Code: code,
+			},
+		}
 	}
 }
 

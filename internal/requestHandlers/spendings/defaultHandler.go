@@ -28,36 +28,12 @@ func (c *defaultRequestsHandler) AddExpense(
 	if err != nil {
 		switch err.Code {
 		case spendingsController.AddExpenseErrorNoSuchUser:
-			failure(
-				http.StatusConflict,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeNoSuchUser,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusConflict, schema.Failure(err, schema.CodeNoSuchUser))
 		case spendingsController.AddExpenseErrorNotYourExpense:
-			failure(
-				http.StatusConflict,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeIsNotYourExpense,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusConflict, schema.Failure(err, schema.CodeIsNotYourExpense))
 		default:
 			c.logger.LogError("addExpense request %v failed with unknown err: %v", request, err)
-			failure(
-				http.StatusInternalServerError,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeInternal,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusInternalServerError, schema.Failure(err, schema.CodeInternal))
 		}
 		return
 	}
@@ -86,46 +62,14 @@ func (c *defaultRequestsHandler) RemoveExpense(
 	if err != nil {
 		switch err.Code {
 		case spendingsController.RemoveExpenseErrorExpenseNotFound:
-			failure(
-				http.StatusConflict,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeExpenseNotFound,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusConflict, schema.Failure(err, schema.CodeExpenseNotFound))
 		case spendingsController.RemoveExpenseErrorNotAFriend:
-			failure(
-				http.StatusConflict,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeNotAFriend,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusConflict, schema.Failure(err, schema.CodeNotAFriend))
 		case spendingsController.RemoveExpenseErrorNotYourExpense:
-			failure(
-				http.StatusConflict,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeIsNotYourExpense,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusConflict, schema.Failure(err, schema.CodeIsNotYourExpense))
 		default:
 			c.logger.LogError("removeExpense request %v failed with unknown err: %v", request, err)
-			failure(
-				http.StatusInternalServerError,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeInternal,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusInternalServerError, schema.Failure(err, schema.CodeInternal))
 		}
 		return
 	}
@@ -154,15 +98,7 @@ func (c *defaultRequestsHandler) GetBalance(
 		switch err.Code {
 		default:
 			c.logger.LogError("getBalance request failed with unknown err: %v", err)
-			failure(
-				http.StatusInternalServerError,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeInternal,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusInternalServerError, schema.Failure(err, schema.CodeInternal))
 		}
 		return
 	}
@@ -180,15 +116,7 @@ func (c *defaultRequestsHandler) GetExpenses(
 		switch err.Code {
 		default:
 			c.logger.LogError("getExpenses request %v failed with unknown err: %v", request, err)
-			failure(
-				http.StatusInternalServerError,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeInternal,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusInternalServerError, schema.Failure(err, schema.CodeInternal))
 		}
 		return
 	}
@@ -205,36 +133,12 @@ func (c *defaultRequestsHandler) GetExpense(
 	if err != nil {
 		switch err.Code {
 		case spendingsController.GetExpenseErrorExpenseNotFound:
-			failure(
-				http.StatusConflict,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeExpenseNotFound,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusConflict, schema.Failure(err, schema.CodeExpenseNotFound))
 		case spendingsController.GetExpenseErrorNotYourExpense:
-			failure(
-				http.StatusConflict,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeIsNotYourExpense,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusConflict, schema.Failure(err, schema.CodeIsNotYourExpense))
 		default:
 			c.logger.LogError("getExpense request %v failed with unknown err: %v", request, err)
-			failure(
-				http.StatusInternalServerError,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeInternal,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusInternalServerError, schema.Failure(err, schema.CodeInternal))
 		}
 		return
 	}

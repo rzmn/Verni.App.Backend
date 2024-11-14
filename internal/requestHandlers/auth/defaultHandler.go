@@ -2,7 +2,6 @@ package auth
 
 import (
 	"net/http"
-	"verni/internal/common"
 	authController "verni/internal/controllers/auth"
 	"verni/internal/schema"
 	"verni/internal/services/logging"
@@ -22,36 +21,12 @@ func (c *defaultRequestsHandler) Signup(
 	if err != nil {
 		switch err.Code {
 		case authController.SignupErrorAlreadyTaken:
-			failure(
-				http.StatusConflict,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeAlreadyTaken,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusConflict, schema.Failure(err, schema.CodeAlreadyTaken))
 		case authController.SignupErrorWrongFormat:
-			failure(
-				http.StatusUnprocessableEntity,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeWrongFormat,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusUnprocessableEntity, schema.Failure(err, schema.CodeWrongFormat))
 		default:
 			c.logger.LogError("signup request %v failed with unknown err: %v", request, err)
-			failure(
-				http.StatusInternalServerError,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeInternal,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusInternalServerError, schema.Failure(err, schema.CodeInternal))
 		}
 		return
 	}
@@ -67,26 +42,10 @@ func (c *defaultRequestsHandler) Login(
 	if err != nil {
 		switch err.Code {
 		case authController.LoginErrorWrongCredentials:
-			failure(
-				http.StatusConflict,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeIncorrectCredentials,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusConflict, schema.Failure(err, schema.CodeIncorrectCredentials))
 		default:
 			c.logger.LogError("login request %v failed with unknown err: %v", request, err)
-			failure(
-				http.StatusInternalServerError,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeInternal,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusInternalServerError, schema.Failure(err, schema.CodeInternal))
 		}
 		return
 	}
@@ -102,36 +61,12 @@ func (c *defaultRequestsHandler) Refresh(
 	if err != nil {
 		switch err.Code {
 		case authController.RefreshErrorTokenExpired:
-			failure(
-				http.StatusUnauthorized,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeTokenExpired,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusUnauthorized, schema.Failure(err, schema.CodeTokenExpired))
 		case authController.RefreshErrorTokenIsWrong:
-			failure(
-				http.StatusConflict,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeWrongAccessToken,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusConflict, schema.Failure(err, schema.CodeWrongAccessToken))
 		default:
 			c.logger.LogError("refresh request %v failed with unknown err: %v", request, err)
-			failure(
-				http.StatusInternalServerError,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeInternal,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusInternalServerError, schema.Failure(err, schema.CodeInternal))
 		}
 		return
 	}
@@ -148,36 +83,12 @@ func (c *defaultRequestsHandler) UpdateEmail(
 	if err != nil {
 		switch err.Code {
 		case authController.UpdateEmailErrorAlreadyTaken:
-			failure(
-				http.StatusConflict,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeAlreadyTaken,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusConflict, schema.Failure(err, schema.CodeAlreadyTaken))
 		case authController.UpdateEmailErrorWrongFormat:
-			failure(
-				http.StatusUnprocessableEntity,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeWrongFormat,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusUnprocessableEntity, schema.Failure(err, schema.CodeWrongFormat))
 		default:
 			c.logger.LogError("updateEmail request %v failed with unknown err: %v", request, err)
-			failure(
-				http.StatusInternalServerError,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeInternal,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusInternalServerError, schema.Failure(err, schema.CodeInternal))
 		}
 		return
 	}
@@ -194,26 +105,10 @@ func (c *defaultRequestsHandler) UpdatePassword(
 	if err != nil {
 		switch err.Code {
 		case authController.UpdatePasswordErrorOldPasswordIsWrong:
-			failure(
-				http.StatusConflict,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeIncorrectCredentials,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusConflict, schema.Failure(err, schema.CodeIncorrectCredentials))
 		default:
 			c.logger.LogError("updatePassword request %v failed with unknown err: %v", request, err)
-			failure(
-				http.StatusInternalServerError,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeInternal,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusInternalServerError, schema.Failure(err, schema.CodeInternal))
 		}
 		return
 	}
@@ -231,15 +126,7 @@ func (c *defaultRequestsHandler) RegisterForPushNotifications(
 		switch err.Code {
 		default:
 			c.logger.LogError("registerForPushNotifications request %v failed with unknown err: %v", request, err)
-			failure(
-				http.StatusInternalServerError,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeInternal,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusInternalServerError, schema.Failure(err, schema.CodeInternal))
 		}
 		return
 	}
@@ -256,15 +143,7 @@ func (c *defaultRequestsHandler) Logout(
 		switch err.Code {
 		default:
 			c.logger.LogError("logout request failed with unknown err: %v", err)
-			failure(
-				http.StatusInternalServerError,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeInternal,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusInternalServerError, schema.Failure(err, schema.CodeInternal))
 		}
 		return
 	}

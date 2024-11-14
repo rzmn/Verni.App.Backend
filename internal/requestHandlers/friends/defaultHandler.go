@@ -26,26 +26,10 @@ func (c *defaultRequestsHandler) AcceptRequest(
 	if err := c.controller.AcceptFriendRequest(friendsController.UserId(request.Sender), friendsController.UserId(subject)); err != nil {
 		switch err.Code {
 		case friendsController.AcceptFriendRequestErrorNoSuchRequest:
-			failure(
-				http.StatusConflict,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeNoSuchRequest,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusConflict, schema.Failure(err, schema.CodeNoSuchRequest))
 		default:
 			c.logger.LogError("acceptRequest request %v failed with unknown err: %v", request, err)
-			failure(
-				http.StatusInternalServerError,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeInternal,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusInternalServerError, schema.Failure(err, schema.CodeInternal))
 		}
 		return
 	}
@@ -65,15 +49,7 @@ func (c *defaultRequestsHandler) GetFriends(
 		switch err.Code {
 		default:
 			c.logger.LogError("getFriends request %v failed with unknown err: %v", request, err)
-			failure(
-				http.StatusInternalServerError,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeInternal,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusInternalServerError, schema.Failure(err, schema.CodeInternal))
 		}
 		return
 	}
@@ -95,26 +71,10 @@ func (c *defaultRequestsHandler) RejectRequest(
 	if err := c.controller.RollbackFriendRequest(friendsController.UserId(request.Sender), friendsController.UserId(subject)); err != nil {
 		switch err.Code {
 		case friendsController.RollbackFriendRequestErrorNoSuchRequest:
-			failure(
-				http.StatusConflict,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeNoSuchRequest,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusConflict, schema.Failure(err, schema.CodeNoSuchRequest))
 		default:
 			c.logger.LogError("rejectRequest request %v failed with unknown err: %v", request, err)
-			failure(
-				http.StatusInternalServerError,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeInternal,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusInternalServerError, schema.Failure(err, schema.CodeInternal))
 		}
 		return
 	}
@@ -130,26 +90,10 @@ func (c *defaultRequestsHandler) RollbackRequest(
 	if err := c.controller.RollbackFriendRequest(friendsController.UserId(subject), friendsController.UserId(request.Target)); err != nil {
 		switch err.Code {
 		case friendsController.RollbackFriendRequestErrorNoSuchRequest:
-			failure(
-				http.StatusConflict,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeNoSuchRequest,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusConflict, schema.Failure(err, schema.CodeNoSuchRequest))
 		default:
 			c.logger.LogError("rollbackRequest request %v failed with unknown err: %v", request, err)
-			failure(
-				http.StatusInternalServerError,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeInternal,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusInternalServerError, schema.Failure(err, schema.CodeInternal))
 		}
 		return
 	}
@@ -165,46 +109,14 @@ func (c *defaultRequestsHandler) SendRequest(
 	if err := c.controller.SendFriendRequest(friendsController.UserId(subject), friendsController.UserId(request.Target)); err != nil {
 		switch err.Code {
 		case friendsController.SendFriendRequestErrorAlreadySent:
-			failure(
-				http.StatusConflict,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeAlreadySend,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusConflict, schema.Failure(err, schema.CodeAlreadySend))
 		case friendsController.SendFriendRequestErrorHaveIncomingRequest:
-			failure(
-				http.StatusConflict,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeHaveIncomingRequest,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusConflict, schema.Failure(err, schema.CodeHaveIncomingRequest))
 		case friendsController.SendFriendRequestErrorAlreadyFriends:
-			failure(
-				http.StatusConflict,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeAlreadyFriends,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusConflict, schema.Failure(err, schema.CodeAlreadyFriends))
 		default:
 			c.logger.LogError("sendRequest request %v failed with unknown err: %v", request, err)
-			failure(
-				http.StatusInternalServerError,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeInternal,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusInternalServerError, schema.Failure(err, schema.CodeInternal))
 		}
 		return
 	}
@@ -220,26 +132,10 @@ func (c *defaultRequestsHandler) Unfriend(
 	if err := c.controller.Unfriend(friendsController.UserId(subject), friendsController.UserId(request.Target)); err != nil {
 		switch err.Code {
 		case friendsController.UnfriendErrorNotAFriend:
-			failure(
-				http.StatusConflict,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeNotAFriend,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusConflict, schema.Failure(err, schema.CodeNotAFriend))
 		default:
 			c.logger.LogError("rollbackRequest request %v failed with unknown err: %v", request, err)
-			failure(
-				http.StatusInternalServerError,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeInternal,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusInternalServerError, schema.Failure(err, schema.CodeInternal))
 		}
 		return
 	}

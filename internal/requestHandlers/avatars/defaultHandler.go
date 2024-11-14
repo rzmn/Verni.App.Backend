@@ -25,15 +25,7 @@ func (c *defaultRequestsHandler) GetAvatars(
 		switch err.Code {
 		default:
 			c.logger.LogError("getAvatars request %v failed with unknown err: %v", request, err)
-			failure(
-				http.StatusInternalServerError,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeInternal,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusInternalServerError, schema.Failure(err, schema.CodeInternal))
 		}
 		return
 	}

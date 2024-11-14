@@ -2,7 +2,6 @@ package profile
 
 import (
 	"net/http"
-	"verni/internal/common"
 	profileController "verni/internal/controllers/profile"
 	"verni/internal/schema"
 	"verni/internal/services/logging"
@@ -22,26 +21,10 @@ func (c *defaultRequestsHandler) GetInfo(
 	if err != nil {
 		switch err.Code {
 		case profileController.GetInfoErrorNotFound:
-			failure(
-				http.StatusConflict,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeNoSuchUser,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusConflict, schema.Failure(err, schema.CodeNoSuchUser))
 		default:
 			c.logger.LogError("getProfile request failed with unknown err: %v", err)
-			failure(
-				http.StatusInternalServerError,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeInternal,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusInternalServerError, schema.Failure(err, schema.CodeInternal))
 		}
 		return
 	}
@@ -59,15 +42,7 @@ func (c *defaultRequestsHandler) SetAvatar(
 		switch err.Code {
 		default:
 			c.logger.LogError("setAvatar request %v failed with unknown err: %v", request, err)
-			failure(
-				http.StatusInternalServerError,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeInternal,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusInternalServerError, schema.Failure(err, schema.CodeInternal))
 		}
 		return
 	}
@@ -83,36 +58,12 @@ func (c *defaultRequestsHandler) SetDisplayName(
 	if err := c.controller.UpdateDisplayName(request.DisplayName, profileController.UserId(subject)); err != nil {
 		switch err.Code {
 		case profileController.UpdateDisplayNameErrorNotFound:
-			failure(
-				http.StatusConflict,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeNoSuchUser,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusConflict, schema.Failure(err, schema.CodeNoSuchUser))
 		case profileController.UpdateDisplayNameErrorWrongFormat:
-			failure(
-				http.StatusUnprocessableEntity,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeWrongFormat,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusUnprocessableEntity, schema.Failure(err, schema.CodeWrongFormat))
 		default:
 			c.logger.LogError("setDisplayName request %v failed with unknown err: %v", request, err)
-			failure(
-				http.StatusInternalServerError,
-				schema.Failure(
-					common.NewErrorWithDescriptionValue(
-						schema.CodeInternal,
-						err.Error(),
-					),
-				),
-			)
+			failure(http.StatusInternalServerError, schema.Failure(err, schema.CodeInternal))
 		}
 		return
 	}

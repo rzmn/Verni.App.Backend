@@ -3,7 +3,6 @@ package server
 import (
 	"net/http"
 	"time"
-	"verni/internal/common"
 	"verni/internal/requestHandlers/accessToken"
 	"verni/internal/requestHandlers/auth"
 	"verni/internal/requestHandlers/avatars"
@@ -80,7 +79,7 @@ func ginRequestHandler[R any](success func(*gin.Context, R)) func(c *gin.Context
 		var request R
 		if err := c.BindJSON(&request); err != nil {
 			failure := ginFailureResponse(c)
-			failure(http.StatusBadRequest, schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())))
+			failure(http.StatusBadRequest, schema.Failure(err, schema.CodeBadRequest))
 		} else {
 			success(c, request)
 		}
