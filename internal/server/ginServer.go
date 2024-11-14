@@ -75,489 +75,149 @@ func createGinServer(
 	}
 }
 
+func ginRequestHandler[R any](success func(*gin.Context, R)) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		var request R
+		if err := c.BindJSON(&request); err != nil {
+			failure := ginFailureResponse(c)
+			failure(http.StatusBadRequest, schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())))
+		} else {
+			success(c, request)
+		}
+	}
+}
+
+func ginSuccessResponse[R any](c *gin.Context) func(status schema.StatusCode, response R) {
+	return func(status schema.StatusCode, response R) {
+		c.JSON(int(status), response)
+	}
+}
+
+func ginFailureResponse(c *gin.Context) func(status schema.StatusCode, response schema.Response[schema.Error]) {
+	return func(status schema.StatusCode, response schema.Response[schema.Error]) {
+		c.AbortWithStatusJSON(int(status), response)
+	}
+}
+
 func registerRoutesAuth(router *gin.Engine, tokenChecker ginAccessTokenChecker, handler auth.RequestsHandler) {
-	router.PUT("/auth/signup", func(c *gin.Context) {
-		var request auth.SignupRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.Signup(
-			request,
-			func(status schema.StatusCode, response schema.Response[schema.Session]) {
-				c.JSON(int(status), response)
-			},
-			func(status schema.StatusCode, response schema.Response[schema.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	router.PUT("/auth/login", func(c *gin.Context) {
-		var request auth.LoginRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.Login(
-			request,
-			func(status schema.StatusCode, response schema.Response[schema.Session]) {
-				c.JSON(int(status), response)
-			},
-			func(status schema.StatusCode, response schema.Response[schema.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	router.PUT("/auth/refresh", tokenChecker.handler, func(c *gin.Context) {
-		var request auth.RefreshRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.Refresh(
-			request,
-			func(status schema.StatusCode, response schema.Response[schema.Session]) {
-				c.JSON(int(status), response)
-			},
-			func(status schema.StatusCode, response schema.Response[schema.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	router.PUT("/auth/updateEmail", tokenChecker.handler, func(c *gin.Context) {
-		var request auth.UpdateEmailRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.UpdateEmail(
-			schema.UserId(tokenChecker.accessToken(c)),
-			request,
-			func(status schema.StatusCode, response schema.Response[schema.Session]) {
-				c.JSON(int(status), response)
-			},
-			func(status schema.StatusCode, response schema.Response[schema.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	router.PUT("/auth/updatePassword", tokenChecker.handler, func(c *gin.Context) {
-		var request auth.UpdatePasswordRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.UpdatePassword(
-			schema.UserId(tokenChecker.accessToken(c)),
-			request,
-			func(status schema.StatusCode, response schema.Response[schema.Session]) {
-				c.JSON(int(status), response)
-			},
-			func(status schema.StatusCode, response schema.Response[schema.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
+	router.PUT("/auth/signup", ginRequestHandler(func(c *gin.Context, request auth.SignupRequest) {
+		handler.Signup(request, ginSuccessResponse[schema.Response[schema.Session]](c), ginFailureResponse(c))
+	}))
+	router.PUT("/auth/login", ginRequestHandler(func(c *gin.Context, request auth.LoginRequest) {
+		handler.Login(request, ginSuccessResponse[schema.Response[schema.Session]](c), ginFailureResponse(c))
+	}))
+	router.PUT("/auth/refresh", tokenChecker.handler, ginRequestHandler(func(c *gin.Context, request auth.RefreshRequest) {
+		handler.Refresh(request, ginSuccessResponse[schema.Response[schema.Session]](c), ginFailureResponse(c))
+	}))
+	router.PUT("/auth/updateEmail", tokenChecker.handler, ginRequestHandler(func(c *gin.Context, request auth.UpdateEmailRequest) {
+		subject := schema.UserId(tokenChecker.accessToken(c))
+		handler.UpdateEmail(subject, request, ginSuccessResponse[schema.Response[schema.Session]](c), ginFailureResponse(c))
+	}))
+	router.PUT("/auth/updatePassword", tokenChecker.handler, ginRequestHandler(func(c *gin.Context, request auth.UpdatePasswordRequest) {
+		subject := schema.UserId(tokenChecker.accessToken(c))
+		handler.UpdatePassword(subject, request, ginSuccessResponse[schema.Response[schema.Session]](c), ginFailureResponse(c))
+	}))
 	router.DELETE("/auth/logout", tokenChecker.handler, func(c *gin.Context) {
-		handler.Logout(
-			schema.UserId(tokenChecker.accessToken(c)),
-			func(status schema.StatusCode, response schema.VoidResponse) {
-				c.JSON(int(status), response)
-			},
-			func(status schema.StatusCode, response schema.Response[schema.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
+		subject := schema.UserId(tokenChecker.accessToken(c))
+		handler.Logout(subject, ginSuccessResponse[schema.VoidResponse](c), ginFailureResponse(c))
 	})
-	router.PUT("/auth/registerForPushNotifications", tokenChecker.handler, func(c *gin.Context) {
-		var request auth.RegisterForPushNotificationsRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.RegisterForPushNotifications(
-			schema.UserId(tokenChecker.accessToken(c)),
-			request,
-			func(status schema.StatusCode, response schema.VoidResponse) {
-				c.JSON(int(status), response)
-			},
-			func(status schema.StatusCode, response schema.Response[schema.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
+	router.PUT("/auth/registerForPushNotifications", tokenChecker.handler, ginRequestHandler(func(c *gin.Context, request auth.RegisterForPushNotificationsRequest) {
+		subject := schema.UserId(tokenChecker.accessToken(c))
+		handler.RegisterForPushNotifications(subject, request, ginSuccessResponse[schema.VoidResponse](c), ginFailureResponse(c))
+	}))
 }
 
 func registerRoutesSpendings(router *gin.Engine, tokenChecker ginAccessTokenChecker, handler spendings.RequestsHandler) {
-	spendingsGroup := router.Group("/spendings", tokenChecker.handler)
-	spendingsGroup.POST("/addExpense", func(c *gin.Context) {
-		var request spendings.AddExpenseRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.AddExpense(
-			schema.UserId(tokenChecker.accessToken(c)),
-			request,
-			func(status schema.StatusCode, response schema.Response[schema.IdentifiableExpense]) {
-				c.JSON(int(status), response)
-			},
-			func(status schema.StatusCode, response schema.Response[schema.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
+	group := router.Group("/spendings", tokenChecker.handler)
+	group.POST("/addExpense", ginRequestHandler(func(c *gin.Context, request spendings.AddExpenseRequest) {
+		subject := schema.UserId(tokenChecker.accessToken(c))
+		handler.AddExpense(subject, request, ginSuccessResponse[schema.Response[schema.IdentifiableExpense]](c), ginFailureResponse(c))
+	}))
+	group.POST("/removeExpense", ginRequestHandler(func(c *gin.Context, request spendings.RemoveExpenseRequest) {
+		subject := schema.UserId(tokenChecker.accessToken(c))
+		handler.RemoveExpense(subject, request, ginSuccessResponse[schema.Response[schema.IdentifiableExpense]](c), ginFailureResponse(c))
+	}))
+	group.GET("/getBalance", func(c *gin.Context) {
+		subject := schema.UserId(tokenChecker.accessToken(c))
+		handler.GetBalance(subject, ginSuccessResponse[schema.Response[[]schema.Balance]](c), ginFailureResponse(c))
 	})
-	spendingsGroup.POST("/removeExpense", func(c *gin.Context) {
-		var request spendings.RemoveExpenseRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.RemoveExpense(
-			schema.UserId(tokenChecker.accessToken(c)),
-			request,
-			func(status schema.StatusCode, response schema.Response[schema.IdentifiableExpense]) {
-				c.JSON(int(status), response)
-			},
-			func(status schema.StatusCode, response schema.Response[schema.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	spendingsGroup.GET("/getBalance", func(c *gin.Context) {
-		handler.GetBalance(
-			schema.UserId(tokenChecker.accessToken(c)),
-			func(status schema.StatusCode, response schema.Response[[]schema.Balance]) {
-				c.JSON(int(status), response)
-			},
-			func(status schema.StatusCode, response schema.Response[schema.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	spendingsGroup.GET("/getExpenses", func(c *gin.Context) {
-		var request spendings.GetExpensesRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.GetExpenses(
-			schema.UserId(tokenChecker.accessToken(c)),
-			request,
-			func(status schema.StatusCode, response schema.Response[[]schema.IdentifiableExpense]) {
-				c.JSON(int(status), response)
-			},
-			func(status schema.StatusCode, response schema.Response[schema.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	spendingsGroup.GET("/getExpense", func(c *gin.Context) {
-		var request spendings.GetExpenseRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.GetExpense(
-			schema.UserId(tokenChecker.accessToken(c)),
-			request,
-			func(status schema.StatusCode, response schema.Response[schema.IdentifiableExpense]) {
-				c.JSON(int(status), response)
-			},
-			func(status schema.StatusCode, response schema.Response[schema.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
+	group.GET("/getExpenses", ginRequestHandler(func(c *gin.Context, request spendings.GetExpensesRequest) {
+		subject := schema.UserId(tokenChecker.accessToken(c))
+		handler.GetExpenses(subject, request, ginSuccessResponse[schema.Response[[]schema.IdentifiableExpense]](c), ginFailureResponse(c))
+	}))
+	group.GET("/getExpense", ginRequestHandler(func(c *gin.Context, request spendings.GetExpenseRequest) {
+		subject := schema.UserId(tokenChecker.accessToken(c))
+		handler.GetExpense(subject, request, ginSuccessResponse[schema.Response[schema.IdentifiableExpense]](c), ginFailureResponse(c))
+	}))
 }
 
 func registerRoutesFriends(router *gin.Engine, tokenChecker ginAccessTokenChecker, handler friends.RequestsHandler) {
-	friendsGroup := router.Group("/friends", tokenChecker.handler)
-	friendsGroup.POST("/acceptRequest", func(c *gin.Context) {
-		var request friends.AcceptFriendRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.AcceptRequest(
-			schema.UserId(tokenChecker.accessToken(c)),
-			request,
-			func(status schema.StatusCode, response schema.VoidResponse) {
-				c.JSON(int(status), response)
-			},
-			func(status schema.StatusCode, response schema.Response[schema.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	friendsGroup.GET("/get", func(c *gin.Context) {
-		var request friends.GetFriendsRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.GetFriends(
-			schema.UserId(tokenChecker.accessToken(c)),
-			request,
-			func(status schema.StatusCode, response schema.Response[map[schema.FriendStatus][]schema.UserId]) {
-				c.JSON(int(status), response)
-			},
-			func(status schema.StatusCode, response schema.Response[schema.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	friendsGroup.POST("/rejectRequest", func(c *gin.Context) {
-		var request friends.RejectFriendRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.RejectRequest(
-			schema.UserId(tokenChecker.accessToken(c)),
-			request,
-			func(status schema.StatusCode, response schema.VoidResponse) {
-				c.JSON(int(status), response)
-			},
-			func(status schema.StatusCode, response schema.Response[schema.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	friendsGroup.POST("/rollbackRequest", func(c *gin.Context) {
-		var request friends.RollbackFriendRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.RollbackRequest(
-			schema.UserId(tokenChecker.accessToken(c)),
-			request,
-			func(status schema.StatusCode, response schema.VoidResponse) {
-				c.JSON(int(status), response)
-			},
-			func(status schema.StatusCode, response schema.Response[schema.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	friendsGroup.POST("/sendRequest", func(c *gin.Context) {
-		var request friends.SendFriendRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.SendRequest(
-			schema.UserId(tokenChecker.accessToken(c)),
-			request,
-			func(status schema.StatusCode, response schema.VoidResponse) {
-				c.JSON(int(status), response)
-			},
-			func(status schema.StatusCode, response schema.Response[schema.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	friendsGroup.POST("/unfriend", func(c *gin.Context) {
-		var request friends.UnfriendRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.Unfriend(
-			schema.UserId(tokenChecker.accessToken(c)),
-			request,
-			func(status schema.StatusCode, response schema.VoidResponse) {
-				c.JSON(int(status), response)
-			},
-			func(status schema.StatusCode, response schema.Response[schema.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
+	group := router.Group("/friends", tokenChecker.handler)
+	group.POST("/acceptRequest", ginRequestHandler(func(c *gin.Context, request friends.AcceptFriendRequest) {
+		subject := schema.UserId(tokenChecker.accessToken(c))
+		handler.AcceptRequest(subject, request, ginSuccessResponse[schema.VoidResponse](c), ginFailureResponse(c))
+	}))
+	group.GET("/get", ginRequestHandler(func(c *gin.Context, request friends.GetFriendsRequest) {
+		subject := schema.UserId(tokenChecker.accessToken(c))
+		handler.GetFriends(subject, request, ginSuccessResponse[schema.Response[map[schema.FriendStatus][]schema.UserId]](c), ginFailureResponse(c))
+	}))
+	group.POST("/rejectRequest", ginRequestHandler(func(c *gin.Context, request friends.RejectFriendRequest) {
+		subject := schema.UserId(tokenChecker.accessToken(c))
+		handler.RejectRequest(subject, request, ginSuccessResponse[schema.VoidResponse](c), ginFailureResponse(c))
+	}))
+	group.POST("/rollbackRequest", ginRequestHandler(func(c *gin.Context, request friends.RollbackFriendRequest) {
+		subject := schema.UserId(tokenChecker.accessToken(c))
+		handler.RollbackRequest(subject, request, ginSuccessResponse[schema.VoidResponse](c), ginFailureResponse(c))
+	}))
+	group.POST("/sendRequest", ginRequestHandler(func(c *gin.Context, request friends.SendFriendRequest) {
+		subject := schema.UserId(tokenChecker.accessToken(c))
+		handler.SendRequest(subject, request, ginSuccessResponse[schema.VoidResponse](c), ginFailureResponse(c))
+	}))
+	group.POST("/unfriend", ginRequestHandler(func(c *gin.Context, request friends.UnfriendRequest) {
+		subject := schema.UserId(tokenChecker.accessToken(c))
+		handler.Unfriend(subject, request, ginSuccessResponse[schema.VoidResponse](c), ginFailureResponse(c))
+	}))
 }
 
 func registerRoutesProfile(router *gin.Engine, tokenChecker ginAccessTokenChecker, handler profile.RequestsHandler) {
-	profileGroup := router.Group("/profile", tokenChecker.handler)
-	profileGroup.GET("/getInfo", func(c *gin.Context) {
-		handler.GetInfo(
-			schema.UserId(tokenChecker.accessToken(c)),
-			func(status schema.StatusCode, response schema.Response[schema.Profile]) {
-				c.JSON(int(status), response)
-			},
-			func(status schema.StatusCode, response schema.Response[schema.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
+	group := router.Group("/profile", tokenChecker.handler)
+	group.GET("/getInfo", func(c *gin.Context) {
+		subject := schema.UserId(tokenChecker.accessToken(c))
+		handler.GetInfo(subject, ginSuccessResponse[schema.Response[schema.Profile]](c), ginFailureResponse(c))
 	})
-	profileGroup.PUT("/setAvatar", func(c *gin.Context) {
-		var request profile.SetAvatarRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.SetAvatar(
-			schema.UserId(tokenChecker.accessToken(c)),
-			request,
-			func(status schema.StatusCode, response schema.Response[schema.ImageId]) {
-				c.JSON(int(status), response)
-			},
-			func(status schema.StatusCode, response schema.Response[schema.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	profileGroup.PUT("/setDisplayName", func(c *gin.Context) {
-		var request profile.SetDisplayNameRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.SetDisplayName(
-			schema.UserId(tokenChecker.accessToken(c)),
-			request,
-			func(status schema.StatusCode, response schema.VoidResponse) {
-				c.JSON(int(status), response)
-			},
-			func(status schema.StatusCode, response schema.Response[schema.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
+	group.PUT("/setAvatar", ginRequestHandler(func(c *gin.Context, request profile.SetAvatarRequest) {
+		subject := schema.UserId(tokenChecker.accessToken(c))
+		handler.SetAvatar(subject, request, ginSuccessResponse[schema.Response[schema.ImageId]](c), ginFailureResponse(c))
+	}))
+	group.PUT("/setDisplayName", ginRequestHandler(func(c *gin.Context, request profile.SetDisplayNameRequest) {
+		subject := schema.UserId(tokenChecker.accessToken(c))
+		handler.SetDisplayName(subject, request, ginSuccessResponse[schema.VoidResponse](c), ginFailureResponse(c))
+	}))
 }
 
 func registerRoutesVerification(router *gin.Engine, tokenChecker ginAccessTokenChecker, handler verification.RequestsHandler) {
-	verificationGroup := router.Group("/verification", tokenChecker.handler)
-	verificationGroup.PUT("/confirmEmail", func(c *gin.Context) {
-		var request verification.ConfirmEmailRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.ConfirmEmail(
-			schema.UserId(tokenChecker.accessToken(c)),
-			request,
-			func(status schema.StatusCode, response schema.VoidResponse) {
-				c.JSON(int(status), response)
-			},
-			func(status schema.StatusCode, response schema.Response[schema.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
-	verificationGroup.PUT("/sendEmailConfirmationCode", func(c *gin.Context) {
-		handler.SendEmailConfirmationCode(
-			schema.UserId(tokenChecker.accessToken(c)),
-			func(status schema.StatusCode, response schema.VoidResponse) {
-				c.JSON(int(status), response)
-			},
-			func(status schema.StatusCode, response schema.Response[schema.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
+	group := router.Group("/verification", tokenChecker.handler)
+	group.PUT("/confirmEmail", ginRequestHandler(func(c *gin.Context, request verification.ConfirmEmailRequest) {
+		subject := schema.UserId(tokenChecker.accessToken(c))
+		handler.ConfirmEmail(subject, request, ginSuccessResponse[schema.VoidResponse](c), ginFailureResponse(c))
+	}))
+	group.PUT("/sendEmailConfirmationCode", func(c *gin.Context) {
+		subject := schema.UserId(tokenChecker.accessToken(c))
+		handler.SendEmailConfirmationCode(subject, ginSuccessResponse[schema.VoidResponse](c), ginFailureResponse(c))
 	})
 }
 
 func registerRoutesUsers(router *gin.Engine, tokenChecker ginAccessTokenChecker, handler users.RequestsHandler) {
-	usersGroup := router.Group("/users", tokenChecker.handler)
-	usersGroup.GET("/get", func(c *gin.Context) {
-		var request users.GetUsersRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.GetUsers(
-			schema.UserId(tokenChecker.accessToken(c)),
-			request,
-			func(status schema.StatusCode, response schema.Response[[]schema.User]) {
-				c.JSON(int(status), response)
-			},
-			func(status schema.StatusCode, response schema.Response[schema.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
+	group := router.Group("/users", tokenChecker.handler)
+	group.GET("/get", ginRequestHandler(func(c *gin.Context, request users.GetUsersRequest) {
+		subject := schema.UserId(tokenChecker.accessToken(c))
+		handler.GetUsers(subject, request, ginSuccessResponse[schema.Response[[]schema.User]](c), ginFailureResponse(c))
+	}))
 }
 
 func registerRoutesAvatars(router *gin.Engine, handler avatars.RequestsHandler) {
-	avatarsGroup := router.Group("/avatars")
-	avatarsGroup.GET("/avatars/get", func(c *gin.Context) {
-		var request avatars.GetAvatarsRequest
-		if err := c.BindJSON(&request); err != nil {
-			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
-				schema.Failure(common.NewErrorWithDescriptionValue(schema.CodeBadRequest, err.Error())),
-			)
-			return
-		}
-		handler.GetAvatars(
-			request,
-			func(status schema.StatusCode, response schema.Response[map[schema.ImageId]schema.Image]) {
-				c.JSON(int(status), response)
-			},
-			func(status schema.StatusCode, response schema.Response[schema.Error]) {
-				c.AbortWithStatusJSON(int(status), response)
-			},
-		)
-	})
+	group := router.Group("/avatars")
+	group.GET("/get", ginRequestHandler(func(c *gin.Context, request avatars.GetAvatarsRequest) {
+		handler.GetAvatars(request, ginSuccessResponse[schema.Response[map[schema.ImageId]schema.Image]](c), ginFailureResponse(c))
+	}))
 }
