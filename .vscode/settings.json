@@ -1,0 +1,5 @@
+{
+    "go.testEnvVars": {
+        "VERNI_PROJECT_ROOT": "${workspaceFolder}"
+    }
+}
