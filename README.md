@@ -1,18 +1,18 @@
 # Verni.App.Backend
 Server side for Verni App
 # Table of Contents
-1. [Tech Stack](#Tech Stack)
+1. [Tech Stack](#TechStack)
 2. [Features](#Features)
-3. [Architecture/Implementation Overview](#Architecture/Implementation Overview)
-## Tech Stack
+3. [Architecture/Implementation Overview](#ArchitectureImplementationOverview)
+## [Tech Stack](#TechStack)
 - Go
 - Gin (HTTP)
 - PostgreSQL
 - Telegram (watchdog alerts)
 - JWT (auth)
-## Features 
+## [Features](#Features)
 - tbd
-## Architecture/Implementation Overview
+## [Architecture/Implementation Overview](#ArchitectureImplementationOverview)
 The App's architecture can be considered as a set of _Layers_. Each layer knows only about the layer "below".
 
 ```mermaid
