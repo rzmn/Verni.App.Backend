@@ -52,19 +52,6 @@ func createGinServer(
 	{
 		auth := router.Group("/auth")
 		{
-			// ShowAccount godoc
-			//
-			//	@Summary		Show an account
-			//	@Description	get string by ID
-			//	@Tags			accounts
-			//	@Accept			json
-			//	@Produce		json
-			//	@Param			id	path		int	true	"Account ID"
-			//	@Success		200	{object}	model.Account
-			//	@Failure		400	{object}	httputil.HTTPError
-			//	@Failure		404	{object}	httputil.HTTPError
-			//	@Failure		500	{object}	httputil.HTTPError
-			//	@Router			/auth/{id} [get]
 			auth.PUT("/signup", ginRequestHandler(func(c *gin.Context, request schema.SignupRequest) {
 				handlers.Auth.Signup(request, ginSuccessResponse[schema.Response[schema.Session]](c), ginFailureResponse(c))
 			}))
