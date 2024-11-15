@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 	"verni/internal/db"
+	postgresDb "verni/internal/db/postgres"
 	"verni/internal/repositories/pushNotifications"
 	"verni/internal/services/logging"
 	"verni/internal/services/pathProvider"
@@ -30,9 +31,9 @@ func TestMain(m *testing.M) {
 		if err != nil {
 			logger.LogFatal("failed to read config file: %s", err)
 		}
-		var config db.PostgresConfig
+		var config postgresDb.PostgresConfig
 		json.Unmarshal([]byte(configData), &config)
-		db, err := db.Postgres(config, logger)
+		db, err := postgresDb.Postgres(config, logger)
 		if err != nil {
 			logger.LogFatal("failed to init db err: %v", err)
 		}

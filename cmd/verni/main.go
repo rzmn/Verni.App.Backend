@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"verni/internal/db"
+	postgresDb "verni/internal/db/postgres"
 	authRepository "verni/internal/repositories/auth"
 	friendsRepository "verni/internal/repositories/friends"
 	imagesRepository "verni/internal/repositories/images"
@@ -149,10 +150,10 @@ func main() {
 			if err != nil {
 				logger.LogFatal("failed to serialize ydb config err: %v", err)
 			}
-			var postgresConfig db.PostgresConfig
+			var postgresConfig postgresDb.PostgresConfig
 			json.Unmarshal(data, &postgresConfig)
 			logger.LogInfo("creating postgres with config %v", postgresConfig)
-			db, err := db.Postgres(postgresConfig, logger)
+			db, err := postgresDb.Postgres(postgresConfig, logger)
 			if err != nil {
 				logger.LogFatal("failed to initialize postgres err: %v", err)
 			}
