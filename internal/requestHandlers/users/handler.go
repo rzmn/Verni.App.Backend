@@ -6,14 +6,10 @@ import (
 	"verni/internal/services/logging"
 )
 
-type GetUsersRequest struct {
-	Ids []schema.UserId `json:"ids"`
-}
-
 type RequestsHandler interface {
 	GetUsers(
 		subject schema.UserId,
-		request GetUsersRequest,
+		request schema.GetUsersRequest,
 		success func(schema.StatusCode, schema.Response[[]schema.User]),
 		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)

@@ -6,14 +6,10 @@ import (
 	"verni/internal/services/logging"
 )
 
-type ConfirmEmailRequest struct {
-	Code string `json:"code"`
-}
-
 type RequestsHandler interface {
 	ConfirmEmail(
 		subject schema.UserId,
-		request ConfirmEmailRequest,
+		request schema.ConfirmEmailRequest,
 		success func(schema.StatusCode, schema.VoidResponse),
 		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)

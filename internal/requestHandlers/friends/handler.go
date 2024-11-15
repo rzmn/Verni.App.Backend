@@ -8,64 +8,40 @@ import (
 	"verni/internal/services/pushNotifications"
 )
 
-type AcceptFriendRequest struct {
-	Sender schema.UserId `json:"sender"`
-}
-
-type GetFriendsRequest struct {
-	Statuses []schema.FriendStatus `json:"statuses"`
-}
-
-type RejectFriendRequest struct {
-	Sender schema.UserId `json:"sender"`
-}
-
-type RollbackFriendRequest struct {
-	Target schema.UserId `json:"target"`
-}
-
-type SendFriendRequest struct {
-	Target schema.UserId `json:"target"`
-}
-
-type UnfriendRequest struct {
-	Target schema.UserId `json:"target"`
-}
-
 type RequestsHandler interface {
 	AcceptRequest(
 		subject schema.UserId,
-		request AcceptFriendRequest,
+		request schema.AcceptFriendRequest,
 		success func(schema.StatusCode, schema.VoidResponse),
 		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
 	GetFriends(
 		subject schema.UserId,
-		request GetFriendsRequest,
+		request schema.GetFriendsRequest,
 		success func(schema.StatusCode, schema.Response[map[schema.FriendStatus][]schema.UserId]),
 		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
 	RejectRequest(
 		subject schema.UserId,
-		request RejectFriendRequest,
+		request schema.RejectFriendRequest,
 		success func(schema.StatusCode, schema.VoidResponse),
 		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
 	RollbackRequest(
 		subject schema.UserId,
-		request RollbackFriendRequest,
+		request schema.RollbackFriendRequest,
 		success func(schema.StatusCode, schema.VoidResponse),
 		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
 	SendRequest(
 		subject schema.UserId,
-		request SendFriendRequest,
+		request schema.SendFriendRequest,
 		success func(schema.StatusCode, schema.VoidResponse),
 		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
 	Unfriend(
 		subject schema.UserId,
-		request UnfriendRequest,
+		request schema.UnfriendRequest,
 		success func(schema.StatusCode, schema.VoidResponse),
 		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)

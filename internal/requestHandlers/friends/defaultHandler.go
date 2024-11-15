@@ -19,7 +19,7 @@ type defaultRequestsHandler struct {
 
 func (c *defaultRequestsHandler) AcceptRequest(
 	subject schema.UserId,
-	request AcceptFriendRequest,
+	request schema.AcceptFriendRequest,
 	success func(schema.StatusCode, schema.VoidResponse),
 	failure func(schema.StatusCode, schema.Response[schema.Error]),
 ) {
@@ -38,7 +38,7 @@ func (c *defaultRequestsHandler) AcceptRequest(
 
 func (c *defaultRequestsHandler) GetFriends(
 	subject schema.UserId,
-	request GetFriendsRequest,
+	request schema.GetFriendsRequest,
 	success func(schema.StatusCode, schema.Response[map[schema.FriendStatus][]schema.UserId]),
 	failure func(schema.StatusCode, schema.Response[schema.Error]),
 ) {
@@ -64,7 +64,7 @@ func (c *defaultRequestsHandler) GetFriends(
 
 func (c *defaultRequestsHandler) RejectRequest(
 	subject schema.UserId,
-	request RejectFriendRequest,
+	request schema.RejectFriendRequest,
 	success func(schema.StatusCode, schema.VoidResponse),
 	failure func(schema.StatusCode, schema.Response[schema.Error]),
 ) {
@@ -83,7 +83,7 @@ func (c *defaultRequestsHandler) RejectRequest(
 
 func (c *defaultRequestsHandler) RollbackRequest(
 	subject schema.UserId,
-	request RollbackFriendRequest,
+	request schema.RollbackFriendRequest,
 	success func(schema.StatusCode, schema.VoidResponse),
 	failure func(schema.StatusCode, schema.Response[schema.Error]),
 ) {
@@ -102,7 +102,7 @@ func (c *defaultRequestsHandler) RollbackRequest(
 
 func (c *defaultRequestsHandler) SendRequest(
 	subject schema.UserId,
-	request SendFriendRequest,
+	request schema.SendFriendRequest,
 	success func(schema.StatusCode, schema.VoidResponse),
 	failure func(schema.StatusCode, schema.Response[schema.Error]),
 ) {
@@ -125,7 +125,7 @@ func (c *defaultRequestsHandler) SendRequest(
 
 func (c *defaultRequestsHandler) Unfriend(
 	subject schema.UserId,
-	request UnfriendRequest,
+	request schema.UnfriendRequest,
 	success func(schema.StatusCode, schema.VoidResponse),
 	failure func(schema.StatusCode, schema.Response[schema.Error]),
 ) {

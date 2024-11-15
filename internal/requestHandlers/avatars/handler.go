@@ -6,13 +6,9 @@ import (
 	"verni/internal/services/logging"
 )
 
-type GetAvatarsRequest struct {
-	Ids []schema.ImageId `json:"ids"`
-}
-
 type RequestsHandler interface {
 	GetAvatars(
-		request GetAvatarsRequest,
+		request schema.GetAvatarsRequest,
 		success func(schema.StatusCode, schema.Response[map[schema.ImageId]schema.Image]),
 		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)

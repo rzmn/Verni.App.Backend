@@ -20,7 +20,7 @@ type defaultRequestsHandler struct {
 
 func (c *defaultRequestsHandler) AddExpense(
 	subject schema.UserId,
-	request AddExpenseRequest,
+	request schema.AddExpenseRequest,
 	success func(schema.StatusCode, schema.Response[schema.IdentifiableExpense]),
 	failure func(schema.StatusCode, schema.Response[schema.Error]),
 ) {
@@ -54,7 +54,7 @@ func (c *defaultRequestsHandler) AddExpense(
 
 func (c *defaultRequestsHandler) RemoveExpense(
 	subject schema.UserId,
-	request RemoveExpenseRequest,
+	request schema.RemoveExpenseRequest,
 	success func(schema.StatusCode, schema.Response[schema.IdentifiableExpense]),
 	failure func(schema.StatusCode, schema.Response[schema.Error]),
 ) {
@@ -107,7 +107,7 @@ func (c *defaultRequestsHandler) GetBalance(
 
 func (c *defaultRequestsHandler) GetExpenses(
 	subject schema.UserId,
-	request GetExpensesRequest,
+	request schema.GetExpensesRequest,
 	success func(schema.StatusCode, schema.Response[[]schema.IdentifiableExpense]),
 	failure func(schema.StatusCode, schema.Response[schema.Error]),
 ) {
@@ -125,7 +125,7 @@ func (c *defaultRequestsHandler) GetExpenses(
 
 func (c *defaultRequestsHandler) GetExpense(
 	subject schema.UserId,
-	request GetExpenseRequest,
+	request schema.GetExpenseRequest,
 	success func(schema.StatusCode, schema.Response[schema.IdentifiableExpense]),
 	failure func(schema.StatusCode, schema.Response[schema.Error]),
 ) {

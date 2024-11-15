@@ -13,7 +13,7 @@ type defaultRequestsHandler struct {
 }
 
 func (c *defaultRequestsHandler) Signup(
-	request SignupRequest,
+	request schema.SignupRequest,
 	success func(schema.StatusCode, schema.Response[schema.Session]),
 	failure func(schema.StatusCode, schema.Response[schema.Error]),
 ) {
@@ -34,7 +34,7 @@ func (c *defaultRequestsHandler) Signup(
 }
 
 func (c *defaultRequestsHandler) Login(
-	request LoginRequest,
+	request schema.LoginRequest,
 	success func(schema.StatusCode, schema.Response[schema.Session]),
 	failure func(schema.StatusCode, schema.Response[schema.Error]),
 ) {
@@ -53,7 +53,7 @@ func (c *defaultRequestsHandler) Login(
 }
 
 func (c *defaultRequestsHandler) Refresh(
-	request RefreshRequest,
+	request schema.RefreshRequest,
 	success func(schema.StatusCode, schema.Response[schema.Session]),
 	failure func(schema.StatusCode, schema.Response[schema.Error]),
 ) {
@@ -75,7 +75,7 @@ func (c *defaultRequestsHandler) Refresh(
 
 func (c *defaultRequestsHandler) UpdateEmail(
 	subject schema.UserId,
-	request UpdateEmailRequest,
+	request schema.UpdateEmailRequest,
 	success func(schema.StatusCode, schema.Response[schema.Session]),
 	failure func(schema.StatusCode, schema.Response[schema.Error]),
 ) {
@@ -97,7 +97,7 @@ func (c *defaultRequestsHandler) UpdateEmail(
 
 func (c *defaultRequestsHandler) UpdatePassword(
 	subject schema.UserId,
-	request UpdatePasswordRequest,
+	request schema.UpdatePasswordRequest,
 	success func(schema.StatusCode, schema.Response[schema.Session]),
 	failure func(schema.StatusCode, schema.Response[schema.Error]),
 ) {
@@ -117,7 +117,7 @@ func (c *defaultRequestsHandler) UpdatePassword(
 
 func (c *defaultRequestsHandler) RegisterForPushNotifications(
 	subject schema.UserId,
-	request RegisterForPushNotificationsRequest,
+	request schema.RegisterForPushNotificationsRequest,
 	success func(schema.StatusCode, schema.VoidResponse),
 	failure func(schema.StatusCode, schema.Response[schema.Error]),
 ) {

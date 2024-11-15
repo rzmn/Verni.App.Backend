@@ -14,7 +14,7 @@ type defaultRequestsHandler struct {
 
 func (c *defaultRequestsHandler) ConfirmEmail(
 	subject schema.UserId,
-	request ConfirmEmailRequest,
+	request schema.ConfirmEmailRequest,
 	success func(schema.StatusCode, schema.VoidResponse),
 	failure func(schema.StatusCode, schema.Response[schema.Error]),
 ) {

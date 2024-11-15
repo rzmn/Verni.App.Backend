@@ -4,13 +4,6 @@ import (
 	"net/http"
 	"time"
 	"verni/internal/requestHandlers/accessToken"
-	"verni/internal/requestHandlers/auth"
-	"verni/internal/requestHandlers/avatars"
-	"verni/internal/requestHandlers/friends"
-	"verni/internal/requestHandlers/profile"
-	"verni/internal/requestHandlers/spendings"
-	"verni/internal/requestHandlers/users"
-	"verni/internal/requestHandlers/verification"
 	"verni/internal/schema"
 	"verni/internal/services/logging"
 	"verni/internal/services/longpoll"
@@ -56,13 +49,138 @@ func createGinServer(
 	}
 	longpollService := longpoll.GinService(router, logger, tokenChecker.handler)
 	handlers := requestHandlersBuilder(longpollService)
-	registerRoutesAuth(router, tokenChecker, handlers.Auth)
-	registerRoutesSpendings(router, tokenChecker, handlers.Spendings)
-	registerRoutesFriends(router, tokenChecker, handlers.Friends)
-	registerRoutesProfile(router, tokenChecker, handlers.Profile)
-	registerRoutesVerification(router, tokenChecker, handlers.Verification)
-	registerRoutesUsers(router, tokenChecker, handlers.Users)
-	registerRoutesAvatars(router, handlers.Avatars)
+	{
+		auth := router.Group("/auth")
+		{
+			// ShowAccount godoc
+			//
+			//	@Summary		Show an account
+			//	@Description	get string by ID
+			//	@Tags			accounts
+			//	@Accept			json
+			//	@Produce		json
+			//	@Param			id	path		int	true	"Account ID"
+			//	@Success		200	{object}	model.Account
+			//	@Failure		400	{object}	httputil.HTTPError
+			//	@Failure		404	{object}	httputil.HTTPError
+			//	@Failure		500	{object}	httputil.HTTPError
+			//	@Router			/auth/{id} [get]
+			auth.PUT("/signup", ginRequestHandler(func(c *gin.Context, request schema.SignupRequest) {
+				handlers.Auth.Signup(request, ginSuccessResponse[schema.Response[schema.Session]](c), ginFailureResponse(c))
+			}))
+			auth.PUT("/login", ginRequestHandler(func(c *gin.Context, request schema.LoginRequest) {
+				handlers.Auth.Login(request, ginSuccessResponse[schema.Response[schema.Session]](c), ginFailureResponse(c))
+			}))
+			auth.PUT("/refresh", tokenChecker.handler, ginRequestHandler(func(c *gin.Context, request schema.RefreshRequest) {
+				handlers.Auth.Refresh(request, ginSuccessResponse[schema.Response[schema.Session]](c), ginFailureResponse(c))
+			}))
+			auth.PUT("/updateEmail", tokenChecker.handler, ginRequestHandler(func(c *gin.Context, request schema.UpdateEmailRequest) {
+				subject := schema.UserId(tokenChecker.accessToken(c))
+				handlers.Auth.UpdateEmail(subject, request, ginSuccessResponse[schema.Response[schema.Session]](c), ginFailureResponse(c))
+			}))
+			auth.PUT("/updatePassword", tokenChecker.handler, ginRequestHandler(func(c *gin.Context, request schema.UpdatePasswordRequest) {
+				subject := schema.UserId(tokenChecker.accessToken(c))
+				handlers.Auth.UpdatePassword(subject, request, ginSuccessResponse[schema.Response[schema.Session]](c), ginFailureResponse(c))
+			}))
+			auth.DELETE("/logout", tokenChecker.handler, func(c *gin.Context) {
+				subject := schema.UserId(tokenChecker.accessToken(c))
+				handlers.Auth.Logout(subject, ginSuccessResponse[schema.VoidResponse](c), ginFailureResponse(c))
+			})
+			auth.PUT("/registerForPushNotifications", tokenChecker.handler, ginRequestHandler(func(c *gin.Context, request schema.RegisterForPushNotificationsRequest) {
+				subject := schema.UserId(tokenChecker.accessToken(c))
+				handlers.Auth.RegisterForPushNotifications(subject, request, ginSuccessResponse[schema.VoidResponse](c), ginFailureResponse(c))
+			}))
+		}
+		spendings := router.Group("/spendings", tokenChecker.handler)
+		{
+			spendings.POST("/addExpense", ginRequestHandler(func(c *gin.Context, request schema.AddExpenseRequest) {
+				subject := schema.UserId(tokenChecker.accessToken(c))
+				handlers.Spendings.AddExpense(subject, request, ginSuccessResponse[schema.Response[schema.IdentifiableExpense]](c), ginFailureResponse(c))
+			}))
+			spendings.POST("/removeExpense", ginRequestHandler(func(c *gin.Context, request schema.RemoveExpenseRequest) {
+				subject := schema.UserId(tokenChecker.accessToken(c))
+				handlers.Spendings.RemoveExpense(subject, request, ginSuccessResponse[schema.Response[schema.IdentifiableExpense]](c), ginFailureResponse(c))
+			}))
+			spendings.GET("/getBalance", func(c *gin.Context) {
+				subject := schema.UserId(tokenChecker.accessToken(c))
+				handlers.Spendings.GetBalance(subject, ginSuccessResponse[schema.Response[[]schema.Balance]](c), ginFailureResponse(c))
+			})
+			spendings.GET("/getExpenses", ginRequestHandler(func(c *gin.Context, request schema.GetExpensesRequest) {
+				subject := schema.UserId(tokenChecker.accessToken(c))
+				handlers.Spendings.GetExpenses(subject, request, ginSuccessResponse[schema.Response[[]schema.IdentifiableExpense]](c), ginFailureResponse(c))
+			}))
+			spendings.GET("/getExpense", ginRequestHandler(func(c *gin.Context, request schema.GetExpenseRequest) {
+				subject := schema.UserId(tokenChecker.accessToken(c))
+				handlers.Spendings.GetExpense(subject, request, ginSuccessResponse[schema.Response[schema.IdentifiableExpense]](c), ginFailureResponse(c))
+			}))
+		}
+		friends := router.Group("/friends", tokenChecker.handler)
+		{
+			friends.POST("/acceptRequest", ginRequestHandler(func(c *gin.Context, request schema.AcceptFriendRequest) {
+				subject := schema.UserId(tokenChecker.accessToken(c))
+				handlers.Friends.AcceptRequest(subject, request, ginSuccessResponse[schema.VoidResponse](c), ginFailureResponse(c))
+			}))
+			friends.GET("/get", ginRequestHandler(func(c *gin.Context, request schema.GetFriendsRequest) {
+				subject := schema.UserId(tokenChecker.accessToken(c))
+				handlers.Friends.GetFriends(subject, request, ginSuccessResponse[schema.Response[map[schema.FriendStatus][]schema.UserId]](c), ginFailureResponse(c))
+			}))
+			friends.POST("/rejectRequest", ginRequestHandler(func(c *gin.Context, request schema.RejectFriendRequest) {
+				subject := schema.UserId(tokenChecker.accessToken(c))
+				handlers.Friends.RejectRequest(subject, request, ginSuccessResponse[schema.VoidResponse](c), ginFailureResponse(c))
+			}))
+			friends.POST("/rollbackRequest", ginRequestHandler(func(c *gin.Context, request schema.RollbackFriendRequest) {
+				subject := schema.UserId(tokenChecker.accessToken(c))
+				handlers.Friends.RollbackRequest(subject, request, ginSuccessResponse[schema.VoidResponse](c), ginFailureResponse(c))
+			}))
+			friends.POST("/sendRequest", ginRequestHandler(func(c *gin.Context, request schema.SendFriendRequest) {
+				subject := schema.UserId(tokenChecker.accessToken(c))
+				handlers.Friends.SendRequest(subject, request, ginSuccessResponse[schema.VoidResponse](c), ginFailureResponse(c))
+			}))
+			friends.POST("/unfriend", ginRequestHandler(func(c *gin.Context, request schema.UnfriendRequest) {
+				subject := schema.UserId(tokenChecker.accessToken(c))
+				handlers.Friends.Unfriend(subject, request, ginSuccessResponse[schema.VoidResponse](c), ginFailureResponse(c))
+			}))
+		}
+		profile := router.Group("/profile", tokenChecker.handler)
+		{
+			profile.GET("/getInfo", func(c *gin.Context) {
+				subject := schema.UserId(tokenChecker.accessToken(c))
+				handlers.Profile.GetInfo(subject, ginSuccessResponse[schema.Response[schema.Profile]](c), ginFailureResponse(c))
+			})
+			profile.PUT("/setAvatar", ginRequestHandler(func(c *gin.Context, request schema.SetAvatarRequest) {
+				subject := schema.UserId(tokenChecker.accessToken(c))
+				handlers.Profile.SetAvatar(subject, request, ginSuccessResponse[schema.Response[schema.ImageId]](c), ginFailureResponse(c))
+			}))
+			profile.PUT("/setDisplayName", ginRequestHandler(func(c *gin.Context, request schema.SetDisplayNameRequest) {
+				subject := schema.UserId(tokenChecker.accessToken(c))
+				handlers.Profile.SetDisplayName(subject, request, ginSuccessResponse[schema.VoidResponse](c), ginFailureResponse(c))
+			}))
+		}
+		verification := router.Group("/verification", tokenChecker.handler)
+		{
+			verification.PUT("/confirmEmail", ginRequestHandler(func(c *gin.Context, request schema.ConfirmEmailRequest) {
+				subject := schema.UserId(tokenChecker.accessToken(c))
+				handlers.Verification.ConfirmEmail(subject, request, ginSuccessResponse[schema.VoidResponse](c), ginFailureResponse(c))
+			}))
+			verification.PUT("/sendEmailConfirmationCode", func(c *gin.Context) {
+				subject := schema.UserId(tokenChecker.accessToken(c))
+				handlers.Verification.SendEmailConfirmationCode(subject, ginSuccessResponse[schema.VoidResponse](c), ginFailureResponse(c))
+			})
+		}
+		users := router.Group("/users", tokenChecker.handler)
+		{
+			users.GET("/get", ginRequestHandler(func(c *gin.Context, request schema.GetUsersRequest) {
+				subject := schema.UserId(tokenChecker.accessToken(c))
+				handlers.Users.GetUsers(subject, request, ginSuccessResponse[schema.Response[[]schema.User]](c), ginFailureResponse(c))
+			}))
+		}
+		avatars := router.Group("/avatars")
+		{
+			avatars.GET("/get", ginRequestHandler(func(c *gin.Context, request schema.GetAvatarsRequest) {
+				handlers.Avatars.GetAvatars(request, ginSuccessResponse[schema.Response[map[schema.ImageId]schema.Image]](c), ginFailureResponse(c))
+			}))
+		}
+	}
 	return ginServer{
 		server: http.Server{
 			Addr:         ":" + config.Port,
@@ -96,127 +214,4 @@ func ginFailureResponse(c *gin.Context) func(status schema.StatusCode, response 
 	return func(status schema.StatusCode, response schema.Response[schema.Error]) {
 		c.AbortWithStatusJSON(int(status), response)
 	}
-}
-
-func registerRoutesAuth(router *gin.Engine, tokenChecker ginAccessTokenChecker, handler auth.RequestsHandler) {
-	router.PUT("/auth/signup", ginRequestHandler(func(c *gin.Context, request auth.SignupRequest) {
-		handler.Signup(request, ginSuccessResponse[schema.Response[schema.Session]](c), ginFailureResponse(c))
-	}))
-	router.PUT("/auth/login", ginRequestHandler(func(c *gin.Context, request auth.LoginRequest) {
-		handler.Login(request, ginSuccessResponse[schema.Response[schema.Session]](c), ginFailureResponse(c))
-	}))
-	router.PUT("/auth/refresh", tokenChecker.handler, ginRequestHandler(func(c *gin.Context, request auth.RefreshRequest) {
-		handler.Refresh(request, ginSuccessResponse[schema.Response[schema.Session]](c), ginFailureResponse(c))
-	}))
-	router.PUT("/auth/updateEmail", tokenChecker.handler, ginRequestHandler(func(c *gin.Context, request auth.UpdateEmailRequest) {
-		subject := schema.UserId(tokenChecker.accessToken(c))
-		handler.UpdateEmail(subject, request, ginSuccessResponse[schema.Response[schema.Session]](c), ginFailureResponse(c))
-	}))
-	router.PUT("/auth/updatePassword", tokenChecker.handler, ginRequestHandler(func(c *gin.Context, request auth.UpdatePasswordRequest) {
-		subject := schema.UserId(tokenChecker.accessToken(c))
-		handler.UpdatePassword(subject, request, ginSuccessResponse[schema.Response[schema.Session]](c), ginFailureResponse(c))
-	}))
-	router.DELETE("/auth/logout", tokenChecker.handler, func(c *gin.Context) {
-		subject := schema.UserId(tokenChecker.accessToken(c))
-		handler.Logout(subject, ginSuccessResponse[schema.VoidResponse](c), ginFailureResponse(c))
-	})
-	router.PUT("/auth/registerForPushNotifications", tokenChecker.handler, ginRequestHandler(func(c *gin.Context, request auth.RegisterForPushNotificationsRequest) {
-		subject := schema.UserId(tokenChecker.accessToken(c))
-		handler.RegisterForPushNotifications(subject, request, ginSuccessResponse[schema.VoidResponse](c), ginFailureResponse(c))
-	}))
-}
-
-func registerRoutesSpendings(router *gin.Engine, tokenChecker ginAccessTokenChecker, handler spendings.RequestsHandler) {
-	group := router.Group("/spendings", tokenChecker.handler)
-	group.POST("/addExpense", ginRequestHandler(func(c *gin.Context, request spendings.AddExpenseRequest) {
-		subject := schema.UserId(tokenChecker.accessToken(c))
-		handler.AddExpense(subject, request, ginSuccessResponse[schema.Response[schema.IdentifiableExpense]](c), ginFailureResponse(c))
-	}))
-	group.POST("/removeExpense", ginRequestHandler(func(c *gin.Context, request spendings.RemoveExpenseRequest) {
-		subject := schema.UserId(tokenChecker.accessToken(c))
-		handler.RemoveExpense(subject, request, ginSuccessResponse[schema.Response[schema.IdentifiableExpense]](c), ginFailureResponse(c))
-	}))
-	group.GET("/getBalance", func(c *gin.Context) {
-		subject := schema.UserId(tokenChecker.accessToken(c))
-		handler.GetBalance(subject, ginSuccessResponse[schema.Response[[]schema.Balance]](c), ginFailureResponse(c))
-	})
-	group.GET("/getExpenses", ginRequestHandler(func(c *gin.Context, request spendings.GetExpensesRequest) {
-		subject := schema.UserId(tokenChecker.accessToken(c))
-		handler.GetExpenses(subject, request, ginSuccessResponse[schema.Response[[]schema.IdentifiableExpense]](c), ginFailureResponse(c))
-	}))
-	group.GET("/getExpense", ginRequestHandler(func(c *gin.Context, request spendings.GetExpenseRequest) {
-		subject := schema.UserId(tokenChecker.accessToken(c))
-		handler.GetExpense(subject, request, ginSuccessResponse[schema.Response[schema.IdentifiableExpense]](c), ginFailureResponse(c))
-	}))
-}
-
-func registerRoutesFriends(router *gin.Engine, tokenChecker ginAccessTokenChecker, handler friends.RequestsHandler) {
-	group := router.Group("/friends", tokenChecker.handler)
-	group.POST("/acceptRequest", ginRequestHandler(func(c *gin.Context, request friends.AcceptFriendRequest) {
-		subject := schema.UserId(tokenChecker.accessToken(c))
-		handler.AcceptRequest(subject, request, ginSuccessResponse[schema.VoidResponse](c), ginFailureResponse(c))
-	}))
-	group.GET("/get", ginRequestHandler(func(c *gin.Context, request friends.GetFriendsRequest) {
-		subject := schema.UserId(tokenChecker.accessToken(c))
-		handler.GetFriends(subject, request, ginSuccessResponse[schema.Response[map[schema.FriendStatus][]schema.UserId]](c), ginFailureResponse(c))
-	}))
-	group.POST("/rejectRequest", ginRequestHandler(func(c *gin.Context, request friends.RejectFriendRequest) {
-		subject := schema.UserId(tokenChecker.accessToken(c))
-		handler.RejectRequest(subject, request, ginSuccessResponse[schema.VoidResponse](c), ginFailureResponse(c))
-	}))
-	group.POST("/rollbackRequest", ginRequestHandler(func(c *gin.Context, request friends.RollbackFriendRequest) {
-		subject := schema.UserId(tokenChecker.accessToken(c))
-		handler.RollbackRequest(subject, request, ginSuccessResponse[schema.VoidResponse](c), ginFailureResponse(c))
-	}))
-	group.POST("/sendRequest", ginRequestHandler(func(c *gin.Context, request friends.SendFriendRequest) {
-		subject := schema.UserId(tokenChecker.accessToken(c))
-		handler.SendRequest(subject, request, ginSuccessResponse[schema.VoidResponse](c), ginFailureResponse(c))
-	}))
-	group.POST("/unfriend", ginRequestHandler(func(c *gin.Context, request friends.UnfriendRequest) {
-		subject := schema.UserId(tokenChecker.accessToken(c))
-		handler.Unfriend(subject, request, ginSuccessResponse[schema.VoidResponse](c), ginFailureResponse(c))
-	}))
-}
-
-func registerRoutesProfile(router *gin.Engine, tokenChecker ginAccessTokenChecker, handler profile.RequestsHandler) {
-	group := router.Group("/profile", tokenChecker.handler)
-	group.GET("/getInfo", func(c *gin.Context) {
-		subject := schema.UserId(tokenChecker.accessToken(c))
-		handler.GetInfo(subject, ginSuccessResponse[schema.Response[schema.Profile]](c), ginFailureResponse(c))
-	})
-	group.PUT("/setAvatar", ginRequestHandler(func(c *gin.Context, request profile.SetAvatarRequest) {
-		subject := schema.UserId(tokenChecker.accessToken(c))
-		handler.SetAvatar(subject, request, ginSuccessResponse[schema.Response[schema.ImageId]](c), ginFailureResponse(c))
-	}))
-	group.PUT("/setDisplayName", ginRequestHandler(func(c *gin.Context, request profile.SetDisplayNameRequest) {
-		subject := schema.UserId(tokenChecker.accessToken(c))
-		handler.SetDisplayName(subject, request, ginSuccessResponse[schema.VoidResponse](c), ginFailureResponse(c))
-	}))
-}
-
-func registerRoutesVerification(router *gin.Engine, tokenChecker ginAccessTokenChecker, handler verification.RequestsHandler) {
-	group := router.Group("/verification", tokenChecker.handler)
-	group.PUT("/confirmEmail", ginRequestHandler(func(c *gin.Context, request verification.ConfirmEmailRequest) {
-		subject := schema.UserId(tokenChecker.accessToken(c))
-		handler.ConfirmEmail(subject, request, ginSuccessResponse[schema.VoidResponse](c), ginFailureResponse(c))
-	}))
-	group.PUT("/sendEmailConfirmationCode", func(c *gin.Context) {
-		subject := schema.UserId(tokenChecker.accessToken(c))
-		handler.SendEmailConfirmationCode(subject, ginSuccessResponse[schema.VoidResponse](c), ginFailureResponse(c))
-	})
-}
-
-func registerRoutesUsers(router *gin.Engine, tokenChecker ginAccessTokenChecker, handler users.RequestsHandler) {
-	group := router.Group("/users", tokenChecker.handler)
-	group.GET("/get", ginRequestHandler(func(c *gin.Context, request users.GetUsersRequest) {
-		subject := schema.UserId(tokenChecker.accessToken(c))
-		handler.GetUsers(subject, request, ginSuccessResponse[schema.Response[[]schema.User]](c), ginFailureResponse(c))
-	}))
-}
-
-func registerRoutesAvatars(router *gin.Engine, handler avatars.RequestsHandler) {
-	group := router.Group("/avatars")
-	group.GET("/get", ginRequestHandler(func(c *gin.Context, request avatars.GetAvatarsRequest) {
-		handler.GetAvatars(request, ginSuccessResponse[schema.Response[map[schema.ImageId]schema.Image]](c), ginFailureResponse(c))
-	}))
 }

@@ -6,14 +6,6 @@ import (
 	"verni/internal/services/logging"
 )
 
-type SetAvatarRequest struct {
-	DataBase64 string `json:"dataBase64"`
-}
-
-type SetDisplayNameRequest struct {
-	DisplayName string `json:"displayName"`
-}
-
 type RequestsHandler interface {
 	GetInfo(
 		subject schema.UserId,
@@ -22,13 +14,13 @@ type RequestsHandler interface {
 	)
 	SetAvatar(
 		subject schema.UserId,
-		request SetAvatarRequest,
+		request schema.SetAvatarRequest,
 		success func(schema.StatusCode, schema.Response[schema.ImageId]),
 		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
 	SetDisplayName(
 		subject schema.UserId,
-		request SetDisplayNameRequest,
+		request schema.SetDisplayNameRequest,
 		success func(schema.StatusCode, schema.VoidResponse),
 		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)

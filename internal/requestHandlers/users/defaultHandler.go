@@ -15,7 +15,7 @@ type defaultRequestsHandler struct {
 
 func (c *defaultRequestsHandler) GetUsers(
 	subject schema.UserId,
-	request GetUsersRequest,
+	request schema.GetUsersRequest,
 	success func(schema.StatusCode, schema.Response[[]schema.User]),
 	failure func(schema.StatusCode, schema.Response[schema.Error]),
 ) {

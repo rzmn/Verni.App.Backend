@@ -33,7 +33,7 @@ func (c *defaultRequestsHandler) GetInfo(
 
 func (c *defaultRequestsHandler) SetAvatar(
 	subject schema.UserId,
-	request SetAvatarRequest,
+	request schema.SetAvatarRequest,
 	success func(schema.StatusCode, schema.Response[schema.ImageId]),
 	failure func(schema.StatusCode, schema.Response[schema.Error]),
 ) {
@@ -51,7 +51,7 @@ func (c *defaultRequestsHandler) SetAvatar(
 
 func (c *defaultRequestsHandler) SetDisplayName(
 	subject schema.UserId,
-	request SetDisplayNameRequest,
+	request schema.SetDisplayNameRequest,
 	success func(schema.StatusCode, schema.VoidResponse),
 	failure func(schema.StatusCode, schema.Response[schema.Error]),
 ) {
