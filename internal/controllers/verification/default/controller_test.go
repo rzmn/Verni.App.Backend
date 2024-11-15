@@ -1,9 +1,10 @@
-package verification_test
+package defaultController_test
 
 import (
 	"errors"
 	"testing"
 	"verni/internal/controllers/verification"
+	defaultController "verni/internal/controllers/verification/default"
 	"verni/internal/repositories"
 	"verni/internal/repositories/auth"
 	auth_mock "verni/internal/repositories/auth/mock"
@@ -43,7 +44,7 @@ func TestSendConfirmationCodeNotDelivered(t *testing.T) {
 			return auth.UserInfo{}, nil
 		},
 	}
-	controller := verification.DefaultController(
+	controller := defaultController.New(
 		&verificationMock,
 		&authMock,
 		&emailSenderMock,
@@ -72,7 +73,7 @@ func TestSendConfirmationGetEmailFailed(t *testing.T) {
 			return auth.UserInfo{}, errors.New("some error")
 		},
 	}
-	controller := verification.DefaultController(
+	controller := defaultController.New(
 		&verificationMock,
 		&authMock,
 		&emailSenderMock,
@@ -110,7 +111,7 @@ func TestSendConfirmationCodeStoreFailed(t *testing.T) {
 			return auth.UserInfo{}, nil
 		},
 	}
-	controller := verification.DefaultController(
+	controller := defaultController.New(
 		&verificationMock,
 		&authMock,
 		&emailSenderMock,
@@ -157,7 +158,7 @@ func TestSendConfirmationCodeDelivered(t *testing.T) {
 			return auth.UserInfo{}, nil
 		},
 	}
-	controller := verification.DefaultController(
+	controller := defaultController.New(
 		&verificationMock,
 		&authMock,
 		&emailSenderMock,
@@ -183,7 +184,7 @@ func TestConfirmEmailGetEmailFailed(t *testing.T) {
 			return auth.UserInfo{}, errors.New("some error")
 		},
 	}
-	controller := verification.DefaultController(
+	controller := defaultController.New(
 		&verificationMock,
 		&authMock,
 		&emailSenderMock,
@@ -210,7 +211,7 @@ func TestConfirmEmailGetCodeFailed(t *testing.T) {
 			return auth.UserInfo{}, nil
 		},
 	}
-	controller := verification.DefaultController(
+	controller := defaultController.New(
 		&verificationMock,
 		&authMock,
 		&emailSenderMock,
@@ -237,7 +238,7 @@ func TestConfirmEmailCodeHasNotBeenSent(t *testing.T) {
 			return auth.UserInfo{}, nil
 		},
 	}
-	controller := verification.DefaultController(
+	controller := defaultController.New(
 		&verificationMock,
 		&authMock,
 		&emailSenderMock,
@@ -265,7 +266,7 @@ func TestConfirmEmailCodeIsWrong(t *testing.T) {
 			return auth.UserInfo{}, nil
 		},
 	}
-	controller := verification.DefaultController(
+	controller := defaultController.New(
 		&verificationMock,
 		&authMock,
 		&emailSenderMock,
@@ -300,7 +301,7 @@ func TestConfirmEmailMarkValidatedFailed(t *testing.T) {
 			}
 		},
 	}
-	controller := verification.DefaultController(
+	controller := defaultController.New(
 		&verificationMock,
 		&authMock,
 		&emailSenderMock,
@@ -335,7 +336,7 @@ func TestConfirmEmailOk(t *testing.T) {
 			}
 		},
 	}
-	controller := verification.DefaultController(
+	controller := defaultController.New(
 		&verificationMock,
 		&authMock,
 		&emailSenderMock,

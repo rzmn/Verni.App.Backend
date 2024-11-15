@@ -2,13 +2,10 @@ package friends
 
 import (
 	"verni/internal/common"
-	friendsRepository "verni/internal/repositories/friends"
-	"verni/internal/services/logging"
 )
 
 type UserId string
 type FriendStatus int
-type Repository friendsRepository.Repository
 
 const (
 	_ FriendStatus = iota
@@ -23,11 +20,4 @@ type Controller interface {
 	RollbackFriendRequest(sender UserId, target UserId) *common.CodeBasedError[RollbackFriendRequestErrorCode]
 	SendFriendRequest(sender UserId, target UserId) *common.CodeBasedError[SendFriendRequestErrorCode]
 	Unfriend(sender UserId, target UserId) *common.CodeBasedError[UnfriendErrorCode]
-}
-
-func DefaultController(repository Repository, logger logging.Service) Controller {
-	return &defaultController{
-		repository: repository,
-		logger:     logger,
-	}
 }

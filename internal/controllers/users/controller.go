@@ -3,14 +3,10 @@ package users
 import (
 	"verni/internal/common"
 	friendsRepository "verni/internal/repositories/friends"
-	usersRepository "verni/internal/repositories/users"
-	"verni/internal/services/logging"
 )
 
 type UserId string
 type AvatarId string
-type UsersRepository usersRepository.Repository
-type FriendsRepository friendsRepository.Repository
 type FriendStatus friendsRepository.FriendStatus
 
 type User struct {
@@ -22,12 +18,4 @@ type User struct {
 
 type Controller interface {
 	Get(ids []UserId, sender UserId) ([]User, *common.CodeBasedError[GetUsersErrorCode])
-}
-
-func DefaultController(users UsersRepository, friends FriendsRepository, logger logging.Service) Controller {
-	return &defaultController{
-		users:   users,
-		friends: friends,
-		logger:  logger,
-	}
 }

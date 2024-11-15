@@ -2,19 +2,9 @@ package auth
 
 import (
 	"verni/internal/common"
-	"verni/internal/services/formatValidation"
-	"verni/internal/services/jwt"
-	"verni/internal/services/logging"
-
-	authRepository "verni/internal/repositories/auth"
-	pushNotificationsRepository "verni/internal/repositories/pushNotifications"
-	usersRepository "verni/internal/repositories/users"
 )
 
 type UserId string
-type AuthRepository authRepository.Repository
-type UsersRepository usersRepository.Repository
-type PushTokensRepository pushNotificationsRepository.Repository
 
 type Session struct {
 	Id           UserId
@@ -32,22 +22,4 @@ type Controller interface {
 	UpdatePassword(oldPassword string, newPassword string, id UserId) (Session, *common.CodeBasedError[UpdatePasswordErrorCode])
 
 	RegisterForPushNotifications(pushToken string, id UserId) *common.CodeBasedError[RegisterForPushNotificationsErrorCode]
-}
-
-func DefaultController(
-	authRepository AuthRepository,
-	pushTokensRepository PushTokensRepository,
-	usersRepository UsersRepository,
-	jwtService jwt.Service,
-	formatValidationService formatValidation.Service,
-	logger logging.Service,
-) Controller {
-	return &defaultController{
-		authRepository:          authRepository,
-		pushTokensRepository:    pushTokensRepository,
-		usersRepository:         usersRepository,
-		jwtService:              jwtService,
-		formatValidationService: formatValidationService,
-		logger:                  logger,
-	}
 }

@@ -23,6 +23,7 @@ import (
 	defaultUsersRepository "verni/internal/repositories/users/default"
 	verificationRepository "verni/internal/repositories/verification"
 	defaultVerificationRepository "verni/internal/repositories/verification/default"
+
 	"verni/internal/requestHandlers/accessToken"
 	"verni/internal/requestHandlers/auth"
 	"verni/internal/requestHandlers/avatars"
@@ -31,7 +32,9 @@ import (
 	"verni/internal/requestHandlers/spendings"
 	"verni/internal/requestHandlers/users"
 	"verni/internal/requestHandlers/verification"
+
 	"verni/internal/server"
+
 	"verni/internal/services/emailSender"
 	"verni/internal/services/formatValidation"
 	"verni/internal/services/jwt"
@@ -42,12 +45,19 @@ import (
 	"verni/internal/services/watchdog"
 
 	authController "verni/internal/controllers/auth"
+	defaultAuthController "verni/internal/controllers/auth/default"
 	avatarsController "verni/internal/controllers/avatars"
+	defaultAvatarsController "verni/internal/controllers/avatars/default"
 	friendsController "verni/internal/controllers/friends"
+	defaultFriendsController "verni/internal/controllers/friends/default"
 	profileController "verni/internal/controllers/profile"
+	defaultProfileController "verni/internal/controllers/profile/default"
 	spendingsController "verni/internal/controllers/spendings"
+	defaultSpendingsController "verni/internal/controllers/spendings/default"
 	usersController "verni/internal/controllers/users"
+	defaultUsersController "verni/internal/controllers/users/default"
 	verificationController "verni/internal/controllers/verification"
+	defaultVerificationController "verni/internal/controllers/verification/default"
 )
 
 type Repositories struct {
@@ -246,7 +256,7 @@ func main() {
 		}(),
 	}
 	controllers := Controllers{
-		auth: authController.DefaultController(
+		auth: defaultAuthController.New(
 			repositories.auth,
 			repositories.pushRegistry,
 			repositories.users,
@@ -254,15 +264,15 @@ func main() {
 			services.formatValidationService,
 			logger,
 		),
-		avatars: avatarsController.DefaultController(
+		avatars: defaultAvatarsController.New(
 			repositories.images,
 			logger,
 		),
-		friends: friendsController.DefaultController(
+		friends: defaultFriendsController.New(
 			repositories.friends,
 			logger,
 		),
-		profile: profileController.DefaultController(
+		profile: defaultProfileController.New(
 			repositories.auth,
 			repositories.images,
 			repositories.users,
@@ -270,16 +280,16 @@ func main() {
 			services.formatValidationService,
 			logger,
 		),
-		spendings: spendingsController.DefaultController(
+		spendings: defaultSpendingsController.New(
 			repositories.spendings,
 			logger,
 		),
-		users: usersController.DefaultController(
+		users: defaultUsersController.New(
 			repositories.users,
 			repositories.friends,
 			logger,
 		),
-		verification: verificationController.DefaultController(
+		verification: defaultVerificationController.New(
 			repositories.verification,
 			repositories.auth,
 			services.emailSender,

@@ -1,9 +1,10 @@
-package auth_test
+package defaultController_test
 
 import (
 	"errors"
 	"testing"
 	"verni/internal/controllers/auth"
+	defaultController "verni/internal/controllers/auth/default"
 	"verni/internal/repositories"
 	authRepository "verni/internal/repositories/auth"
 	auth_mock "verni/internal/repositories/auth/mock"
@@ -32,7 +33,7 @@ func TestSignupInvalidEmailFormat(t *testing.T) {
 	pushTokensRepositoryMock := pushNotifications_mock.RepositoryMock{}
 	usersRepositoryMock := users_mock.RepositoryMock{}
 	jwtServiceMock := jwt_mock.ServiceMock{}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -62,7 +63,7 @@ func TestSignupInvalidPasswordFormat(t *testing.T) {
 	pushTokensRepositoryMock := pushNotifications_mock.RepositoryMock{}
 	usersRepositoryMock := users_mock.RepositoryMock{}
 	jwtServiceMock := jwt_mock.ServiceMock{}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -96,7 +97,7 @@ func TestSignupFailedToCheckIfEmailIsTaken(t *testing.T) {
 	pushTokensRepositoryMock := pushNotifications_mock.RepositoryMock{}
 	usersRepositoryMock := users_mock.RepositoryMock{}
 	jwtServiceMock := jwt_mock.ServiceMock{}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -131,7 +132,7 @@ func TestSignupFailedEmailIsTaken(t *testing.T) {
 	pushTokensRepositoryMock := pushNotifications_mock.RepositoryMock{}
 	usersRepositoryMock := users_mock.RepositoryMock{}
 	jwtServiceMock := jwt_mock.ServiceMock{}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -172,7 +173,7 @@ func TestSignupIssueAccessTokenFailed(t *testing.T) {
 			return jwt.RefreshToken(uuid.New().String()), nil
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -213,7 +214,7 @@ func TestSignupIssueRefreshTokenFailed(t *testing.T) {
 			return jwt.RefreshToken(uuid.New().String()), &jwt.Error{}
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -262,7 +263,7 @@ func TestSignupCreateUserMetaFailed(t *testing.T) {
 			return jwt.RefreshToken(uuid.New().String()), nil
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -325,7 +326,7 @@ func TestSignupCreateUserFailed(t *testing.T) {
 			return jwt.RefreshToken(uuid.New().String()), nil
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -388,7 +389,7 @@ func TestSignupOk(t *testing.T) {
 			return jwt.RefreshToken(uuid.New().String()), nil
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -415,7 +416,7 @@ func TestLoginUnableToCheckCredentials(t *testing.T) {
 	pushTokensRepositoryMock := pushNotifications_mock.RepositoryMock{}
 	usersRepositoryMock := users_mock.RepositoryMock{}
 	jwtServiceMock := jwt_mock.ServiceMock{}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -442,7 +443,7 @@ func TestLoginWrongCredentials(t *testing.T) {
 	pushTokensRepositoryMock := pushNotifications_mock.RepositoryMock{}
 	usersRepositoryMock := users_mock.RepositoryMock{}
 	jwtServiceMock := jwt_mock.ServiceMock{}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -472,7 +473,7 @@ func TestLoginGetUserFailed(t *testing.T) {
 	pushTokensRepositoryMock := pushNotifications_mock.RepositoryMock{}
 	usersRepositoryMock := users_mock.RepositoryMock{}
 	jwtServiceMock := jwt_mock.ServiceMock{}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -502,7 +503,7 @@ func TestLoginGetUserNotFound(t *testing.T) {
 	pushTokensRepositoryMock := pushNotifications_mock.RepositoryMock{}
 	usersRepositoryMock := users_mock.RepositoryMock{}
 	jwtServiceMock := jwt_mock.ServiceMock{}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -540,7 +541,7 @@ func TestLoginIssueAccessTokenFailed(t *testing.T) {
 			return jwt.RefreshToken(uuid.New().String()), nil
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -578,7 +579,7 @@ func TestLoginIssueRefreshTokenFailed(t *testing.T) {
 			return jwt.RefreshToken(uuid.New().String()), &jwt.Error{}
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -623,7 +624,7 @@ func TestLoginUpdateTokenFailed(t *testing.T) {
 			return jwt.RefreshToken(uuid.New().String()), nil
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -670,7 +671,7 @@ func TestLoginOk(t *testing.T) {
 			return jwt.RefreshToken(uuid.New().String()), nil
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -697,7 +698,7 @@ func TestRefreshTokenExpired(t *testing.T) {
 			return &jwt.Error{Code: jwt.CodeTokenExpired}
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -724,7 +725,7 @@ func TestRefreshTokenWrong(t *testing.T) {
 			return &jwt.Error{Code: jwt.CodeTokenInvalid}
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -751,7 +752,7 @@ func TestRefreshUnableToValidateToken(t *testing.T) {
 			return &jwt.Error{Code: jwt.CodeInternal}
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -781,7 +782,7 @@ func TestRefreshUnableToGetSubject(t *testing.T) {
 			return jwt.Subject(uuid.New().String()), &jwt.Error{}
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -815,7 +816,7 @@ func TestRefreshUnableToGetCurrentToken(t *testing.T) {
 			return jwt.Subject(uuid.New().String()), nil
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -852,7 +853,7 @@ func TestRefreshTokensDidNotMatch(t *testing.T) {
 			return jwt.Subject(uuid.New().String()), nil
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -895,7 +896,7 @@ func TestRefreshIssueAccessTokenFailed(t *testing.T) {
 			return jwt.RefreshToken(uuid.New().String()), nil
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -938,7 +939,7 @@ func TestRefreshIssueRefreshTokenFailed(t *testing.T) {
 			return jwt.RefreshToken(uuid.New().String()), &jwt.Error{}
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -988,7 +989,7 @@ func TestRefreshUpdateRefreshTokenFailed(t *testing.T) {
 			return jwt.RefreshToken(uuid.New().String()), nil
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -1040,7 +1041,7 @@ func TestRefreshOk(t *testing.T) {
 			return jwt.RefreshToken(uuid.New().String()), nil
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -1067,7 +1068,7 @@ func TestLogoutIssueNewRefreshTokenFailed(t *testing.T) {
 			return jwt.RefreshToken(uuid.New().String()), &jwt.Error{}
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -1102,7 +1103,7 @@ func TestLogoutUpdateRefreshTokenFailed(t *testing.T) {
 			return jwt.RefreshToken(uuid.New().String()), nil
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -1139,7 +1140,7 @@ func TestLogoutOk(t *testing.T) {
 			return jwt.RefreshToken(uuid.New().String()), nil
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -1166,7 +1167,7 @@ func TestUpdateEmailWrongFormat(t *testing.T) {
 	pushTokensRepositoryMock := pushNotifications_mock.RepositoryMock{}
 	usersRepositoryMock := users_mock.RepositoryMock{}
 	jwtServiceMock := jwt_mock.ServiceMock{}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -1197,7 +1198,7 @@ func TestUpdateEmailGetUserFailed(t *testing.T) {
 	pushTokensRepositoryMock := pushNotifications_mock.RepositoryMock{}
 	usersRepositoryMock := users_mock.RepositoryMock{}
 	jwtServiceMock := jwt_mock.ServiceMock{}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -1229,7 +1230,7 @@ func TestUpdateEmailAlreadyTaken(t *testing.T) {
 	pushTokensRepositoryMock := pushNotifications_mock.RepositoryMock{}
 	usersRepositoryMock := users_mock.RepositoryMock{}
 	jwtServiceMock := jwt_mock.ServiceMock{}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -1267,7 +1268,7 @@ func TestUpdateEmailIssueAccessTokenFailed(t *testing.T) {
 			return jwt.RefreshToken(uuid.New().String()), nil
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -1305,7 +1306,7 @@ func TestUpdateEmailIssueRefreshTokenFailed(t *testing.T) {
 			return jwt.RefreshToken(uuid.New().String()), &jwt.Error{}
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -1350,7 +1351,7 @@ func TestUpdateEmailEmailUpdateFailed(t *testing.T) {
 			return jwt.RefreshToken(uuid.New().String()), nil
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -1409,7 +1410,7 @@ func TestUpdateEmailTokenUpdateFailed(t *testing.T) {
 			return jwt.RefreshToken(uuid.New().String()), nil
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -1471,7 +1472,7 @@ func TestUpdateEmailOk(t *testing.T) {
 			return jwt.RefreshToken(uuid.New().String()), nil
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -1501,7 +1502,7 @@ func TestUpdatePasswordNewPasswordHasWrongFormat(t *testing.T) {
 	pushTokensRepositoryMock := pushNotifications_mock.RepositoryMock{}
 	usersRepositoryMock := users_mock.RepositoryMock{}
 	jwtServiceMock := jwt_mock.ServiceMock{}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -1532,7 +1533,7 @@ func TestUpdatePasswordGetUserFailed(t *testing.T) {
 	pushTokensRepositoryMock := pushNotifications_mock.RepositoryMock{}
 	usersRepositoryMock := users_mock.RepositoryMock{}
 	jwtServiceMock := jwt_mock.ServiceMock{}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -1566,7 +1567,7 @@ func TestUpdatePasswordCredentialsCheckFailed(t *testing.T) {
 	pushTokensRepositoryMock := pushNotifications_mock.RepositoryMock{}
 	usersRepositoryMock := users_mock.RepositoryMock{}
 	jwtServiceMock := jwt_mock.ServiceMock{}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -1600,7 +1601,7 @@ func TestUpdatePasswordOldPasswordIsWrong(t *testing.T) {
 	pushTokensRepositoryMock := pushNotifications_mock.RepositoryMock{}
 	usersRepositoryMock := users_mock.RepositoryMock{}
 	jwtServiceMock := jwt_mock.ServiceMock{}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -1641,7 +1642,7 @@ func TestUpdatePasswordIssueAccessTokenFailed(t *testing.T) {
 			return jwt.RefreshToken(uuid.New().String()), nil
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -1682,7 +1683,7 @@ func TestUpdatePasswordIssueRefreshTokenFailed(t *testing.T) {
 			return jwt.RefreshToken(uuid.New().String()), &jwt.Error{}
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -1730,7 +1731,7 @@ func TestUpdatePasswordPasswordUpdateFailed(t *testing.T) {
 			return jwt.RefreshToken(uuid.New().String()), nil
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -1792,7 +1793,7 @@ func TestUpdatePasswordTokenUpdateFailed(t *testing.T) {
 			return jwt.RefreshToken(uuid.New().String()), nil
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -1857,7 +1858,7 @@ func TestUpdatePasswordOk(t *testing.T) {
 			return jwt.RefreshToken(uuid.New().String()), nil
 		},
 	}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -1891,7 +1892,7 @@ func TestRegisterForPushNotificationsFailedToStoreToken(t *testing.T) {
 	}
 	usersRepositoryMock := users_mock.RepositoryMock{}
 	jwtServiceMock := jwt_mock.ServiceMock{}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,
@@ -1924,7 +1925,7 @@ func TestRegisterForPushNotificationsOk(t *testing.T) {
 	}
 	usersRepositoryMock := users_mock.RepositoryMock{}
 	jwtServiceMock := jwt_mock.ServiceMock{}
-	controller := auth.DefaultController(
+	controller := defaultController.New(
 		&authRepositoryMock,
 		&pushTokensRepositoryMock,
 		&usersRepositoryMock,

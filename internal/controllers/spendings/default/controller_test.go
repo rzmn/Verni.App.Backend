@@ -1,9 +1,10 @@
-package spendings_test
+package defaultController_test
 
 import (
 	"errors"
 	"testing"
 	"verni/internal/controllers/spendings"
+	defaultController "verni/internal/controllers/spendings/default"
 	"verni/internal/repositories"
 	spendingsRepository "verni/internal/repositories/spendings"
 	spendings_mock "verni/internal/repositories/spendings/mock"
@@ -15,7 +16,7 @@ import (
 func TestAddExpenseFailedNotYourExpense(t *testing.T) {
 	repository := spendings_mock.RepositoryMock{}
 
-	controller := spendings.DefaultController(&repository, logging.TestService())
+	controller := defaultController.New(&repository, logging.TestService())
 
 	expense := spendings.Expense{
 		Shares: []spendingsRepository.ShareOfExpense{
@@ -47,7 +48,7 @@ func TestAddExpenseFailedToAddInRepository(t *testing.T) {
 		},
 	}
 
-	controller := spendings.DefaultController(&repository, logging.TestService())
+	controller := defaultController.New(&repository, logging.TestService())
 	actor := spendings.CounterpartyId(uuid.New().String())
 	counterparty := spendings.CounterpartyId(uuid.New().String())
 
@@ -80,7 +81,7 @@ func TestAddExpenseOk(t *testing.T) {
 			}
 		},
 	}
-	controller := spendings.DefaultController(&repository, logging.TestService())
+	controller := defaultController.New(&repository, logging.TestService())
 	actor := spendings.CounterpartyId(uuid.New().String())
 	counterparty := spendings.CounterpartyId(uuid.New().String())
 
@@ -106,7 +107,7 @@ func TestRemoveExpenseFailedToGetById(t *testing.T) {
 			return nil, errors.New("some error")
 		},
 	}
-	controller := spendings.DefaultController(&repository, logging.TestService())
+	controller := defaultController.New(&repository, logging.TestService())
 	_, err := controller.RemoveExpense(spendings.ExpenseId(uuid.New().String()), spendings.CounterpartyId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`RemoveExpense` should be failed, found nil err")
@@ -122,7 +123,7 @@ func TestRemoveExpenseFailedNotFound(t *testing.T) {
 			return nil, nil
 		},
 	}
-	controller := spendings.DefaultController(&repository, logging.TestService())
+	controller := defaultController.New(&repository, logging.TestService())
 	_, err := controller.RemoveExpense(spendings.ExpenseId(uuid.New().String()), spendings.CounterpartyId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`RemoveExpense` should be failed, found nil err")
@@ -150,7 +151,7 @@ func TestRemoveExpenseFailedNotYourExpense(t *testing.T) {
 			}, nil
 		},
 	}
-	controller := spendings.DefaultController(&repository, logging.TestService())
+	controller := defaultController.New(&repository, logging.TestService())
 	_, err := controller.RemoveExpense(spendings.ExpenseId(uuid.New().String()), spendings.CounterpartyId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`RemoveExpense` should be failed, found nil err")
@@ -187,7 +188,7 @@ func TestRemoveExpenseRemoveFailed(t *testing.T) {
 			}
 		},
 	}
-	controller := spendings.DefaultController(&repository, logging.TestService())
+	controller := defaultController.New(&repository, logging.TestService())
 	_, err := controller.RemoveExpense(spendings.ExpenseId(uuid.New().String()), actor)
 	if err == nil {
 		t.Fatalf("`RemoveExpense` should be failed, found nil err")
@@ -226,7 +227,7 @@ func TestRemoveExpenseOk(t *testing.T) {
 			}
 		},
 	}
-	controller := spendings.DefaultController(&repository, logging.TestService())
+	controller := defaultController.New(&repository, logging.TestService())
 	_, err := controller.RemoveExpense(spendings.ExpenseId(uuid.New().String()), actor)
 	if err != nil {
 		t.Fatalf("`RemoveExpense` should not be failed, found err %v", err)
@@ -242,7 +243,7 @@ func TestGetExpenseFailedToGetFromRepository(t *testing.T) {
 			return nil, errors.New("some error")
 		},
 	}
-	controller := spendings.DefaultController(&repository, logging.TestService())
+	controller := defaultController.New(&repository, logging.TestService())
 	_, err := controller.GetExpense(spendings.ExpenseId(uuid.New().String()), spendings.CounterpartyId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`GetExpense` should be failed, found nil err")
@@ -258,7 +259,7 @@ func TestGetExpenseFailedNotFound(t *testing.T) {
 			return nil, nil
 		},
 	}
-	controller := spendings.DefaultController(&repository, logging.TestService())
+	controller := defaultController.New(&repository, logging.TestService())
 	_, err := controller.GetExpense(spendings.ExpenseId(uuid.New().String()), spendings.CounterpartyId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`GetExpense` should be failed, found nil err")
@@ -286,7 +287,7 @@ func TestGetExpenseNotYourExpense(t *testing.T) {
 			}, nil
 		},
 	}
-	controller := spendings.DefaultController(&repository, logging.TestService())
+	controller := defaultController.New(&repository, logging.TestService())
 	_, err := controller.GetExpense(spendings.ExpenseId(uuid.New().String()), spendings.CounterpartyId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`GetExpense` should be failed, found nil err")
@@ -318,7 +319,7 @@ func TestGetExpenseOk(t *testing.T) {
 			}, nil
 		},
 	}
-	controller := spendings.DefaultController(&repository, logging.TestService())
+	controller := defaultController.New(&repository, logging.TestService())
 	_, err := controller.GetExpense(spendings.ExpenseId(uuid.New().String()), actor)
 	if err != nil {
 		t.Fatalf("`GetExpense` should not be failed, found err %v", err)
@@ -334,7 +335,7 @@ func TestGetExpensesWithFailedToGetFromRepository(t *testing.T) {
 			return []spendingsRepository.IdentifiableExpense{}, errors.New("some error")
 		},
 	}
-	controller := spendings.DefaultController(&repository, logging.TestService())
+	controller := defaultController.New(&repository, logging.TestService())
 	_, err := controller.GetExpensesWith(spendings.CounterpartyId(uuid.New().String()), spendings.CounterpartyId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`GetExpensesWith` should be failed, found nil err")
@@ -352,7 +353,7 @@ func TestGetExpensesOk(t *testing.T) {
 			return []spendingsRepository.IdentifiableExpense{}, nil
 		},
 	}
-	controller := spendings.DefaultController(&repository, logging.TestService())
+	controller := defaultController.New(&repository, logging.TestService())
 	_, err := controller.GetExpensesWith(spendings.CounterpartyId(uuid.New().String()), spendings.CounterpartyId(uuid.New().String()))
 	if err != nil {
 		t.Fatalf("`GetExpensesWith` should not be failed, found err %v", err)
@@ -369,7 +370,7 @@ func TestGetBalanceWithFailedToGetFromRepository(t *testing.T) {
 		},
 	}
 
-	controller := spendings.DefaultController(&repository, logging.TestService())
+	controller := defaultController.New(&repository, logging.TestService())
 	_, err := controller.GetBalance(spendings.CounterpartyId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`GetBalance` should be failed, found nil err")
@@ -387,7 +388,7 @@ func TestGetBalanceOk(t *testing.T) {
 			return []spendingsRepository.Balance{}, nil
 		},
 	}
-	controller := spendings.DefaultController(&repository, logging.TestService())
+	controller := defaultController.New(&repository, logging.TestService())
 	_, err := controller.GetBalance(spendings.CounterpartyId(uuid.New().String()))
 	if err != nil {
 		t.Fatalf("`GetBalance` should not be failed, found err %v", err)
