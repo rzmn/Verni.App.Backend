@@ -1,9 +1,7 @@
 package auth
 
 import (
-	"verni/internal/db"
 	"verni/internal/repositories"
-	"verni/internal/services/logging"
 )
 
 type UserId string
@@ -27,11 +25,4 @@ type Repository interface {
 	UpdateEmail(uid UserId, newEmail string) repositories.MutationWorkItem
 
 	GetUserInfo(uid UserId) (UserInfo, error)
-}
-
-func PostgresRepository(db db.DB, logger logging.Service) Repository {
-	return &postgresRepository{
-		db:     db,
-		logger: logger,
-	}
 }

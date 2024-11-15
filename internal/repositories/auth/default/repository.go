@@ -1,14 +1,22 @@
-package auth
+package defaultRepository
 
 import (
 	"verni/internal/db"
 	"verni/internal/repositories"
+	"verni/internal/repositories/auth"
 	"verni/internal/services/logging"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
-type postgresRepository struct {
+func New(db db.DB, logger logging.Service) auth.Repository {
+	return &defaultRepository{
+		db:     db,
+		logger: logger,
+	}
+}
+
+type defaultRepository struct {
 	db     db.DB
 	logger logging.Service
 }
@@ -22,7 +30,7 @@ func checkPasswordHash(password, hash string) bool {
 	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)) == nil
 }
 
-func (c *postgresRepository) CreateUser(uid UserId, email string, password string, refreshToken string) repositories.MutationWorkItem {
+func (c *defaultRepository) CreateUser(uid auth.UserId, email string, password string, refreshToken string) repositories.MutationWorkItem {
 	return repositories.MutationWorkItem{
 		Perform: func() error {
 			return c.createUser(uid, email, password, refreshToken)
@@ -33,7 +41,7 @@ func (c *postgresRepository) CreateUser(uid UserId, email string, password strin
 	}
 }
 
-func (c *postgresRepository) CheckCredentials(email string, password string) (bool, error) {
+func (c *defaultRepository) CheckCredentials(email string, password string) (bool, error) {
 	const op = "repositories.auth.postgresRepository.CheckCredentials"
 	c.logger.LogInfo("%s: start[email=%s]", op, email)
 	query := `SELECT password FROM credentials WHERE email = $1;`
@@ -47,7 +55,7 @@ func (c *postgresRepository) CheckCredentials(email string, password string) (bo
 	return checkPasswordHash(password, passwordHash), nil
 }
 
-func (c *postgresRepository) GetUserIdByEmail(email string) (*UserId, error) {
+func (c *defaultRepository) GetUserIdByEmail(email string) (*auth.UserId, error) {
 	const op = "repositories.auth.postgresRepository.GetUserIdByEmail"
 	c.logger.LogInfo("%s: start[email=%s]", op, email)
 	query := `SELECT id FROM credentials WHERE email = $1;`
@@ -68,7 +76,7 @@ func (c *postgresRepository) GetUserIdByEmail(email string) (*UserId, error) {
 			return nil, err
 		}
 		c.logger.LogInfo("%s: success[email=%s]", op, email)
-		return (*UserId)(&id), nil
+		return (*auth.UserId)(&id), nil
 	}
 	if err := rows.Err(); err != nil {
 		c.logger.LogInfo("%s: found rows err: %v", op, err)
@@ -78,7 +86,7 @@ func (c *postgresRepository) GetUserIdByEmail(email string) (*UserId, error) {
 	return nil, nil
 }
 
-func (c *postgresRepository) UpdateRefreshToken(uid UserId, token string) repositories.MutationWorkItem {
+func (c *defaultRepository) UpdateRefreshToken(uid auth.UserId, token string) repositories.MutationWorkItem {
 	const op = "repositories.auth.postgresRepository.UpdateRefreshToken"
 	c.logger.LogInfo("%s: start[uid=%s]", op, uid)
 	existed, err := c.GetUserInfo(uid)
@@ -100,7 +108,7 @@ func (c *postgresRepository) UpdateRefreshToken(uid UserId, token string) reposi
 	}
 }
 
-func (c *postgresRepository) updateRefreshToken(uid UserId, token string) error {
+func (c *defaultRepository) updateRefreshToken(uid auth.UserId, token string) error {
 	const op = "repositories.auth.postgresRepository.updateRefreshToken"
 	c.logger.LogInfo("%s: start[uid=%s]", op, uid)
 	query := `UPDATE credentials SET token = $2 WHERE id = $1;`
@@ -113,7 +121,7 @@ func (c *postgresRepository) updateRefreshToken(uid UserId, token string) error 
 	return nil
 }
 
-func (c *postgresRepository) UpdatePassword(uid UserId, password string) repositories.MutationWorkItem {
+func (c *defaultRepository) UpdatePassword(uid auth.UserId, password string) repositories.MutationWorkItem {
 	const op = "repositories.auth.postgresRepository.UpdatePassword"
 	c.logger.LogInfo("%s: start[uid=%s]", op, uid)
 	existed, getCredentialsErr := c.GetUserInfo(uid)
@@ -140,7 +148,7 @@ func (c *postgresRepository) UpdatePassword(uid UserId, password string) reposit
 	}
 }
 
-func (c *postgresRepository) updatePassword(uid UserId, passwordHash string) error {
+func (c *defaultRepository) updatePassword(uid auth.UserId, passwordHash string) error {
 	const op = "repositories.auth.postgresRepository.updatePassword"
 	c.logger.LogInfo("%s: start[uid=%s]", op, uid)
 	query := `UPDATE credentials SET password = $2 WHERE id = $1;`
@@ -153,7 +161,7 @@ func (c *postgresRepository) updatePassword(uid UserId, passwordHash string) err
 	return nil
 }
 
-func (c *postgresRepository) UpdateEmail(uid UserId, newEmail string) repositories.MutationWorkItem {
+func (c *defaultRepository) UpdateEmail(uid auth.UserId, newEmail string) repositories.MutationWorkItem {
 	const op = "repositories.auth.postgresRepository.UpdateEmail"
 	c.logger.LogInfo("%s: start[uid=%s]", op, uid)
 	existed, err := c.GetUserInfo(uid)
@@ -183,7 +191,7 @@ func (c *postgresRepository) UpdateEmail(uid UserId, newEmail string) repositori
 	}
 }
 
-func (c *postgresRepository) updateEmail(uid UserId, newEmail string) error {
+func (c *defaultRepository) updateEmail(uid auth.UserId, newEmail string) error {
 	const op = "repositories.auth.postgresRepository.updateEmail"
 	c.logger.LogInfo("%s: start[uid=%s]", op, uid)
 	query := `UPDATE credentials SET email = $2, emailVerified = False WHERE id = $1;`
@@ -196,7 +204,7 @@ func (c *postgresRepository) updateEmail(uid UserId, newEmail string) error {
 	return nil
 }
 
-func (c *postgresRepository) GetRefreshToken(uid UserId) (string, error) {
+func (c *defaultRepository) GetRefreshToken(uid auth.UserId) (string, error) {
 	const op = "repositories.auth.postgresRepository.GetRefreshToken"
 	c.logger.LogInfo("%s: start[uid=%s]", op, uid)
 	query := `SELECT token FROM credentials WHERE id = $1;`
@@ -210,7 +218,7 @@ func (c *postgresRepository) GetRefreshToken(uid UserId) (string, error) {
 	return token, nil
 }
 
-func (c *postgresRepository) MarkUserEmailValidated(uid UserId) repositories.MutationWorkItem {
+func (c *defaultRepository) MarkUserEmailValidated(uid auth.UserId) repositories.MutationWorkItem {
 	const op = "repositories.auth.postgresRepository.MarkUserEmailValidated"
 	existed, err := c.GetUserInfo(uid)
 	return repositories.MutationWorkItem{
@@ -239,7 +247,7 @@ func (c *postgresRepository) MarkUserEmailValidated(uid UserId) repositories.Mut
 	}
 }
 
-func (c *postgresRepository) markUserEmailValidated(uid UserId, validated bool) error {
+func (c *defaultRepository) markUserEmailValidated(uid auth.UserId, validated bool) error {
 	const op = "repositories.auth.postgresRepository.markUserEmailValidated"
 	c.logger.LogInfo("%s: start[uid=%s validated=%t]", op, uid, validated)
 	query := `UPDATE credentials SET emailVerified = $2 WHERE id = $1;`
@@ -252,7 +260,7 @@ func (c *postgresRepository) markUserEmailValidated(uid UserId, validated bool) 
 	return nil
 }
 
-func (c *postgresRepository) createUser(uid UserId, email string, password string, refreshToken string) error {
+func (c *defaultRepository) createUser(uid auth.UserId, email string, password string, refreshToken string) error {
 	const op = "repositories.auth.postgresRepository.createUser"
 	c.logger.LogInfo("%s: start[uid=%s email=%s]", op, uid, email)
 	passwordHash, err := hashPassword(password)
@@ -270,7 +278,7 @@ func (c *postgresRepository) createUser(uid UserId, email string, password strin
 	return nil
 }
 
-func (c *postgresRepository) deleteUser(uid UserId) error {
+func (c *defaultRepository) deleteUser(uid auth.UserId) error {
 	const op = "repositories.auth.postgresRepository.deleteUser"
 	c.logger.LogInfo("%s: start[uid=%s]", op, uid)
 	query := `DELETE FROM credentials WHERE id = $1;`
@@ -283,23 +291,23 @@ func (c *postgresRepository) deleteUser(uid UserId) error {
 	return nil
 }
 
-func (c *postgresRepository) GetUserInfo(uid UserId) (UserInfo, error) {
+func (c *defaultRepository) GetUserInfo(uid auth.UserId) (auth.UserInfo, error) {
 	const op = "repositories.auth.postgresRepository.GetCredentials"
 	c.logger.LogInfo("%s: start[uid=%s]", op, uid)
 	query := `SELECT email, password, token, emailVerified FROM credentials WHERE id = $1;`
 	row := c.db.QueryRow(query, string(uid))
-	result := UserInfo{
-		UserId: UserId(uid),
+	result := auth.UserInfo{
+		UserId: auth.UserId(uid),
 	}
 	if err := row.Scan(&result.Email, &result.PasswordHash, &result.RefreshToken, &result.EmailVerified); err != nil {
 		c.logger.LogInfo("%s: failed to perform scan err: %v", op, err)
-		return UserInfo{}, err
+		return auth.UserInfo{}, err
 	}
 	c.logger.LogInfo("%s: success[uid=%s]", op, uid)
 	return result, nil
 }
 
-func (c *postgresRepository) IsUserExists(uid UserId) (bool, error) {
+func (c *defaultRepository) IsUserExists(uid auth.UserId) (bool, error) {
 	const op = "repositories.auth.postgresRepository.IsUserExists"
 	c.logger.LogInfo("%s: start[uid=%s]", op, uid)
 	query := `SELECT EXISTS(SELECT 1 FROM credentials WHERE id = $1);`

@@ -1,4 +1,4 @@
-package verification_test
+package defaultRepository_test
 
 import (
 	"encoding/json"
@@ -9,7 +9,7 @@ import (
 	"testing"
 	"verni/internal/db"
 	postgresDb "verni/internal/db/postgres"
-	"verni/internal/repositories/verification"
+	defaultRepository "verni/internal/repositories/verification/default"
 	"verni/internal/services/logging"
 	"verni/internal/services/pathProvider"
 
@@ -55,7 +55,7 @@ func randomCode() string {
 }
 
 func TestStore(t *testing.T) {
-	repository := verification.PostgresRepository(database, logging.TestService())
+	repository := defaultRepository.New(database, logging.TestService())
 	email := randomEmail()
 
 	// if no code was stored, should return nil
@@ -135,7 +135,7 @@ func TestStore(t *testing.T) {
 }
 
 func TestRemoveEmpty(t *testing.T) {
-	repository := verification.PostgresRepository(database, logging.TestService())
+	repository := defaultRepository.New(database, logging.TestService())
 	email := randomEmail()
 
 	// check if remove works when there is no token stored previously
@@ -167,7 +167,7 @@ func TestRemoveEmpty(t *testing.T) {
 }
 
 func TestRemoveNonEmpty(t *testing.T) {
-	repository := verification.PostgresRepository(database, logging.TestService())
+	repository := defaultRepository.New(database, logging.TestService())
 	email := randomEmail()
 	codeToStore := randomCode()
 	storeTransaction := repository.StoreEmailVerificationCode(email, codeToStore)

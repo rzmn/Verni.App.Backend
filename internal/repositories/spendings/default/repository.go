@@ -1,25 +1,33 @@
-package spendings
+package defaultRepository
 
 import (
 	"context"
 	"errors"
 	"verni/internal/db"
 	"verni/internal/repositories"
+	"verni/internal/repositories/spendings"
 	"verni/internal/services/logging"
 
 	"github.com/google/uuid"
 )
 
-type postgresRepository struct {
+func New(db db.DB, logger logging.Service) spendings.Repository {
+	return &defaultRepository{
+		db:     db,
+		logger: logger,
+	}
+}
+
+type defaultRepository struct {
 	db     db.DB
 	logger logging.Service
 }
 
-func (c *postgresRepository) AddExpense(expense Expense) repositories.MutationWorkItemWithReturnValue[ExpenseId] {
+func (c *defaultRepository) AddExpense(expense spendings.Expense) repositories.MutationWorkItemWithReturnValue[spendings.ExpenseId] {
 	const op = "repositories.spendings.postgresRepository.AddExpense"
-	expenseId := ExpenseId(uuid.New().String())
-	return repositories.MutationWorkItemWithReturnValue[ExpenseId]{
-		Perform: func() (ExpenseId, error) {
+	expenseId := spendings.ExpenseId(uuid.New().String())
+	return repositories.MutationWorkItemWithReturnValue[spendings.ExpenseId]{
+		Perform: func() (spendings.ExpenseId, error) {
 			if err := c.addExpense(expense, expenseId); err != nil {
 				c.logger.LogInfo("%s: failed to insert err: %v", op, err)
 				return expenseId, err
@@ -32,7 +40,7 @@ func (c *postgresRepository) AddExpense(expense Expense) repositories.MutationWo
 	}
 }
 
-func (c *postgresRepository) addExpense(expense Expense, id ExpenseId) error {
+func (c *defaultRepository) addExpense(expense spendings.Expense, id spendings.ExpenseId) error {
 	const op = "repositories.spendings.postgresRepository.addExpense"
 	c.logger.LogInfo("%s: start[expense=%v id=%s]", op, expense, id)
 	tx, err := c.db.BeginTx(context.Background(), nil)
@@ -71,7 +79,7 @@ VALUES($1, $2, $3, $4);
 	return nil
 }
 
-func (c *postgresRepository) RemoveExpense(expenseId ExpenseId) repositories.MutationWorkItem {
+func (c *defaultRepository) RemoveExpense(expenseId spendings.ExpenseId) repositories.MutationWorkItem {
 	const op = "repositories.spendings.postgresRepository.RemoveExpense"
 	expense, err := c.GetExpense(expenseId)
 	return repositories.MutationWorkItem{
@@ -95,12 +103,12 @@ func (c *postgresRepository) RemoveExpense(expenseId ExpenseId) repositories.Mut
 				c.logger.LogInfo("%s: expense to remove not found", op)
 				return errors.New("expense to remove not found")
 			}
-			return c.addExpense(Expense((*expense).Expense), ExpenseId((*expense).Id))
+			return c.addExpense(spendings.Expense((*expense).Expense), spendings.ExpenseId((*expense).Id))
 		},
 	}
 }
 
-func (c *postgresRepository) removeExpense(id ExpenseId) error {
+func (c *defaultRepository) removeExpense(id spendings.ExpenseId) error {
 	const op = "repositories.spendings.postgresRepository.removeExpense"
 	c.logger.LogInfo("%s: start[id=%s]", op, id)
 	tx, err := c.db.BeginTx(context.Background(), nil)
@@ -128,7 +136,7 @@ func (c *postgresRepository) removeExpense(id ExpenseId) error {
 	return nil
 }
 
-func (c *postgresRepository) GetExpense(id ExpenseId) (*IdentifiableExpense, error) {
+func (c *defaultRepository) GetExpense(id spendings.ExpenseId) (*spendings.IdentifiableExpense, error) {
 	const op = "repositories.spendings.postgresRepository.GetExpense"
 	c.logger.LogInfo("%s: start[id=%s]", op, id)
 	query := `
@@ -152,11 +160,11 @@ WHERE
 		return nil, err
 	}
 	defer rows.Close()
-	var expense *IdentifiableExpense
+	var expense *spendings.IdentifiableExpense
 	for rows.Next() {
-		var _expense IdentifiableExpense
+		var _expense spendings.IdentifiableExpense
 		if expense == nil {
-			_expense = IdentifiableExpense{}
+			_expense = spendings.IdentifiableExpense{}
 		} else {
 			_expense = *expense
 		}
@@ -175,10 +183,10 @@ WHERE
 			c.logger.LogInfo("%s: scan failed err: %v", op, err)
 			return nil, err
 		}
-		_expense.Id = ExpenseId(expenseIdString)
-		_expense.Shares = append(_expense.Shares, ShareOfExpense{
-			Counterparty: CounterpartyId(counterparty),
-			Cost:         Cost(cost),
+		_expense.Id = spendings.ExpenseId(expenseIdString)
+		_expense.Shares = append(_expense.Shares, spendings.ShareOfExpense{
+			Counterparty: spendings.CounterpartyId(counterparty),
+			Cost:         spendings.Cost(cost),
 		})
 		expense = &_expense
 	}
@@ -190,7 +198,7 @@ WHERE
 	return expense, nil
 }
 
-func (c *postgresRepository) GetExpensesBetween(counterparty1 CounterpartyId, counterparty2 CounterpartyId) ([]IdentifiableExpense, error) {
+func (c *defaultRepository) GetExpensesBetween(counterparty1 spendings.CounterpartyId, counterparty2 spendings.CounterpartyId) ([]spendings.IdentifiableExpense, error) {
 	const op = "repositories.spendings.postgresRepository.GetExpensesBetween"
 	c.logger.LogInfo("%s: start[c1=%s c2=%s]", op, counterparty1, counterparty2)
 	query := `
@@ -218,10 +226,10 @@ ORDER BY d.timestamp;
 		return nil, err
 	}
 	defer rows.Close()
-	expenses := []IdentifiableExpense{}
+	expenses := []spendings.IdentifiableExpense{}
 	for rows.Next() {
-		expense := IdentifiableExpense{}
-		expense.Shares = make([]ShareOfExpense, 2)
+		expense := spendings.IdentifiableExpense{}
+		expense.Shares = make([]spendings.ShareOfExpense, 2)
 		var uid1 string
 		var uid2 string
 		var expenseId string
@@ -239,9 +247,9 @@ ORDER BY d.timestamp;
 			c.logger.LogInfo("%s: scan failed err: %v", op, err)
 			return nil, err
 		}
-		expense.Id = ExpenseId(expenseId)
-		expense.Shares[0].Counterparty = CounterpartyId(uid1)
-		expense.Shares[1].Counterparty = CounterpartyId(uid2)
+		expense.Id = spendings.ExpenseId(expenseId)
+		expense.Shares[0].Counterparty = spendings.CounterpartyId(uid1)
+		expense.Shares[1].Counterparty = spendings.CounterpartyId(uid2)
 		expenses = append(expenses, expense)
 	}
 	if err := rows.Err(); err != nil {
@@ -252,7 +260,7 @@ ORDER BY d.timestamp;
 	return expenses, nil
 }
 
-func (c *postgresRepository) GetBalance(counterparty CounterpartyId) ([]Balance, error) {
+func (c *defaultRepository) GetBalance(counterparty spendings.CounterpartyId) ([]spendings.Balance, error) {
 	const op = "repositories.spendings.postgresRepository.GetBalance"
 	c.logger.LogInfo("%s: start[counterparty=%s]", op, counterparty)
 	query := `
@@ -273,7 +281,7 @@ WHERE
 		return nil, err
 	}
 	defer rows.Close()
-	balancesMap := map[CounterpartyId]Balance{}
+	balancesMap := map[spendings.CounterpartyId]spendings.Balance{}
 	for rows.Next() {
 		var currency string
 		var user string
@@ -285,22 +293,22 @@ WHERE
 		)
 		if err != nil {
 			c.logger.LogInfo("%s: scan failed err: %v", op, err)
-			return []Balance{}, err
+			return []spendings.Balance{}, err
 		}
-		_, ok := balancesMap[CounterpartyId(user)]
+		_, ok := balancesMap[spendings.CounterpartyId(user)]
 		if !ok {
-			balancesMap[CounterpartyId(user)] = Balance{
-				Counterparty: CounterpartyId(user),
-				Currencies:   map[Currency]Cost{},
+			balancesMap[spendings.CounterpartyId(user)] = spendings.Balance{
+				Counterparty: spendings.CounterpartyId(user),
+				Currencies:   map[spendings.Currency]spendings.Cost{},
 			}
 		}
-		balancesMap[CounterpartyId(user)].Currencies[Currency(currency)] += Cost(cost)
+		balancesMap[spendings.CounterpartyId(user)].Currencies[spendings.Currency(currency)] += spendings.Cost(cost)
 	}
 	if err := rows.Err(); err != nil {
 		c.logger.LogInfo("%s: found rows err: %v", op, err)
 		return nil, err
 	}
-	balance := make([]Balance, 0, len(balancesMap))
+	balance := make([]spendings.Balance, 0, len(balancesMap))
 	if err != nil {
 		c.logger.LogInfo("%s: unexpected err %v", op, err)
 		return balance, err

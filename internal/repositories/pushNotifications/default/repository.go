@@ -1,17 +1,25 @@
-package pushNotifications
+package defaultRepository
 
 import (
 	"verni/internal/db"
 	"verni/internal/repositories"
+	"verni/internal/repositories/pushNotifications"
 	"verni/internal/services/logging"
 )
 
-type postgresRepository struct {
+func New(db db.DB, logger logging.Service) pushNotifications.Repository {
+	return &defaultRepository{
+		db:     db,
+		logger: logger,
+	}
+}
+
+type defaultRepository struct {
 	db     db.DB
 	logger logging.Service
 }
 
-func (c *postgresRepository) StorePushToken(uid UserId, token string) repositories.MutationWorkItem {
+func (c *defaultRepository) StorePushToken(uid pushNotifications.UserId, token string) repositories.MutationWorkItem {
 	const op = "repositories.pushNotifications.postgresRepository.StorePushToken"
 	currentToken, err := c.GetPushToken(uid)
 	return repositories.MutationWorkItem{
@@ -36,7 +44,7 @@ func (c *postgresRepository) StorePushToken(uid UserId, token string) repositori
 	}
 }
 
-func (c *postgresRepository) storePushToken(uid UserId, token string) error {
+func (c *defaultRepository) storePushToken(uid pushNotifications.UserId, token string) error {
 	const op = "repositories.pushNotifications.postgresRepository.storePushToken"
 	c.logger.LogInfo("%s: start[uid=%v]", op, uid)
 	query := `
@@ -52,7 +60,7 @@ ON CONFLICT (id) DO UPDATE SET token = $2;
 	return nil
 }
 
-func (c *postgresRepository) removePushToken(uid UserId) error {
+func (c *defaultRepository) removePushToken(uid pushNotifications.UserId) error {
 	const op = "repositories.pushNotifications.postgresRepository.removePushToken"
 	c.logger.LogInfo("%s: start[uid=%v]", op, uid)
 	query := `DELETE FROM pushTokens WHERE id = $1;`
@@ -65,7 +73,7 @@ func (c *postgresRepository) removePushToken(uid UserId) error {
 	return nil
 }
 
-func (c *postgresRepository) GetPushToken(uid UserId) (*string, error) {
+func (c *defaultRepository) GetPushToken(uid pushNotifications.UserId) (*string, error) {
 	const op = "repositories.pushNotifications.postgresRepository.GetPushToken"
 	c.logger.LogInfo("%s: start[uid=%v]", op, uid)
 	query := `SELECT token FROM pushTokens WHERE id = $1;`

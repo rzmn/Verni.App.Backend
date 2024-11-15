@@ -1,10 +1,18 @@
-package verification
+package defaultRepository
 
 import (
 	"verni/internal/db"
 	"verni/internal/repositories"
+	"verni/internal/repositories/verification"
 	"verni/internal/services/logging"
 )
+
+func New(db db.DB, logger logging.Service) verification.Repository {
+	return &postgresRepository{
+		db:     db,
+		logger: logger,
+	}
+}
 
 type postgresRepository struct {
 	db     db.DB

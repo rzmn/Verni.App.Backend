@@ -1,4 +1,4 @@
-package friends_test
+package defaultRepository_test
 
 import (
 	"encoding/json"
@@ -9,6 +9,7 @@ import (
 	postgresDb "verni/internal/db/postgres"
 	"verni/internal/repositories"
 	"verni/internal/repositories/friends"
+	defaultRepository "verni/internal/repositories/friends/default"
 	"verni/internal/services/logging"
 	"verni/internal/services/pathProvider"
 
@@ -50,7 +51,7 @@ func randomUid() friends.UserId {
 }
 
 func TestSubscribtion(t *testing.T) {
-	repository := friends.PostgresRepository(database, logging.TestService())
+	repository := defaultRepository.New(database, logging.TestService())
 	subscriber := randomUid()
 	subscription := randomUid()
 
@@ -176,7 +177,7 @@ func TestSubscribtion(t *testing.T) {
 }
 
 func TestStoreAndRemoveFriendRequest(t *testing.T) {
-	repository := friends.PostgresRepository(database, logging.TestService())
+	repository := defaultRepository.New(database, logging.TestService())
 	subscriber := randomUid()
 	subscription := randomUid()
 
@@ -303,7 +304,7 @@ func TestStoreAndRemoveFriendRequest(t *testing.T) {
 }
 
 func TestFriendship(t *testing.T) {
-	repository := friends.PostgresRepository(database, logging.TestService())
+	repository := defaultRepository.New(database, logging.TestService())
 	subscriber := randomUid()
 	subscription := randomUid()
 
@@ -436,7 +437,7 @@ func TestFriendship(t *testing.T) {
 }
 
 func TestHasFriendRequestEmpty(t *testing.T) {
-	repository := friends.PostgresRepository(database, logging.TestService())
+	repository := defaultRepository.New(database, logging.TestService())
 	subscriber := randomUid()
 	subscription := randomUid()
 
@@ -450,7 +451,7 @@ func TestHasFriendRequestEmpty(t *testing.T) {
 }
 
 func TestGetSubscribersEmpty(t *testing.T) {
-	repository := friends.PostgresRepository(database, logging.TestService())
+	repository := defaultRepository.New(database, logging.TestService())
 	uid := randomUid()
 	subscribers, err := repository.GetSubscribers(uid)
 	if err != nil {
@@ -462,7 +463,7 @@ func TestGetSubscribersEmpty(t *testing.T) {
 }
 
 func TestGetSubsriptionsEmpty(t *testing.T) {
-	repository := friends.PostgresRepository(database, logging.TestService())
+	repository := defaultRepository.New(database, logging.TestService())
 	uid := randomUid()
 	subscriptions, err := repository.GetSubscriptions(uid)
 	if err != nil {
@@ -474,7 +475,7 @@ func TestGetSubsriptionsEmpty(t *testing.T) {
 }
 
 func TestGetFriendsEmpty(t *testing.T) {
-	repository := friends.PostgresRepository(database, logging.TestService())
+	repository := defaultRepository.New(database, logging.TestService())
 	uid := randomUid()
 	friends, err := repository.GetFriends(uid)
 	if err != nil {

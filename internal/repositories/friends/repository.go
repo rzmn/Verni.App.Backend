@@ -1,9 +1,7 @@
 package friends
 
 import (
-	"verni/internal/db"
 	"verni/internal/repositories"
-	"verni/internal/services/logging"
 )
 
 type UserId string
@@ -27,11 +25,4 @@ type Repository interface {
 
 	StoreFriendRequest(sender UserId, target UserId) repositories.MutationWorkItem
 	RemoveFriendRequest(sender UserId, target UserId) repositories.MutationWorkItem
-}
-
-func PostgresRepository(db db.DB, logger logging.Service) Repository {
-	return &postgresRepository{
-		db:     db,
-		logger: logger,
-	}
 }

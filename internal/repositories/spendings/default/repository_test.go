@@ -1,4 +1,4 @@
-package spendings_test
+package defaultRepository_test
 
 import (
 	"encoding/json"
@@ -10,6 +10,7 @@ import (
 	"verni/internal/db"
 	postgresDb "verni/internal/db/postgres"
 	"verni/internal/repositories/spendings"
+	defaultRepository "verni/internal/repositories/spendings/default"
 	"verni/internal/services/logging"
 	"verni/internal/services/pathProvider"
 
@@ -65,7 +66,7 @@ func expensesAreEqual(lhs spendings.Expense, rhs spendings.Expense) bool {
 }
 
 func TestGetExpensesEmpty(t *testing.T) {
-	repository := spendings.PostgresRepository(database, logging.TestService())
+	repository := defaultRepository.New(database, logging.TestService())
 	expenseId := randomEid()
 
 	shouldBeEmpty, err := repository.GetExpense(expenseId)
@@ -78,7 +79,7 @@ func TestGetExpensesEmpty(t *testing.T) {
 }
 
 func TestGetBalanceEmpty(t *testing.T) {
-	repository := spendings.PostgresRepository(database, logging.TestService())
+	repository := defaultRepository.New(database, logging.TestService())
 	counterparty := randomUid()
 
 	shouldBeEmpty, err := repository.GetBalance(counterparty)
@@ -91,7 +92,7 @@ func TestGetBalanceEmpty(t *testing.T) {
 }
 
 func TestExpensesAndCounterparties(t *testing.T) {
-	repository := spendings.PostgresRepository(database, logging.TestService())
+	repository := defaultRepository.New(database, logging.TestService())
 	firstCounterparty := randomUid()
 	secondCounterparty := randomUid()
 	cost1 := spendings.Cost(456)
@@ -265,7 +266,7 @@ func TestExpensesAndCounterparties(t *testing.T) {
 }
 
 func TestAddAndRemoveExpense(t *testing.T) {
-	repository := spendings.PostgresRepository(database, logging.TestService())
+	repository := defaultRepository.New(database, logging.TestService())
 	counterparty1 := randomUid()
 	counterparty2 := randomUid()
 	cost := spendings.Cost(456)

@@ -1,4 +1,4 @@
-package images_test
+package defaultRepository_test
 
 import (
 	"encoding/json"
@@ -8,6 +8,7 @@ import (
 	"verni/internal/db"
 	postgresDb "verni/internal/db/postgres"
 	"verni/internal/repositories/images"
+	defaultRepository "verni/internal/repositories/images/default"
 	"verni/internal/services/logging"
 	"verni/internal/services/pathProvider"
 
@@ -45,7 +46,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestUpload(t *testing.T) {
-	repository := images.PostgresRepository(database, logging.TestService())
+	repository := defaultRepository.New(database, logging.TestService())
 	base64 := uuid.New().String()
 
 	transaction := repository.UploadImageBase64(base64)
@@ -73,7 +74,7 @@ func TestUpload(t *testing.T) {
 }
 
 func TestGetEmpty(t *testing.T) {
-	repository := images.PostgresRepository(database, logging.TestService())
+	repository := defaultRepository.New(database, logging.TestService())
 	id := images.ImageId(uuid.New().String())
 
 	shouldBeEmpty, err := repository.GetImagesBase64([]images.ImageId{id})

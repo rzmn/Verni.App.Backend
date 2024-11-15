@@ -1,4 +1,4 @@
-package users_test
+package defaultRepository_test
 
 import (
 	"encoding/json"
@@ -9,6 +9,7 @@ import (
 	"verni/internal/db"
 	postgresDb "verni/internal/db/postgres"
 	"verni/internal/repositories/users"
+	defaultRepository "verni/internal/repositories/users/default"
 	"verni/internal/services/logging"
 	"verni/internal/services/pathProvider"
 
@@ -66,7 +67,7 @@ func TestStore(t *testing.T) {
 }
 
 func storeUser(user users.User, t *testing.T) {
-	repository := users.PostgresRepository(database, logging.TestService())
+	repository := defaultRepository.New(database, logging.TestService())
 
 	// if no user with this id, should return []
 
@@ -116,7 +117,7 @@ func storeUser(user users.User, t *testing.T) {
 }
 
 func TestUpdateDisplayName(t *testing.T) {
-	repository := users.PostgresRepository(database, logging.TestService())
+	repository := defaultRepository.New(database, logging.TestService())
 	user := randomUserWithAvatar(true)
 	storeTransaction := repository.StoreUser(user)
 	if err := storeTransaction.Perform(); err != nil {
@@ -158,7 +159,7 @@ func TestUpdateAvatar(t *testing.T) {
 }
 
 func testUpdateAvatar(user users.User, newAvatar *users.AvatarId, t *testing.T) {
-	repository := users.PostgresRepository(database, logging.TestService())
+	repository := defaultRepository.New(database, logging.TestService())
 	storeTransaction := repository.StoreUser(user)
 	if err := storeTransaction.Perform(); err != nil {
 		t.Fatalf("failed to perform `storeTransaction` err: %v", err)

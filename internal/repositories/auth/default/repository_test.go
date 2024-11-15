@@ -1,4 +1,4 @@
-package auth_test
+package defaultRepository_test
 
 import (
 	"encoding/json"
@@ -10,6 +10,7 @@ import (
 	"verni/internal/db"
 	postgresDb "verni/internal/db/postgres"
 	"verni/internal/repositories/auth"
+	defaultRepository "verni/internal/repositories/auth/default"
 	"verni/internal/services/logging"
 	"verni/internal/services/pathProvider"
 
@@ -55,7 +56,7 @@ func randomEmail() string {
 }
 
 func TestGetUserInfo(t *testing.T) {
-	repository := auth.PostgresRepository(database, logging.TestService())
+	repository := defaultRepository.New(database, logging.TestService())
 	userId := randomUid()
 	userEmail := randomEmail()
 	userToken := uuid.New().String()
@@ -91,7 +92,7 @@ func TestGetUserInfo(t *testing.T) {
 }
 
 func TestMarkUserEmailValidated(t *testing.T) {
-	repository := auth.PostgresRepository(database, logging.TestService())
+	repository := defaultRepository.New(database, logging.TestService())
 	userId := randomUid()
 	userEmail := randomEmail()
 	userToken := uuid.New().String()
@@ -128,7 +129,7 @@ func TestMarkUserEmailValidated(t *testing.T) {
 }
 
 func TestIsUserExists(t *testing.T) {
-	repository := auth.PostgresRepository(database, logging.TestService())
+	repository := defaultRepository.New(database, logging.TestService())
 	userId := randomUid()
 	userEmail := randomEmail()
 	userToken := uuid.New().String()
@@ -165,7 +166,7 @@ func TestIsUserExists(t *testing.T) {
 }
 
 func TestCheckCredentials(t *testing.T) {
-	repository := auth.PostgresRepository(database, logging.TestService())
+	repository := defaultRepository.New(database, logging.TestService())
 	userId := randomUid()
 	userEmail := randomEmail()
 	userToken := uuid.New().String()
@@ -197,7 +198,7 @@ func TestCheckCredentials(t *testing.T) {
 }
 
 func TestGetUserIdByEmail(t *testing.T) {
-	repository := auth.PostgresRepository(database, logging.TestService())
+	repository := defaultRepository.New(database, logging.TestService())
 	userId := randomUid()
 	userEmail := randomEmail()
 	userToken := uuid.New().String()
@@ -237,7 +238,7 @@ func TestGetUserIdByEmail(t *testing.T) {
 }
 
 func TestUpdateRefreshToken(t *testing.T) {
-	repository := auth.PostgresRepository(database, logging.TestService())
+	repository := defaultRepository.New(database, logging.TestService())
 	userId := randomUid()
 	userEmail := randomEmail()
 	userToken := uuid.New().String()
@@ -275,7 +276,7 @@ func TestUpdateRefreshToken(t *testing.T) {
 }
 
 func TestUpdatePassword(t *testing.T) {
-	repository := auth.PostgresRepository(database, logging.TestService())
+	repository := defaultRepository.New(database, logging.TestService())
 	userId := randomUid()
 	userEmail := randomEmail()
 	userToken := uuid.New().String()
@@ -313,7 +314,7 @@ func TestUpdatePassword(t *testing.T) {
 }
 
 func TestUpdateEmail(t *testing.T) {
-	repository := auth.PostgresRepository(database, logging.TestService())
+	repository := defaultRepository.New(database, logging.TestService())
 	userId := randomUid()
 	userEmail := randomEmail()
 	userToken := uuid.New().String()

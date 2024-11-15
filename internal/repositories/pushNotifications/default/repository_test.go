@@ -1,4 +1,4 @@
-package pushNotifications_test
+package defaultRepository_test
 
 import (
 	"encoding/json"
@@ -8,6 +8,7 @@ import (
 	"verni/internal/db"
 	postgresDb "verni/internal/db/postgres"
 	"verni/internal/repositories/pushNotifications"
+	defaultRepository "verni/internal/repositories/pushNotifications/default"
 	"verni/internal/services/logging"
 	"verni/internal/services/pathProvider"
 
@@ -49,7 +50,7 @@ func randomUid() pushNotifications.UserId {
 }
 
 func TestStorePushToken(t *testing.T) {
-	repository := pushNotifications.PostgresRepository(database, logging.TestService())
+	repository := defaultRepository.New(database, logging.TestService())
 
 	// initially token should be nil
 

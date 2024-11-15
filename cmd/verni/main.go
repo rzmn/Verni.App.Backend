@@ -10,12 +10,19 @@ import (
 	"verni/internal/db"
 	postgresDb "verni/internal/db/postgres"
 	authRepository "verni/internal/repositories/auth"
+	defaultAuthRepository "verni/internal/repositories/auth/default"
 	friendsRepository "verni/internal/repositories/friends"
+	defaultFriendsRepository "verni/internal/repositories/friends/default"
 	imagesRepository "verni/internal/repositories/images"
+	defaultImagesRepository "verni/internal/repositories/images/default"
 	pushRegistryRepository "verni/internal/repositories/pushNotifications"
+	defaultPushRegistryRepository "verni/internal/repositories/pushNotifications/default"
 	spendingsRepository "verni/internal/repositories/spendings"
+	defaultSpendingsRepository "verni/internal/repositories/spendings/default"
 	usersRepository "verni/internal/repositories/users"
+	defaultUsersRepository "verni/internal/repositories/users/default"
 	verificationRepository "verni/internal/repositories/verification"
+	defaultVerificationRepository "verni/internal/repositories/verification/default"
 	"verni/internal/requestHandlers/accessToken"
 	"verni/internal/requestHandlers/auth"
 	"verni/internal/requestHandlers/avatars"
@@ -166,13 +173,13 @@ func main() {
 	}()
 	defer database.Close()
 	repositories := Repositories{
-		auth:         authRepository.PostgresRepository(database, logger),
-		friends:      friendsRepository.PostgresRepository(database, logger),
-		images:       imagesRepository.PostgresRepository(database, logger),
-		pushRegistry: pushRegistryRepository.PostgresRepository(database, logger),
-		spendings:    spendingsRepository.PostgresRepository(database, logger),
-		users:        usersRepository.PostgresRepository(database, logger),
-		verification: verificationRepository.PostgresRepository(database, logger),
+		auth:         defaultAuthRepository.New(database, logger),
+		friends:      defaultFriendsRepository.New(database, logger),
+		images:       defaultImagesRepository.New(database, logger),
+		pushRegistry: defaultPushRegistryRepository.New(database, logger),
+		spendings:    defaultSpendingsRepository.New(database, logger),
+		users:        defaultUsersRepository.New(database, logger),
+		verification: defaultVerificationRepository.New(database, logger),
 	}
 	services := Services{
 		push: func() pushNotifications.Service {

@@ -1,4 +1,4 @@
-package users
+package defaultRepository
 
 import (
 	"database/sql"
@@ -8,15 +8,23 @@ import (
 	"verni/internal/common"
 	"verni/internal/db"
 	"verni/internal/repositories"
+	"verni/internal/repositories/users"
 	"verni/internal/services/logging"
 )
 
-type postgresRepository struct {
+func New(db db.DB, logger logging.Service) users.Repository {
+	return &defaultRepository{
+		db:     db,
+		logger: logger,
+	}
+}
+
+type defaultRepository struct {
 	db     db.DB
 	logger logging.Service
 }
 
-func (c *postgresRepository) StoreUser(user User) repositories.MutationWorkItem {
+func (c *defaultRepository) StoreUser(user users.User) repositories.MutationWorkItem {
 	return repositories.MutationWorkItem{
 		Perform: func() error {
 			return c.storeUser(user)
@@ -27,7 +35,7 @@ func (c *postgresRepository) StoreUser(user User) repositories.MutationWorkItem 
 	}
 }
 
-func (c *postgresRepository) storeUser(user User) error {
+func (c *defaultRepository) storeUser(user users.User) error {
 	const op = "repositories.users.postgresRepository.storeUser"
 	c.logger.LogInfo("%s: start[id=%s]", op, user.Id)
 
@@ -50,7 +58,7 @@ func (c *postgresRepository) storeUser(user User) error {
 	return nil
 }
 
-func (c *postgresRepository) removeUser(userId UserId) error {
+func (c *defaultRepository) removeUser(userId users.UserId) error {
 	const op = "repositories.users.postgresRepository.removeUser"
 	c.logger.LogInfo("%s: start[id=%s]", op, userId)
 	query := `DELETE FROM users WHERE id = $1;`
@@ -63,65 +71,65 @@ func (c *postgresRepository) removeUser(userId UserId) error {
 	return nil
 }
 
-func (c *postgresRepository) GetUsers(ids []UserId) ([]User, error) {
+func (c *defaultRepository) GetUsers(ids []users.UserId) ([]users.User, error) {
 	const op = "repositories.users.postgresRepository.GetUsers"
 	c.logger.LogInfo("%s: start", op)
 	if len(ids) == 0 {
 		c.logger.LogInfo("%s: success", op)
-		return []User{}, nil
+		return []users.User{}, nil
 	}
 	query := fmt.Sprintf(
 		`SELECT id, displayName, avatarId FROM users WHERE id IN (%s);`,
-		strings.Join(common.Map(ids, func(id UserId) string {
+		strings.Join(common.Map(ids, func(id users.UserId) string {
 			return fmt.Sprintf("'%s'", id)
 		}), ","),
 	)
 	rows, err := c.db.Query(query)
 	if err != nil {
 		c.logger.LogInfo("%s: failed to perform query err: %v", op, err)
-		return []User{}, err
+		return []users.User{}, err
 	}
 	defer rows.Close()
-	users := []User{}
+	result := []users.User{}
 	for rows.Next() {
 		var id string
 		var displayName string
 		var sqlAvatarId sql.NullString
 		if err := rows.Scan(&id, &displayName, &sqlAvatarId); err != nil {
 			c.logger.LogInfo("%s: failed to perform scan err: %v", op, err)
-			return []User{}, err
+			return []users.User{}, err
 		}
-		var avatarId *AvatarId
+		var avatarId *users.AvatarId
 		if sqlAvatarId.Valid {
-			avatarId = (*AvatarId)(&sqlAvatarId.String)
+			avatarId = (*users.AvatarId)(&sqlAvatarId.String)
 		} else {
 			avatarId = nil
 		}
-		users = append(users, User{
-			Id:          UserId(id),
+		result = append(result, users.User{
+			Id:          users.UserId(id),
 			DisplayName: displayName,
 			AvatarId:    avatarId,
 		})
 	}
 	if err := rows.Err(); err != nil {
 		c.logger.LogInfo("%s: found rows err: %v", op, err)
-		return []User{}, err
+		return []users.User{}, err
 	}
 	c.logger.LogInfo("%s: success", op)
-	return users, nil
+	return result, nil
 }
 
-func (c *postgresRepository) UpdateDisplayName(name string, id UserId) repositories.MutationWorkItem {
+func (c *defaultRepository) UpdateDisplayName(name string, id users.UserId) repositories.MutationWorkItem {
 	const op = "repositories.users.postgresRepository.UpdateDisplayName"
 	c.logger.LogInfo("%s: start[name=%s id=%s]", op, name, id)
-	users, err := c.GetUsers([]UserId{id})
+	usersFromDb, err := c.GetUsers([]users.UserId{id})
 	return repositories.MutationWorkItem{
 		Perform: func() error {
 			if err != nil {
 				c.logger.LogInfo("%s: cannot get user info: %v", op, err)
 				return err
 			}
-			if len(users) == 0 {
+			if len(usersFromDb) == 0 {
 				err := errors.New("no such user exists")
 				c.logger.LogInfo("%s: cannot get user info: %v", op, err)
 				return err
@@ -133,17 +141,17 @@ func (c *postgresRepository) UpdateDisplayName(name string, id UserId) repositor
 				c.logger.LogInfo("%s: cannot get user info: %v", op, err)
 				return err
 			}
-			if len(users) == 0 {
+			if len(usersFromDb) == 0 {
 				err := errors.New("no such user exists")
 				c.logger.LogInfo("%s: cannot get user info: %v", op, err)
 				return err
 			}
-			return c.updateDisplayName(users[0].DisplayName, id)
+			return c.updateDisplayName(usersFromDb[0].DisplayName, id)
 		},
 	}
 }
 
-func (c *postgresRepository) updateDisplayName(name string, id UserId) error {
+func (c *defaultRepository) updateDisplayName(name string, id users.UserId) error {
 	const op = "repositories.users.postgresRepository.updateDisplayName"
 	c.logger.LogInfo("%s: start[name=%s id=%s]", op, name, id)
 	query := `UPDATE users SET displayName = $2 WHERE id = $1;`
@@ -156,17 +164,17 @@ func (c *postgresRepository) updateDisplayName(name string, id UserId) error {
 	return nil
 }
 
-func (c *postgresRepository) UpdateAvatarId(avatarId *AvatarId, id UserId) repositories.MutationWorkItem {
+func (c *defaultRepository) UpdateAvatarId(avatarId *users.AvatarId, id users.UserId) repositories.MutationWorkItem {
 	const op = "repositories.users.postgresRepository.UpdateAvatarId"
 	c.logger.LogInfo("%s: start[avatarId=%v id=%s]", op, avatarId, id)
-	users, err := c.GetUsers([]UserId{id})
+	usersFromDb, err := c.GetUsers([]users.UserId{id})
 	return repositories.MutationWorkItem{
 		Perform: func() error {
 			if err != nil {
 				c.logger.LogInfo("%s: cannot get user info: %v", op, err)
 				return err
 			}
-			if len(users) == 0 {
+			if len(usersFromDb) == 0 {
 				err := errors.New("no such user exists")
 				c.logger.LogInfo("%s: cannot get user info: %v", op, err)
 				return err
@@ -178,17 +186,17 @@ func (c *postgresRepository) UpdateAvatarId(avatarId *AvatarId, id UserId) repos
 				c.logger.LogInfo("%s: cannot get user info: %v", op, err)
 				return err
 			}
-			if len(users) == 0 {
+			if len(usersFromDb) == 0 {
 				err := errors.New("no such user exists")
 				c.logger.LogInfo("%s: cannot get user info: %v", op, err)
 				return err
 			}
-			return c.updateAvatarId((*AvatarId)(users[0].AvatarId), id)
+			return c.updateAvatarId((*users.AvatarId)(usersFromDb[0].AvatarId), id)
 		},
 	}
 }
 
-func (c *postgresRepository) updateAvatarId(avatarId *AvatarId, id UserId) error {
+func (c *defaultRepository) updateAvatarId(avatarId *users.AvatarId, id users.UserId) error {
 	const op = "repositories.users.postgresRepository.updateAvatarId"
 	c.logger.LogInfo("%s: start[avatarId=%v id=%s]", op, avatarId, id)
 	if avatarId == nil {
