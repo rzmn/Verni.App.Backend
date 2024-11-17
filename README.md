@@ -1,5 +1,16 @@
+[![Go Report Card](https://goreportcard.com/badge/rzmn/Verni.App.Backend)](https://goreportcard.com/report/rzmn/Verni.App.Backend) 
+[![Build](https://github.com/rzmn/Verni.App.Backend/actions/workflows/build.yml/badge.svg)](https://github.com/rzmn/Verni.App.Backend/actions/workflows/build.yml)
+
 # Verni.App.Backend
-Server side for Verni App
+Server side for Verni App. 
+
+Verni is an open-source shared expenses tracker.
+The core value of the App is a focus on testability, extensibility and reliability of the infrastructure it is built with.
+Infrastructure refers to both the codebase, the design system and user scenarios.
+The main feature of the application is a complete absence of a desire to monetize user journeys. The user's needs should be met in the simplest possible way, forever free.
+
+**Project is under development.**
+
 # Table of Contents
 1. [Tech Stack](#TechStack)
 2. [Features](#Features)
