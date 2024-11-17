@@ -23,6 +23,7 @@ import (
 	defaultUsersRepository "verni/internal/repositories/users/default"
 	verificationRepository "verni/internal/repositories/verification"
 	defaultVerificationRepository "verni/internal/repositories/verification/default"
+	ginServer "verni/internal/server/gin"
 
 	defaultAccessTokenHandler "verni/internal/requestHandlers/accessToken/default"
 	defaultAuthHandler "verni/internal/requestHandlers/auth/default"
@@ -310,18 +311,18 @@ func main() {
 			if err != nil {
 				logger.LogFatal("failed to serialize default server config err: %v", err)
 			}
-			var ginConfig server.GinConfig
+			var ginConfig ginServer.GinConfig
 			json.Unmarshal(data, &ginConfig)
 			logger.LogInfo("creating gin server with config %v", ginConfig)
-			return server.GinServer(
+			return ginServer.New(
 				ginConfig,
 				defaultAccessTokenHandler.New(
 					repositories.auth,
 					services.jwt,
 					logger,
 				),
-				func(realtimeEvents realtimeEvents.Service) server.RequestHandlers {
-					return server.RequestHandlers{
+				func(realtimeEvents realtimeEvents.Service) ginServer.RequestHandlers {
+					return ginServer.RequestHandlers{
 						Auth: defaultAuthHandler.New(
 							controllers.auth,
 							logger,
