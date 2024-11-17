@@ -43,3 +43,9 @@ Service is an abstraction over some 3rdparty library (like JWT or some hashing a
 - `jwt` - Json Web Tokens standart interface. Using a wrapper around 3rdparty library in production.
 - `pathProvider` - interface for getting absolute paths from relative independently from location of the binary file. Using value from environment in production.
 - `pushNotifications` - interface for sending push notifications. APNS is supported in production.
+### Repositories Layer
+Repository is an abstraction over some data storage. Each repository should provide an access to certain problem domain. Each mutable (update/delete/insert) action should return an instance of "transaction" object which can rollback performed action.
+### Controllers Layer
+Controller is responsible to do data manipulations to perform some product use case. Usually controller is a coordinator of several repositories. Example: to get a "Profile Info" info you have to query both `auth` and `users` repository to get private(eg email or verification status) and public(display name or avatar) account data.
+### Request Handlers Layer
+The topmost layer. Each request handler provides an action to be performed when the corresponding URL is called. In most cases Request Handler is a decorator over some Controller that interacts with notification services (push, polling etc) and maps Controllers entities into serializable ones
