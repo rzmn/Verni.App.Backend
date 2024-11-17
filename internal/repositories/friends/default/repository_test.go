@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"reflect"
+	"sort"
 	"testing"
 	"verni/internal/db"
 	postgresDb "verni/internal/db/postgres"
@@ -59,121 +61,25 @@ func TestSubscribtion(t *testing.T) {
 	if err := subsctiptionTransaction.Perform(); err != nil {
 		t.Fatalf("failed to perform `subsctiptionTransaction` err: %v", err)
 	}
-	hasRequestFromSubscriberToSubscription, err := repository.HasFriendRequest(subscriber, subscription)
-	if err != nil {
-		t.Fatalf("failed to get `hasRequestFromSubscriberToSubscription` err: %v", err)
-	}
-	if !hasRequestFromSubscriberToSubscription {
-		t.Fatalf("`hasRequestFromSubscriberToSubscription` should be true")
-	}
-	hasRequestFromSubscriptionToSubscriber, err := repository.HasFriendRequest(subscription, subscriber)
-	if err != nil {
-		t.Fatalf("failed to get `hasRequestFromSubscriptionToSubscriber` err: %v", err)
-	}
-	if hasRequestFromSubscriptionToSubscriber {
-		t.Fatalf("`hasRequestFromSubscriptionToSubscriber` should be false")
-	}
-	subscriptionsOfSubscriber, err := repository.GetSubscriptions(subscriber)
-	if err != nil {
-		t.Fatalf("failed to get `subscriptionsOfSubscriber` err: %v", err)
-	}
-	if len(subscriptionsOfSubscriber) != 1 || subscriptionsOfSubscriber[0] != subscription {
-		t.Fatalf("`subscriptionsOfSubscriber` should contain %s only, found %v", subscription, subscriptionsOfSubscriber)
-	}
-	subscriptionsOfSubscription, err := repository.GetSubscriptions(subscription)
-	if err != nil {
-		t.Fatalf("failed to get `subscriptionsOfSubscription` err: %v", err)
-	}
-	if len(subscriptionsOfSubscription) != 0 {
-		t.Fatalf("`subscriptionsOfSubscription` be empty, found %v", subscriptionsOfSubscription)
-	}
-	subscribersOfSubscriber, err := repository.GetSubscribers(subscriber)
-	if err != nil {
-		t.Fatalf("failed to get `subscribersOfSubscriber` err: %v", err)
-	}
-	if len(subscribersOfSubscriber) != 0 {
-		t.Fatalf("`subscribersOfSubscriber` should be empty, found %v", subscribersOfSubscriber)
-	}
-	subscribersOfSubscription, err := repository.GetSubscribers(subscription)
-	if err != nil {
-		t.Fatalf("failed to get `subscribersOfSubscription` err: %v", err)
-	}
-	if len(subscribersOfSubscription) != 1 || subscribersOfSubscription[0] != subscriber {
-		t.Fatalf("`subscribersOfSubscription` should contain %s only, found %v", subscriber, subscribersOfSubscription)
-	}
-	friendsOfSubscriber, err := repository.GetFriends(subscriber)
-	if err != nil {
-		t.Fatalf("failed to get `friendsOfSubscriber` err: %v", err)
-	}
-	if len(friendsOfSubscriber) != 0 {
-		t.Fatalf("`friendsOfSubscriber` should be empty, found %v", friendsOfSubscriber)
-	}
-	friendsOfSubscription, err := repository.GetFriends(subscription)
-	if err != nil {
-		t.Fatalf("failed to get `friendsOfSubscription` err: %v", err)
-	}
-	if len(friendsOfSubscription) != 0 {
-		t.Fatalf("`friendsOfSubscription` should be empty, found %v", friendsOfSubscription)
-	}
+	ensureFriendRequest(repository, t, subscriber, subscription, true)
+	ensureFriendRequest(repository, t, subscription, subscriber, false)
+	ensureSubscriptionsIgnoringOrder(repository, t, subscriber, []friends.UserId{subscription})
+	ensureSubscriptionsIgnoringOrder(repository, t, subscription, []friends.UserId{})
+	ensureSubscribersIgnoringOrder(repository, t, subscriber, []friends.UserId{})
+	ensureSubscribersIgnoringOrder(repository, t, subscription, []friends.UserId{subscriber})
+	ensureFriendsIgnoringOrder(repository, t, subscriber, []friends.UserId{})
+	ensureFriendsIgnoringOrder(repository, t, subscription, []friends.UserId{})
 	if err := subsctiptionTransaction.Rollback(); err != nil {
 		t.Fatalf("failed to rollback `subsctiptionTransaction` err: %v", err)
 	}
-	hasRequestFromSubscriberToSubscription, err = repository.HasFriendRequest(subscriber, subscription)
-	if err != nil {
-		t.Fatalf("[after rollback] failed to get `hasRequestFromSubscriberToSubscription` err: %v", err)
-	}
-	if hasRequestFromSubscriberToSubscription {
-		t.Fatalf("[after rollback] `hasRequestFromSubscriberToSubscription` should be false")
-	}
-	hasRequestFromSubscriptionToSubscriber, err = repository.HasFriendRequest(subscription, subscriber)
-	if err != nil {
-		t.Fatalf("[after rollback] failed to get `hasRequestFromSubscriptionToSubscriber` err: %v", err)
-	}
-	if hasRequestFromSubscriptionToSubscriber {
-		t.Fatalf("[after rollback] `hasRequestFromSubscriptionToSubscriber` should be false")
-	}
-	subscriptionsOfSubscriber, err = repository.GetSubscriptions(subscriber)
-	if err != nil {
-		t.Fatalf("[after rollback] failed to get `subscriptionsOfSubscriber` err: %v", err)
-	}
-	if len(subscriptionsOfSubscriber) != 0 {
-		t.Fatalf("[after rollback] `subscriptionsOfSubscriber` should be empty, found %v", subscriptionsOfSubscriber)
-	}
-	subscriptionsOfSubscription, err = repository.GetSubscriptions(subscription)
-	if err != nil {
-		t.Fatalf("[after rollback] failed to get `subscriptionsOfSubscription` err: %v", err)
-	}
-	if len(subscriptionsOfSubscription) != 0 {
-		t.Fatalf("[after rollback] `subscriptionsOfSubscription` be empty, found %v", subscriptionsOfSubscription)
-	}
-	subscribersOfSubscriber, err = repository.GetSubscribers(subscriber)
-	if err != nil {
-		t.Fatalf("[after rollback] failed to get `subscribersOfSubscriber` err: %v", err)
-	}
-	if len(subscribersOfSubscriber) != 0 {
-		t.Fatalf("[after rollback] `subscribersOfSubscriber` should be empty, found %v", subscribersOfSubscriber)
-	}
-	subscribersOfSubscription, err = repository.GetSubscribers(subscription)
-	if err != nil {
-		t.Fatalf("[after rollback] failed to get `subscribersOfSubscription` err: %v", err)
-	}
-	if len(subscribersOfSubscription) != 0 {
-		t.Fatalf("[after rollback] `subscribersOfSubscription` should be empty, found %v", subscribersOfSubscription)
-	}
-	friendsOfSubscriber, err = repository.GetFriends(subscriber)
-	if err != nil {
-		t.Fatalf("[after rollback] failed to get `friendsOfSubscriber` err: %v", err)
-	}
-	if len(friendsOfSubscriber) != 0 {
-		t.Fatalf("[after rollback] `friendsOfSubscriber` should be empty, found %v", friendsOfSubscriber)
-	}
-	friendsOfSubscription, err = repository.GetFriends(subscription)
-	if err != nil {
-		t.Fatalf("[after rollback] failed to get `friendsOfSubscription` err: %v", err)
-	}
-	if len(friendsOfSubscription) != 0 {
-		t.Fatalf("[after rollback] `friendsOfSubscription` should be empty, found %v", friendsOfSubscription)
-	}
+	ensureFriendRequest(repository, t, subscriber, subscription, false)
+	ensureFriendRequest(repository, t, subscription, subscriber, false)
+	ensureSubscriptionsIgnoringOrder(repository, t, subscriber, []friends.UserId{})
+	ensureSubscriptionsIgnoringOrder(repository, t, subscription, []friends.UserId{})
+	ensureSubscribersIgnoringOrder(repository, t, subscriber, []friends.UserId{})
+	ensureSubscribersIgnoringOrder(repository, t, subscription, []friends.UserId{})
+	ensureFriendsIgnoringOrder(repository, t, subscriber, []friends.UserId{})
+	ensureFriendsIgnoringOrder(repository, t, subscription, []friends.UserId{})
 }
 
 func TestStoreAndRemoveFriendRequest(t *testing.T) {
@@ -185,122 +91,26 @@ func TestStoreAndRemoveFriendRequest(t *testing.T) {
 	if err := subsctiptionTransaction.Perform(); err != nil {
 		t.Fatalf("failed to perform `subsctiptionTransaction` err: %v", err)
 	}
-	hasRequestFromSubscriberToSubscription, err := repository.HasFriendRequest(subscriber, subscription)
-	if err != nil {
-		t.Fatalf("failed to get `hasRequestFromSubscriberToSubscription` err: %v", err)
-	}
-	if !hasRequestFromSubscriberToSubscription {
-		t.Fatalf("`hasRequestFromSubscriberToSubscription` should be true")
-	}
-	hasRequestFromSubscriptionToSubscriber, err := repository.HasFriendRequest(subscription, subscriber)
-	if err != nil {
-		t.Fatalf("failed to get `hasRequestFromSubscriptionToSubscriber` err: %v", err)
-	}
-	if hasRequestFromSubscriptionToSubscriber {
-		t.Fatalf("`hasRequestFromSubscriptionToSubscriber` should be false")
-	}
-	subscriptionsOfSubscriber, err := repository.GetSubscriptions(subscriber)
-	if err != nil {
-		t.Fatalf("failed to get `subscriptionsOfSubscriber` err: %v", err)
-	}
-	if len(subscriptionsOfSubscriber) != 1 || subscriptionsOfSubscriber[0] != subscription {
-		t.Fatalf("`subscriptionsOfSubscriber` should contain %s only, found %v", subscription, subscriptionsOfSubscriber)
-	}
-	subscriptionsOfSubscription, err := repository.GetSubscriptions(subscription)
-	if err != nil {
-		t.Fatalf("failed to get `subscriptionsOfSubscription` err: %v", err)
-	}
-	if len(subscriptionsOfSubscription) != 0 {
-		t.Fatalf("`subscriptionsOfSubscription` be empty, found %v", subscriptionsOfSubscription)
-	}
-	subscribersOfSubscriber, err := repository.GetSubscribers(subscriber)
-	if err != nil {
-		t.Fatalf("failed to get `subscribersOfSubscriber` err: %v", err)
-	}
-	if len(subscribersOfSubscriber) != 0 {
-		t.Fatalf("`subscribersOfSubscriber` should be empty, found %v", subscribersOfSubscriber)
-	}
-	subscribersOfSubscription, err := repository.GetSubscribers(subscription)
-	if err != nil {
-		t.Fatalf("failed to get `subscribersOfSubscription` err: %v", err)
-	}
-	if len(subscribersOfSubscription) != 1 || subscribersOfSubscription[0] != subscriber {
-		t.Fatalf("`subscribersOfSubscription` should contain %s only, found %v", subscriber, subscribersOfSubscription)
-	}
-	friendsOfSubscriber, err := repository.GetFriends(subscriber)
-	if err != nil {
-		t.Fatalf("failed to get `friendsOfSubscriber` err: %v", err)
-	}
-	if len(friendsOfSubscriber) != 0 {
-		t.Fatalf("`friendsOfSubscriber` should be empty, found %v", friendsOfSubscriber)
-	}
-	friendsOfSubscription, err := repository.GetFriends(subscription)
-	if err != nil {
-		t.Fatalf("failed to get `friendsOfSubscription` err: %v", err)
-	}
-	if len(friendsOfSubscription) != 0 {
-		t.Fatalf("`friendsOfSubscription` should be empty, found %v", friendsOfSubscription)
-	}
+	ensureFriendRequest(repository, t, subscriber, subscription, true)
+	ensureFriendRequest(repository, t, subscription, subscriber, false)
+	ensureSubscriptionsIgnoringOrder(repository, t, subscriber, []friends.UserId{subscription})
+	ensureSubscriptionsIgnoringOrder(repository, t, subscription, []friends.UserId{})
+	ensureSubscribersIgnoringOrder(repository, t, subscriber, []friends.UserId{})
+	ensureSubscribersIgnoringOrder(repository, t, subscription, []friends.UserId{subscriber})
+	ensureFriendsIgnoringOrder(repository, t, subscriber, []friends.UserId{})
+	ensureFriendsIgnoringOrder(repository, t, subscription, []friends.UserId{})
 	removeTransaction := repository.RemoveFriendRequest(subscriber, subscription)
 	if err := removeTransaction.Perform(); err != nil {
 		t.Fatalf("failed to perform `removeTransaction` err: %v", err)
 	}
-	hasRequestFromSubscriberToSubscription, err = repository.HasFriendRequest(subscriber, subscription)
-	if err != nil {
-		t.Fatalf("[after remove] failed to get `hasRequestFromSubscriberToSubscription` err: %v", err)
-	}
-	if hasRequestFromSubscriberToSubscription {
-		t.Fatalf("[after remove] `hasRequestFromSubscriberToSubscription` should be false")
-	}
-	hasRequestFromSubscriptionToSubscriber, err = repository.HasFriendRequest(subscription, subscriber)
-	if err != nil {
-		t.Fatalf("[after remove] failed to get `hasRequestFromSubscriptionToSubscriber` err: %v", err)
-	}
-	if hasRequestFromSubscriptionToSubscriber {
-		t.Fatalf("[after remove] `hasRequestFromSubscriptionToSubscriber` should be false")
-	}
-	subscriptionsOfSubscriber, err = repository.GetSubscriptions(subscriber)
-	if err != nil {
-		t.Fatalf("[after remove] failed to get `subscriptionsOfSubscriber` err: %v", err)
-	}
-	if len(subscriptionsOfSubscriber) != 0 {
-		t.Fatalf("[after remove] `subscriptionsOfSubscriber` should be empty, found %v", subscriptionsOfSubscriber)
-	}
-	subscriptionsOfSubscription, err = repository.GetSubscriptions(subscription)
-	if err != nil {
-		t.Fatalf("[after remove] failed to get `subscriptionsOfSubscription` err: %v", err)
-	}
-	if len(subscriptionsOfSubscription) != 0 {
-		t.Fatalf("[after remove] `subscriptionsOfSubscription` be empty, found %v", subscriptionsOfSubscription)
-	}
-	subscribersOfSubscriber, err = repository.GetSubscribers(subscriber)
-	if err != nil {
-		t.Fatalf("[after remove] failed to get `subscribersOfSubscriber` err: %v", err)
-	}
-	if len(subscribersOfSubscriber) != 0 {
-		t.Fatalf("[after remove] `subscribersOfSubscriber` should be empty, found %v", subscribersOfSubscriber)
-	}
-	subscribersOfSubscription, err = repository.GetSubscribers(subscription)
-	if err != nil {
-		t.Fatalf("[after remove] failed to get `subscribersOfSubscription` err: %v", err)
-	}
-	if len(subscribersOfSubscription) != 0 {
-		t.Fatalf("[after remove] `subscribersOfSubscription` should be empty, found %v", subscribersOfSubscription)
-	}
-	friendsOfSubscriber, err = repository.GetFriends(subscriber)
-	if err != nil {
-		t.Fatalf("[after rollback] failed to get `friendsOfSubscriber` err: %v", err)
-	}
-	if len(friendsOfSubscriber) != 0 {
-		t.Fatalf("[after rollback] `friendsOfSubscriber` should be empty, found %v", friendsOfSubscriber)
-	}
-	friendsOfSubscription, err = repository.GetFriends(subscription)
-	if err != nil {
-		t.Fatalf("[after rollback] failed to get `friendsOfSubscription` err: %v", err)
-	}
-	if len(friendsOfSubscription) != 0 {
-		t.Fatalf("[after rollback] `friendsOfSubscription` should be empty, found %v", friendsOfSubscription)
-	}
+	ensureFriendRequest(repository, t, subscriber, subscription, false)
+	ensureFriendRequest(repository, t, subscription, subscriber, false)
+	ensureSubscriptionsIgnoringOrder(repository, t, subscriber, []friends.UserId{})
+	ensureSubscriptionsIgnoringOrder(repository, t, subscription, []friends.UserId{})
+	ensureSubscribersIgnoringOrder(repository, t, subscriber, []friends.UserId{})
+	ensureSubscribersIgnoringOrder(repository, t, subscription, []friends.UserId{})
+	ensureFriendsIgnoringOrder(repository, t, subscriber, []friends.UserId{})
+	ensureFriendsIgnoringOrder(repository, t, subscription, []friends.UserId{})
 }
 
 func TestFriendship(t *testing.T) {
@@ -317,171 +127,99 @@ func TestFriendship(t *testing.T) {
 			t.Fatalf("failed to perform `friendshipTransaction[%d]` err: %v", i, err)
 		}
 	}
-	hasRequestFromSubscriberToSubscription, err := repository.HasFriendRequest(subscriber, subscription)
-	if err != nil {
-		t.Fatalf("failed to get `hasRequestFromSubscriberToSubscription` err: %v", err)
-	}
-	if hasRequestFromSubscriberToSubscription {
-		t.Fatalf("`hasRequestFromSubscriberToSubscription` should be false")
-	}
-	hasRequestFromSubscriptionToSubscriber, err := repository.HasFriendRequest(subscription, subscriber)
-	if err != nil {
-		t.Fatalf("failed to get `hasRequestFromSubscriptionToSubscriber` err: %v", err)
-	}
-	if hasRequestFromSubscriptionToSubscriber {
-		t.Fatalf("`hasRequestFromSubscriptionToSubscriber` should be false")
-	}
-	subscriptionsOfSubscriber, err := repository.GetSubscriptions(subscriber)
-	if err != nil {
-		t.Fatalf("failed to get `subscriptionsOfSubscriber` err: %v", err)
-	}
-	if len(subscriptionsOfSubscriber) != 0 {
-		t.Fatalf("`subscriptionsOfSubscriber` should be empty, found %v", subscriptionsOfSubscriber)
-	}
-	subscriptionsOfSubscription, err := repository.GetSubscriptions(subscription)
-	if err != nil {
-		t.Fatalf("failed to get `subscriptionsOfSubscription` err: %v", err)
-	}
-	if len(subscriptionsOfSubscription) != 0 {
-		t.Fatalf("`subscriptionsOfSubscription` be empty, found %v", subscriptionsOfSubscription)
-	}
-	subscribersOfSubscriber, err := repository.GetSubscribers(subscriber)
-	if err != nil {
-		t.Fatalf("failed to get `subscribersOfSubscriber` err: %v", err)
-	}
-	if len(subscribersOfSubscriber) != 0 {
-		t.Fatalf("`subscribersOfSubscriber` should be empty, found %v", subscribersOfSubscriber)
-	}
-	subscribersOfSubscription, err := repository.GetSubscribers(subscription)
-	if err != nil {
-		t.Fatalf("failed to get `subscribersOfSubscription` err: %v", err)
-	}
-	if len(subscribersOfSubscription) != 0 {
-		t.Fatalf("`subscribersOfSubscription` should contain %s only, found %v", subscriber, subscribersOfSubscription)
-	}
-	friendsOfSubscriber, err := repository.GetFriends(subscriber)
-	if err != nil {
-		t.Fatalf("failed to get `friendsOfSubscriber` err: %v", err)
-	}
-	if len(friendsOfSubscriber) != 1 || friendsOfSubscriber[0] != subscription {
-		t.Fatalf("`subscribersOfSubscriber` should contain %s only, found %v", subscription, friendsOfSubscriber)
-	}
-	friendsOfSubscription, err := repository.GetFriends(subscription)
-	if err != nil {
-		t.Fatalf("failed to get `friendsOfSubscription` err: %v", err)
-	}
-	if len(friendsOfSubscription) != 1 || friendsOfSubscription[0] != subscriber {
-		t.Fatalf("`subscribersOfSubscriber` should contain %s only, found %v", subscriber, friendsOfSubscription)
-	}
+	ensureFriendRequest(repository, t, subscriber, subscription, false)
+	ensureFriendRequest(repository, t, subscription, subscriber, false)
+	ensureSubscriptionsIgnoringOrder(repository, t, subscriber, []friends.UserId{})
+	ensureSubscriptionsIgnoringOrder(repository, t, subscription, []friends.UserId{})
+	ensureSubscribersIgnoringOrder(repository, t, subscriber, []friends.UserId{})
+	ensureSubscribersIgnoringOrder(repository, t, subscription, []friends.UserId{})
+	ensureFriendsIgnoringOrder(repository, t, subscriber, []friends.UserId{subscription})
+	ensureFriendsIgnoringOrder(repository, t, subscription, []friends.UserId{subscriber})
 	for i := 0; i < len(friendshipTransaction); i++ {
 		if err := friendshipTransaction[i].Rollback(); err != nil {
 			t.Fatalf("failed to rollback `friendshipTransaction[%d]` err: %v", i, err)
 		}
 	}
-	hasRequestFromSubscriberToSubscription, err = repository.HasFriendRequest(subscriber, subscription)
-	if err != nil {
-		t.Fatalf("[after rollback] failed to get `hasRequestFromSubscriberToSubscription` err: %v", err)
-	}
-	if hasRequestFromSubscriberToSubscription {
-		t.Fatalf("[after rollback] `hasRequestFromSubscriberToSubscription` should be false")
-	}
-	hasRequestFromSubscriptionToSubscriber, err = repository.HasFriendRequest(subscription, subscriber)
-	if err != nil {
-		t.Fatalf("[after rollback] failed to get `hasRequestFromSubscriptionToSubscriber` err: %v", err)
-	}
-	if hasRequestFromSubscriptionToSubscriber {
-		t.Fatalf("[after rollback] `hasRequestFromSubscriptionToSubscriber` should be false")
-	}
-	subscriptionsOfSubscriber, err = repository.GetSubscriptions(subscriber)
-	if err != nil {
-		t.Fatalf("[after rollback] failed to get `subscriptionsOfSubscriber` err: %v", err)
-	}
-	if len(subscriptionsOfSubscriber) != 0 {
-		t.Fatalf("[after rollback] `subscriptionsOfSubscriber` should be empty, found %v", subscriptionsOfSubscriber)
-	}
-	subscriptionsOfSubscription, err = repository.GetSubscriptions(subscription)
-	if err != nil {
-		t.Fatalf("[after rollback] failed to get `subscriptionsOfSubscription` err: %v", err)
-	}
-	if len(subscriptionsOfSubscription) != 0 {
-		t.Fatalf("[after rollback] `subscriptionsOfSubscription` be empty, found %v", subscriptionsOfSubscription)
-	}
-	subscribersOfSubscriber, err = repository.GetSubscribers(subscriber)
-	if err != nil {
-		t.Fatalf("[after rollback] failed to get `subscribersOfSubscriber` err: %v", err)
-	}
-	if len(subscribersOfSubscriber) != 0 {
-		t.Fatalf("[after rollback] `subscribersOfSubscriber` should be empty, found %v", subscribersOfSubscriber)
-	}
-	subscribersOfSubscription, err = repository.GetSubscribers(subscription)
-	if err != nil {
-		t.Fatalf("[after rollback] failed to get `subscribersOfSubscription` err: %v", err)
-	}
-	if len(subscribersOfSubscription) != 0 {
-		t.Fatalf("[after rollback] `subscribersOfSubscription` should be empty, found %v", subscribersOfSubscription)
-	}
-	friendsOfSubscriber, err = repository.GetFriends(subscriber)
-	if err != nil {
-		t.Fatalf("failed to get `friendsOfSubscriber` err: %v", err)
-	}
-	if len(friendsOfSubscriber) != 0 {
-		t.Fatalf("[after rollback] `subscribersOfSubscriber` should be empty, found %v", friendsOfSubscriber)
-	}
-	friendsOfSubscription, err = repository.GetFriends(subscription)
-	if err != nil {
-		t.Fatalf("failed to get `friendsOfSubscription` err: %v", err)
-	}
-	if len(friendsOfSubscription) != 0 {
-		t.Fatalf("`subscribersOfSubscriber` should be empty, found %v", friendsOfSubscription)
-	}
+	ensureFriendRequest(repository, t, subscriber, subscription, false)
+	ensureFriendRequest(repository, t, subscription, subscriber, false)
+	ensureSubscriptionsIgnoringOrder(repository, t, subscriber, []friends.UserId{})
+	ensureSubscriptionsIgnoringOrder(repository, t, subscription, []friends.UserId{})
+	ensureSubscribersIgnoringOrder(repository, t, subscriber, []friends.UserId{})
+	ensureSubscribersIgnoringOrder(repository, t, subscription, []friends.UserId{})
+	ensureFriendsIgnoringOrder(repository, t, subscriber, []friends.UserId{})
+	ensureFriendsIgnoringOrder(repository, t, subscription, []friends.UserId{})
 }
 
 func TestHasFriendRequestEmpty(t *testing.T) {
 	repository := defaultRepository.New(database, logging.TestService())
 	subscriber := randomUid()
 	subscription := randomUid()
-
-	exists, err := repository.HasFriendRequest(subscriber, subscription)
-	if err != nil {
-		t.Fatalf("cannot perform HasFriendRequest err: %v", err)
-	}
-	if exists {
-		t.Fatalf("`exists` should be false")
-	}
+	ensureFriendRequest(repository, t, subscriber, subscription, false)
 }
 
 func TestGetSubscribersEmpty(t *testing.T) {
 	repository := defaultRepository.New(database, logging.TestService())
 	uid := randomUid()
-	subscribers, err := repository.GetSubscribers(uid)
-	if err != nil {
-		t.Fatalf("failed to perform GetSubscribers err: %v", err)
-	}
-	if len(subscribers) != 0 {
-		t.Fatalf("`subscribers` should be empty")
-	}
+	ensureSubscribersIgnoringOrder(repository, t, uid, []friends.UserId{})
 }
 
 func TestGetSubsriptionsEmpty(t *testing.T) {
 	repository := defaultRepository.New(database, logging.TestService())
 	uid := randomUid()
-	subscriptions, err := repository.GetSubscriptions(uid)
-	if err != nil {
-		t.Fatalf("failed to perform GetSubscriptions err: %v", err)
-	}
-	if len(subscriptions) != 0 {
-		t.Fatalf("`subscriptions` should be empty")
-	}
+	ensureSubscriptionsIgnoringOrder(repository, t, uid, []friends.UserId{})
 }
 
 func TestGetFriendsEmpty(t *testing.T) {
 	repository := defaultRepository.New(database, logging.TestService())
 	uid := randomUid()
-	friends, err := repository.GetFriends(uid)
+	ensureFriendsIgnoringOrder(repository, t, uid, []friends.UserId{})
+}
+
+//
+
+func ensureFriendRequest(repository friends.Repository, t *testing.T, from friends.UserId, to friends.UserId, expectation bool) {
+	has, err := repository.HasFriendRequest(from, to)
 	if err != nil {
-		t.Fatalf("failed to perform GetFriends err: %v", err)
+		t.Fatalf("failed to perform `HasFriendRequest` err: %v", err)
 	}
-	if len(friends) != 0 {
-		t.Fatalf("`friends` should be empty")
+	if has != expectation {
+		t.Fatalf("`HasFriendRequest` result should be %t, found: %t", expectation, has)
+	}
+}
+
+func ensureSubscriptionsIgnoringOrder(repository friends.Repository, t *testing.T, userId friends.UserId, expectation []friends.UserId) {
+	subscriptions, err := repository.GetSubscriptions(userId)
+	if err != nil {
+		t.Fatalf("failed to perform `GetSubscriptions` err: %v", err)
+	}
+	ensureEqualIgnoringOrder(t, subscriptions, expectation, "GetSubscriptions")
+}
+
+func ensureSubscribersIgnoringOrder(repository friends.Repository, t *testing.T, userId friends.UserId, expectation []friends.UserId) {
+	subscribers, err := repository.GetSubscribers(userId)
+	if err != nil {
+		t.Fatalf("failed to perform `GetSubscribers` err: %v", err)
+	}
+	ensureEqualIgnoringOrder(t, subscribers, expectation, "GetSubscribers")
+}
+
+func ensureFriendsIgnoringOrder(repository friends.Repository, t *testing.T, userId friends.UserId, expectation []friends.UserId) {
+	subscribers, err := repository.GetFriends(userId)
+	if err != nil {
+		t.Fatalf("failed to get `GetFriends` err: %v", err)
+	}
+	ensureEqualIgnoringOrder(t, subscribers, expectation, "GetFriends")
+}
+
+func ensureEqualIgnoringOrder(t *testing.T, lhs []friends.UserId, rhs []friends.UserId, label string) {
+	comparator := func(array []friends.UserId) func(i, j int) bool {
+		return func(i, j int) bool {
+			return array[i] < array[j]
+		}
+	}
+	sort.Slice(lhs, comparator(lhs))
+	sort.Slice(rhs, comparator(rhs))
+	if !reflect.DeepEqual(lhs, rhs) {
+		t.Fatalf("%s: result should be %v, found %v", label, lhs, rhs)
 	}
 }
