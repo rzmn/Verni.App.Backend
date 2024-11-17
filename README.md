@@ -7,7 +7,7 @@ Server side for Verni App.
 Verni is an open-source shared expenses tracker.
 
 The core value of the App is a focus on extensibility and reliability of the infrastructure it's built with.
-Infrastructure refers to both the codebase and the design system.
+Infrastructure refers to both the codebase, api design and the user interface design.
 
 The main feature of the application is a complete absence of a desire to monetize user journeys. The user's needs should be met in the simplest possible way, forever free.
 
