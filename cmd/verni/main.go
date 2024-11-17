@@ -24,14 +24,14 @@ import (
 	verificationRepository "verni/internal/repositories/verification"
 	defaultVerificationRepository "verni/internal/repositories/verification/default"
 
-	"verni/internal/requestHandlers/accessToken"
-	"verni/internal/requestHandlers/auth"
-	"verni/internal/requestHandlers/avatars"
-	"verni/internal/requestHandlers/friends"
-	"verni/internal/requestHandlers/profile"
-	"verni/internal/requestHandlers/spendings"
-	"verni/internal/requestHandlers/users"
-	"verni/internal/requestHandlers/verification"
+	defaultAccessTokenHandler "verni/internal/requestHandlers/accessToken/default"
+	defaultAuthHandler "verni/internal/requestHandlers/auth/default"
+	defaultAvatarsHandler "verni/internal/requestHandlers/avatars/default"
+	defaultFriendsHandler "verni/internal/requestHandlers/friends/default"
+	defaultProfileHandler "verni/internal/requestHandlers/profile/default"
+	defaultSpendingsHandler "verni/internal/requestHandlers/spendings/default"
+	defaultUsersHandler "verni/internal/requestHandlers/users/default"
+	defaultVerificationHandler "verni/internal/requestHandlers/verification/default"
 
 	"verni/internal/server"
 
@@ -315,42 +315,42 @@ func main() {
 			logger.LogInfo("creating gin server with config %v", ginConfig)
 			return server.GinServer(
 				ginConfig,
-				accessToken.DefaultHandler(
+				defaultAccessTokenHandler.New(
 					repositories.auth,
 					services.jwt,
 					logger,
 				),
 				func(realtimeEvents realtimeEvents.Service) server.RequestHandlers {
 					return server.RequestHandlers{
-						Auth: auth.DefaultHandler(
+						Auth: defaultAuthHandler.New(
 							controllers.auth,
 							logger,
 						),
-						Spendings: spendings.DefaultHandler(
+						Spendings: defaultSpendingsHandler.New(
 							controllers.spendings,
 							services.push,
 							realtimeEvents,
 							logger,
 						),
-						Friends: friends.DefaultHandler(
+						Friends: defaultFriendsHandler.New(
 							controllers.friends,
 							services.push,
 							realtimeEvents,
 							logger,
 						),
-						Profile: profile.DefaultHandler(
+						Profile: defaultProfileHandler.New(
 							controllers.profile,
 							logger,
 						),
-						Verification: verification.DefaultHandler(
+						Verification: defaultVerificationHandler.New(
 							controllers.verification,
 							logger,
 						),
-						Users: users.DefaultHandler(
+						Users: defaultUsersHandler.New(
 							controllers.users,
 							logger,
 						),
-						Avatars: avatars.DefaultHandler(
+						Avatars: defaultAvatarsHandler.New(
 							controllers.avatars,
 							logger,
 						),

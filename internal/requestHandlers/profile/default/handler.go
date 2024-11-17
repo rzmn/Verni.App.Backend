@@ -1,11 +1,22 @@
-package profile
+package defaultProfileHandler
 
 import (
 	"net/http"
 	profileController "verni/internal/controllers/profile"
+	"verni/internal/requestHandlers/profile"
 	"verni/internal/schema"
 	"verni/internal/services/logging"
 )
+
+func New(
+	controller profileController.Controller,
+	logger logging.Service,
+) profile.RequestsHandler {
+	return &defaultRequestsHandler{
+		controller: controller,
+		logger:     logger,
+	}
+}
 
 type defaultRequestsHandler struct {
 	controller profileController.Controller

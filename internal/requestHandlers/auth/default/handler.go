@@ -1,11 +1,22 @@
-package auth
+package defaultAuthHandler
 
 import (
 	"net/http"
 	authController "verni/internal/controllers/auth"
+	"verni/internal/requestHandlers/auth"
 	"verni/internal/schema"
 	"verni/internal/services/logging"
 )
+
+func New(
+	controller authController.Controller,
+	logger logging.Service,
+) auth.RequestsHandler {
+	return &defaultRequestsHandler{
+		controller: controller,
+		logger:     logger,
+	}
+}
 
 type defaultRequestsHandler struct {
 	controller authController.Controller

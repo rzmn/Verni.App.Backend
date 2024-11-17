@@ -1,14 +1,29 @@
-package friends
+package defaultFriendsHandler
 
 import (
 	"net/http"
 	"verni/internal/common"
 	friendsController "verni/internal/controllers/friends"
+	"verni/internal/requestHandlers/friends"
 	"verni/internal/schema"
 	"verni/internal/services/logging"
 	"verni/internal/services/pushNotifications"
 	"verni/internal/services/realtimeEvents"
 )
+
+func New(
+	controller friendsController.Controller,
+	pushService pushNotifications.Service,
+	realtimeEvents realtimeEvents.Service,
+	logger logging.Service,
+) friends.RequestsHandler {
+	return &defaultRequestsHandler{
+		controller:     controller,
+		pushService:    pushService,
+		realtimeEvents: realtimeEvents,
+		logger:         logger,
+	}
+}
 
 type defaultRequestsHandler struct {
 	controller     friendsController.Controller

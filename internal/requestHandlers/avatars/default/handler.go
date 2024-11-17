@@ -1,12 +1,23 @@
-package avatars
+package defaultAvatarsHandler
 
 import (
 	"net/http"
 	"verni/internal/common"
 	avatarsController "verni/internal/controllers/avatars"
+	"verni/internal/requestHandlers/avatars"
 	"verni/internal/schema"
 	"verni/internal/services/logging"
 )
+
+func New(
+	controller avatarsController.Controller,
+	logger logging.Service,
+) avatars.RequestsHandler {
+	return &defaultRequestsHandler{
+		controller: controller,
+		logger:     logger,
+	}
+}
 
 type defaultRequestsHandler struct {
 	controller avatarsController.Controller

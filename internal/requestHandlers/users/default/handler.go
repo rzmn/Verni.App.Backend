@@ -1,12 +1,23 @@
-package users
+package defaultUsersHandler
 
 import (
 	"net/http"
 	"verni/internal/common"
 	usersController "verni/internal/controllers/users"
+	"verni/internal/requestHandlers/users"
 	"verni/internal/schema"
 	"verni/internal/services/logging"
 )
+
+func New(
+	controller usersController.Controller,
+	logger logging.Service,
+) users.RequestsHandler {
+	return &defaultRequestsHandler{
+		controller: controller,
+		logger:     logger,
+	}
+}
 
 type defaultRequestsHandler struct {
 	controller usersController.Controller

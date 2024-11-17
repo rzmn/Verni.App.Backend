@@ -1,11 +1,7 @@
 package spendings
 
 import (
-	spendingsController "verni/internal/controllers/spendings"
 	"verni/internal/schema"
-	"verni/internal/services/logging"
-	"verni/internal/services/pushNotifications"
-	"verni/internal/services/realtimeEvents"
 )
 
 type RequestsHandler interface {
@@ -38,18 +34,4 @@ type RequestsHandler interface {
 		success func(schema.StatusCode, schema.Response[schema.IdentifiableExpense]),
 		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
-}
-
-func DefaultHandler(
-	controller spendingsController.Controller,
-	pushService pushNotifications.Service,
-	realtimeEvents realtimeEvents.Service,
-	logger logging.Service,
-) RequestsHandler {
-	return &defaultRequestsHandler{
-		controller:     controller,
-		pushService:    pushService,
-		realtimeEvents: realtimeEvents,
-		logger:         logger,
-	}
 }

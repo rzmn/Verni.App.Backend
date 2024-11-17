@@ -1,11 +1,22 @@
-package verification
+package defaultVerificationHandler
 
 import (
 	"net/http"
 	verificationController "verni/internal/controllers/verification"
+	"verni/internal/requestHandlers/verification"
 	"verni/internal/schema"
 	"verni/internal/services/logging"
 )
+
+func New(
+	controller verificationController.Controller,
+	logger logging.Service,
+) verification.RequestsHandler {
+	return &defaultRequestsHandler{
+		controller: controller,
+		logger:     logger,
+	}
+}
 
 type defaultRequestsHandler struct {
 	controller verificationController.Controller

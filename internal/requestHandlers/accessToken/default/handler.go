@@ -1,14 +1,27 @@
-package accessToken
+package defaultAccessTokenHandler
 
 import (
 	"errors"
 	"net/http"
 	"strings"
 	authRepository "verni/internal/repositories/auth"
+	"verni/internal/requestHandlers/accessToken"
 	"verni/internal/schema"
 	"verni/internal/services/jwt"
 	"verni/internal/services/logging"
 )
+
+func New(
+	repository authRepository.Repository,
+	jwtService jwt.Service,
+	logger logging.Service,
+) accessToken.RequestHandler {
+	return &defaultRequestsHandler{
+		repository: repository,
+		jwtService: jwtService,
+		logger:     logger,
+	}
+}
 
 type defaultRequestsHandler struct {
 	repository authRepository.Repository

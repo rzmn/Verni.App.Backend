@@ -1,11 +1,7 @@
 package friends
 
 import (
-	friendsController "verni/internal/controllers/friends"
 	"verni/internal/schema"
-	"verni/internal/services/logging"
-	"verni/internal/services/pushNotifications"
-	"verni/internal/services/realtimeEvents"
 )
 
 type RequestsHandler interface {
@@ -45,18 +41,4 @@ type RequestsHandler interface {
 		success func(schema.StatusCode, schema.VoidResponse),
 		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
-}
-
-func DefaultHandler(
-	controller friendsController.Controller,
-	pushService pushNotifications.Service,
-	realtimeEvents realtimeEvents.Service,
-	logger logging.Service,
-) RequestsHandler {
-	return &defaultRequestsHandler{
-		controller:     controller,
-		pushService:    pushService,
-		realtimeEvents: realtimeEvents,
-		logger:         logger,
-	}
 }

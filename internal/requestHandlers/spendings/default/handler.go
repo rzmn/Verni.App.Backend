@@ -1,15 +1,30 @@
-package spendings
+package defaultSpendingsHandler
 
 import (
 	"net/http"
 	"verni/internal/common"
 	spendingsController "verni/internal/controllers/spendings"
 	spendingsRepository "verni/internal/repositories/spendings"
+	"verni/internal/requestHandlers/spendings"
 	"verni/internal/schema"
 	"verni/internal/services/logging"
 	"verni/internal/services/pushNotifications"
 	"verni/internal/services/realtimeEvents"
 )
+
+func New(
+	controller spendingsController.Controller,
+	pushService pushNotifications.Service,
+	realtimeEvents realtimeEvents.Service,
+	logger logging.Service,
+) spendings.RequestsHandler {
+	return &defaultRequestsHandler{
+		controller:     controller,
+		pushService:    pushService,
+		realtimeEvents: realtimeEvents,
+		logger:         logger,
+	}
+}
 
 type defaultRequestsHandler struct {
 	controller     spendingsController.Controller
