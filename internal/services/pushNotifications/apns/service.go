@@ -1,13 +1,45 @@
-package pushNotifications
+package applePushNotifications
 
 import (
 	"encoding/json"
 	"fmt"
-	"verni/internal/repositories/pushNotifications"
+	"os"
+	pushNotificationsRepository "verni/internal/repositories/pushNotifications"
 	"verni/internal/services/logging"
+	"verni/internal/services/pathProvider"
+	"verni/internal/services/pushNotifications"
 
 	"github.com/sideshow/apns2"
+	"github.com/sideshow/apns2/certificate"
 )
+
+type ApnsConfig struct {
+	CertificatePath string `json:"certificatePath"`
+	CredentialsPath string `json:"credentialsPath"`
+}
+
+type Repository pushNotificationsRepository.Repository
+
+func New(config ApnsConfig, logger logging.Service, pathProviderService pathProvider.Service, repository Repository) (pushNotifications.Service, error) {
+	const op = "apns.AppleService"
+	credentialsData, err := os.ReadFile(pathProviderService.AbsolutePath(config.CredentialsPath))
+	if err != nil {
+		logger.LogInfo("%s: failed to open config: %v", op, err)
+		return &appleService{}, err
+	}
+	var credentials ApnsCredentials
+	json.Unmarshal(credentialsData, &credentials)
+	cert, err := certificate.FromP12File(pathProviderService.AbsolutePath(config.CertificatePath), credentials.Password)
+	if err != nil {
+		logger.LogInfo("%s: failed to open p12 creds %v: %v", op, err, credentials)
+		return &appleService{}, err
+	}
+	return &appleService{
+		client:     apns2.NewClient(cert).Development(),
+		repository: repository,
+		logger:     logger,
+	}, nil
+}
 
 type appleService struct {
 	client     *apns2.Client
@@ -48,10 +80,10 @@ type ApnsCredentials struct {
 	Password string `json:"cert_pwd"`
 }
 
-func (c *appleService) FriendRequestHasBeenAccepted(receiver UserId, acceptedBy UserId) {
+func (c *appleService) FriendRequestHasBeenAccepted(receiver pushNotifications.UserId, acceptedBy pushNotifications.UserId) {
 	const op = "apns.defaultService.FriendRequestHasBeenAccepted"
 	c.logger.LogInfo("%s: start[receiver=%s acceptedBy=%s]", op, receiver, acceptedBy)
-	receiverToken, err := c.repository.GetPushToken(pushNotifications.UserId(receiver))
+	receiverToken, err := c.repository.GetPushToken(pushNotificationsRepository.UserId(receiver))
 	if err != nil {
 		c.logger.LogError("%s: cannot get receiver token from db err: %v", op, err)
 		return
@@ -61,7 +93,7 @@ func (c *appleService) FriendRequestHasBeenAccepted(receiver UserId, acceptedBy 
 		return
 	}
 	type Payload struct {
-		Target UserId `json:"t"`
+		Target pushNotifications.UserId `json:"t"`
 	}
 	body := fmt.Sprintf("By %s", acceptedBy)
 	payload := Payload{
@@ -93,10 +125,10 @@ func (c *appleService) FriendRequestHasBeenAccepted(receiver UserId, acceptedBy 
 	c.logger.LogInfo("%s: success[receiver=%s acceptedBy=%s]", op, receiver, acceptedBy)
 }
 
-func (c *appleService) FriendRequestHasBeenReceived(receiver UserId, sentBy UserId) {
+func (c *appleService) FriendRequestHasBeenReceived(receiver pushNotifications.UserId, sentBy pushNotifications.UserId) {
 	const op = "apns.defaultService.FriendRequestHasBeenReceived"
 	c.logger.LogInfo("%s: start[receiver=%s sentBy=%s]", op, receiver, sentBy)
-	receiverToken, err := c.repository.GetPushToken(pushNotifications.UserId(receiver))
+	receiverToken, err := c.repository.GetPushToken(pushNotificationsRepository.UserId(receiver))
 	if err != nil {
 		c.logger.LogError("%s: cannot get receiver token from db err: %v", op, err)
 		return
@@ -106,7 +138,7 @@ func (c *appleService) FriendRequestHasBeenReceived(receiver UserId, sentBy User
 		return
 	}
 	type Payload struct {
-		Sender UserId `json:"s"`
+		Sender pushNotifications.UserId `json:"s"`
 	}
 	body := fmt.Sprintf("From: %s", sentBy)
 	payload := Payload{
@@ -138,10 +170,10 @@ func (c *appleService) FriendRequestHasBeenReceived(receiver UserId, sentBy User
 	c.logger.LogInfo("%s: success[receiver=%s sentBy=%s]", op, receiver, sentBy)
 }
 
-func (c *appleService) NewExpenseReceived(receiver UserId, expense Expense, author UserId) {
+func (c *appleService) NewExpenseReceived(receiver pushNotifications.UserId, expense pushNotifications.Expense, author pushNotifications.UserId) {
 	const op = "apns.defaultService.NewExpenseReceived"
 	c.logger.LogInfo("%s: start[receiver=%s id=%s author=%s]", op, receiver, expense.Id, author)
-	receiverToken, err := c.repository.GetPushToken(pushNotifications.UserId(receiver))
+	receiverToken, err := c.repository.GetPushToken(pushNotificationsRepository.UserId(receiver))
 	if err != nil {
 		c.logger.LogError("%s: cannot get receiver token from db err: %v", op, err)
 		return
@@ -151,21 +183,21 @@ func (c *appleService) NewExpenseReceived(receiver UserId, expense Expense, auth
 		return
 	}
 	type Payload struct {
-		DealId   ExpenseId `json:"d"`
-		AuthorId UserId    `json:"u"`
-		Cost     Cost      `json:"c"`
+		DealId   pushNotifications.ExpenseId `json:"d"`
+		AuthorId pushNotifications.UserId    `json:"u"`
+		Cost     pushNotifications.Cost      `json:"c"`
 	}
 	body := fmt.Sprintf("%s: %d", expense.Details, expense.Total)
 	cost := expense.Total
 	for i := 0; i < len(expense.Shares); i++ {
-		if UserId(expense.Shares[i].UserId) == receiver {
+		if pushNotifications.UserId(expense.Shares[i].UserId) == receiver {
 			cost = expense.Shares[i].Cost
 		}
 	}
 	payload := Payload{
-		DealId:   ExpenseId(expense.Id),
+		DealId:   pushNotifications.ExpenseId(expense.Id),
 		AuthorId: author,
-		Cost:     Cost(cost),
+		Cost:     pushNotifications.Cost(cost),
 	}
 	mutable := 1
 	payloadString, err := json.Marshal(Push[Payload]{

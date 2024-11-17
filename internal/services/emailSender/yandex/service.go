@@ -1,10 +1,31 @@
-package emailSender
+package yandexEmailSender
 
 import (
 	"fmt"
 	"net/smtp"
+	"verni/internal/services/emailSender"
 	"verni/internal/services/logging"
 )
+
+type YandexConfig struct {
+	Address  string `json:"address"`
+	Password string `json:"password"`
+	Host     string `json:"host"`
+	Port     string `json:"port"`
+}
+
+func New(
+	config YandexConfig,
+	logger logging.Service,
+) emailSender.Service {
+	return &yandexService{
+		sender:   config.Address,
+		password: config.Password,
+		host:     config.Host,
+		port:     config.Port,
+		logger:   logger,
+	}
+}
 
 type yandexService struct {
 	sender   string

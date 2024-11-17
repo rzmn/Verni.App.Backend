@@ -10,7 +10,7 @@ import (
 	auth_mock "verni/internal/repositories/auth/mock"
 	verification_mock "verni/internal/repositories/verification/mock"
 	emailSender_mock "verni/internal/services/emailSender/mock"
-	"verni/internal/services/logging"
+	standartOutputLoggingService "verni/internal/services/logging/standartOutput"
 
 	"github.com/google/uuid"
 )
@@ -48,7 +48,7 @@ func TestSendConfirmationCodeNotDelivered(t *testing.T) {
 		&verificationMock,
 		&authMock,
 		&emailSenderMock,
-		logging.TestService(),
+		standartOutputLoggingService.New(),
 	)
 	err := controller.SendConfirmationCode(verification.UserId(uuid.New().String()))
 	if err == nil {
@@ -77,7 +77,7 @@ func TestSendConfirmationGetEmailFailed(t *testing.T) {
 		&verificationMock,
 		&authMock,
 		&emailSenderMock,
-		logging.TestService(),
+		standartOutputLoggingService.New(),
 	)
 	err := controller.SendConfirmationCode(verification.UserId(uuid.New().String()))
 	if err == nil {
@@ -115,7 +115,7 @@ func TestSendConfirmationCodeStoreFailed(t *testing.T) {
 		&verificationMock,
 		&authMock,
 		&emailSenderMock,
-		logging.TestService(),
+		standartOutputLoggingService.New(),
 	)
 	err := controller.SendConfirmationCode(verification.UserId(uuid.New().String()))
 	if err == nil {
@@ -162,7 +162,7 @@ func TestSendConfirmationCodeDelivered(t *testing.T) {
 		&verificationMock,
 		&authMock,
 		&emailSenderMock,
-		logging.TestService(),
+		standartOutputLoggingService.New(),
 	)
 	err := controller.SendConfirmationCode(verification.UserId(uuid.New().String()))
 	if err != nil {
@@ -188,7 +188,7 @@ func TestConfirmEmailGetEmailFailed(t *testing.T) {
 		&verificationMock,
 		&authMock,
 		&emailSenderMock,
-		logging.TestService(),
+		standartOutputLoggingService.New(),
 	)
 	err := controller.ConfirmEmail(verification.UserId(uuid.New().String()), "")
 	if err == nil {
@@ -215,7 +215,7 @@ func TestConfirmEmailGetCodeFailed(t *testing.T) {
 		&verificationMock,
 		&authMock,
 		&emailSenderMock,
-		logging.TestService(),
+		standartOutputLoggingService.New(),
 	)
 	err := controller.ConfirmEmail(verification.UserId(uuid.New().String()), "")
 	if err == nil {
@@ -242,7 +242,7 @@ func TestConfirmEmailCodeHasNotBeenSent(t *testing.T) {
 		&verificationMock,
 		&authMock,
 		&emailSenderMock,
-		logging.TestService(),
+		standartOutputLoggingService.New(),
 	)
 	err := controller.ConfirmEmail(verification.UserId(uuid.New().String()), "")
 	if err == nil {
@@ -270,7 +270,7 @@ func TestConfirmEmailCodeIsWrong(t *testing.T) {
 		&verificationMock,
 		&authMock,
 		&emailSenderMock,
-		logging.TestService(),
+		standartOutputLoggingService.New(),
 	)
 	err := controller.ConfirmEmail(verification.UserId(uuid.New().String()), "")
 	if err == nil {
@@ -305,7 +305,7 @@ func TestConfirmEmailMarkValidatedFailed(t *testing.T) {
 		&verificationMock,
 		&authMock,
 		&emailSenderMock,
-		logging.TestService(),
+		standartOutputLoggingService.New(),
 	)
 	err := controller.ConfirmEmail(verification.UserId(uuid.New().String()), codeFromRepository)
 	if err == nil {
@@ -340,7 +340,7 @@ func TestConfirmEmailOk(t *testing.T) {
 		&verificationMock,
 		&authMock,
 		&emailSenderMock,
-		logging.TestService(),
+		standartOutputLoggingService.New(),
 	)
 	err := controller.ConfirmEmail(verification.UserId(uuid.New().String()), codeFromRepository)
 	if err != nil {

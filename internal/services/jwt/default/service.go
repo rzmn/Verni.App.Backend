@@ -1,12 +1,35 @@
-package jwt
+package defaultJwtService
 
 import (
 	"errors"
 	"time"
+	jwtService "verni/internal/services/jwt"
 	"verni/internal/services/logging"
 
 	"github.com/golang-jwt/jwt/v5"
 )
+
+type DefaultConfig struct {
+	AccessTokenLifetimeHours  int    `json:"accessTokenLifetimeHours"`
+	RefreshTokenLifetimeHours int    `json:"refreshTokenLifetimeHours"`
+	RefreshTokenSecret        string `json:"refreshTokenSecret"`
+	AccessTokenSecret         string `json:"accessTokenSecret"`
+}
+
+func New(
+	config DefaultConfig,
+	logger logging.Service,
+	currentTime func() time.Time,
+) jwtService.Service {
+	return &defaultService{
+		refreshTokenLifetime: time.Hour * time.Duration(config.RefreshTokenLifetimeHours),
+		accessTokenLifetime:  time.Hour * time.Duration(config.AccessTokenLifetimeHours),
+		refreshTokenSecret:   config.RefreshTokenSecret,
+		accessTokenSecret:    config.AccessTokenSecret,
+		currentTime:          currentTime,
+		logger:               logger,
+	}
+}
 
 const (
 	tokenTypeRefresh = "refresh"
@@ -22,7 +45,7 @@ type defaultService struct {
 	logger               logging.Service
 }
 
-func (c *defaultService) IssueRefreshToken(subject Subject) (RefreshToken, *Error) {
+func (c *defaultService) IssueRefreshToken(subject jwtService.Subject) (jwtService.RefreshToken, *jwtService.Error) {
 	const op = "jwt.defaultService.IssueRefreshToken"
 	currentTime := c.currentTime()
 	rawToken, err := generateToken(jwtClaims{
@@ -35,14 +58,14 @@ func (c *defaultService) IssueRefreshToken(subject Subject) (RefreshToken, *Erro
 	}, []byte(c.refreshTokenSecret))
 	if err != nil {
 		c.logger.LogInfo("%s: cannot generate token %v", op, err)
-		return RefreshToken(rawToken), &Error{
-			Code: CodeInternal,
+		return jwtService.RefreshToken(rawToken), &jwtService.Error{
+			Code: jwtService.CodeInternal,
 		}
 	}
-	return RefreshToken(rawToken), nil
+	return jwtService.RefreshToken(rawToken), nil
 }
 
-func (c *defaultService) IssueAccessToken(subject Subject) (AccessToken, *Error) {
+func (c *defaultService) IssueAccessToken(subject jwtService.Subject) (jwtService.AccessToken, *jwtService.Error) {
 	const op = "jwt.defaultService.IssueAccessToken"
 	currentTime := c.currentTime()
 	rawToken, err := generateToken(jwtClaims{
@@ -55,125 +78,125 @@ func (c *defaultService) IssueAccessToken(subject Subject) (AccessToken, *Error)
 	}, []byte(c.accessTokenSecret))
 	if err != nil {
 		c.logger.LogInfo("%s: cannot generate token %v", op, err)
-		return AccessToken(rawToken), &Error{
-			Code: CodeInternal,
+		return jwtService.AccessToken(rawToken), &jwtService.Error{
+			Code: jwtService.CodeInternal,
 		}
 	}
-	return AccessToken(rawToken), nil
+	return jwtService.AccessToken(rawToken), nil
 }
 
-func (c *defaultService) ValidateRefreshToken(token RefreshToken) *Error {
+func (c *defaultService) ValidateRefreshToken(token jwtService.RefreshToken) *jwtService.Error {
 	const op = "jwt.defaultService.ValidateRefreshToken"
 	rawToken, err := parseToken(string(token), []byte(c.refreshTokenSecret))
 	expired := errors.Is(err, jwt.ErrTokenExpired)
 	if rawToken == nil || (err != nil && !expired) {
 		c.logger.LogInfo("%s: bad jwt token %v", op, err)
-		return &Error{
-			Code: CodeTokenInvalid,
+		return &jwtService.Error{
+			Code: jwtService.CodeTokenInvalid,
 		}
 	}
 	claims, ok := rawToken.Claims.(*jwtClaims)
 	if !ok {
 		c.logger.LogInfo("%s: bad jwt token claims", op)
-		return &Error{
-			Code: CodeTokenInvalid,
+		return &jwtService.Error{
+			Code: jwtService.CodeTokenInvalid,
 		}
 	}
 	if claims.TokenType != tokenTypeRefresh || claims.ExpiresAt == nil {
 		c.logger.LogInfo("%s: bad token claims %s", op, claims)
-		return &Error{
-			Code: CodeTokenInvalid,
+		return &jwtService.Error{
+			Code: jwtService.CodeTokenInvalid,
 		}
 	}
 	if expired {
-		return &Error{
-			Code: CodeTokenExpired,
+		return &jwtService.Error{
+			Code: jwtService.CodeTokenExpired,
 		}
 	}
 	return nil
 }
 
-func (c *defaultService) ValidateAccessToken(token AccessToken) *Error {
+func (c *defaultService) ValidateAccessToken(token jwtService.AccessToken) *jwtService.Error {
 	const op = "jwt.defaultService.ValidateAccessToken"
 	rawToken, err := parseToken(string(token), []byte(c.accessTokenSecret))
 	expired := errors.Is(err, jwt.ErrTokenExpired)
 	if rawToken == nil || (err != nil && !expired) {
 		c.logger.LogInfo("%s: bad jwt token %v", op, err)
-		return &Error{
-			Code: CodeTokenInvalid,
+		return &jwtService.Error{
+			Code: jwtService.CodeTokenInvalid,
 		}
 	}
 	claims, ok := rawToken.Claims.(*jwtClaims)
 	if !ok {
 		c.logger.LogInfo("%s: bad jwt token claims", op)
-		return &Error{
-			Code: CodeTokenInvalid,
+		return &jwtService.Error{
+			Code: jwtService.CodeTokenInvalid,
 		}
 	}
 	if claims.TokenType != tokenTypeAccess || claims.ExpiresAt == nil {
 		c.logger.LogInfo("%s: bad token claims %s", op, claims)
-		return &Error{
-			Code: CodeTokenInvalid,
+		return &jwtService.Error{
+			Code: jwtService.CodeTokenInvalid,
 		}
 	}
 	if expired {
-		return &Error{
-			Code: CodeTokenExpired,
+		return &jwtService.Error{
+			Code: jwtService.CodeTokenExpired,
 		}
 	}
 	return nil
 }
 
-func (c *defaultService) GetRefreshTokenSubject(token RefreshToken) (Subject, *Error) {
+func (c *defaultService) GetRefreshTokenSubject(token jwtService.RefreshToken) (jwtService.Subject, *jwtService.Error) {
 	const op = "jwt.defaultService.GetRefreshTokenSubject"
 	rawToken, err := parseToken(string(token), []byte(c.refreshTokenSecret))
 	if rawToken == nil || err != nil {
 		if errors.Is(err, jwt.ErrTokenExpired) {
 			c.logger.LogInfo("%s: jwt token expired %v", op, err)
-			return "", &Error{
-				Code: CodeTokenExpired,
+			return "", &jwtService.Error{
+				Code: jwtService.CodeTokenExpired,
 			}
 		} else {
 			c.logger.LogInfo("%s: bad jwt token %v", op, err)
-			return "", &Error{
-				Code: CodeTokenInvalid,
+			return "", &jwtService.Error{
+				Code: jwtService.CodeTokenInvalid,
 			}
 		}
 	}
 	claims, ok := rawToken.Claims.(*jwtClaims)
 	if !ok || claims.TokenType != tokenTypeRefresh {
 		c.logger.LogInfo("%s: bad jwt token claims", op)
-		return "", &Error{
-			Code: CodeTokenInvalid,
+		return "", &jwtService.Error{
+			Code: jwtService.CodeTokenInvalid,
 		}
 	}
-	return Subject(claims.Subject), nil
+	return jwtService.Subject(claims.Subject), nil
 }
 
-func (c *defaultService) GetAccessTokenSubject(token AccessToken) (Subject, *Error) {
+func (c *defaultService) GetAccessTokenSubject(token jwtService.AccessToken) (jwtService.Subject, *jwtService.Error) {
 	const op = "jwt.defaultService.GetAccessTokenSubject"
 	rawToken, err := parseToken(string(token), []byte(c.accessTokenSecret))
 	if rawToken == nil || err != nil {
 		if errors.Is(err, jwt.ErrTokenExpired) {
 			c.logger.LogInfo("%s: jwt token expired %v", op, err)
-			return "", &Error{
-				Code: CodeTokenExpired,
+			return "", &jwtService.Error{
+				Code: jwtService.CodeTokenExpired,
 			}
 		} else {
 			c.logger.LogInfo("%s: bad jwt token %v", op, err)
-			return "", &Error{
-				Code: CodeTokenInvalid,
+			return "", &jwtService.Error{
+				Code: jwtService.CodeTokenInvalid,
 			}
 		}
 	}
 	claims, ok := rawToken.Claims.(*jwtClaims)
 	if !ok || claims.TokenType != tokenTypeAccess {
 		c.logger.LogInfo("%s: bad jwt token claims", op)
-		return "", &Error{
-			Code: CodeTokenInvalid,
+		return "", &jwtService.Error{
+			Code: jwtService.CodeTokenInvalid,
 		}
 	}
-	return Subject(claims.Subject), nil
+	return jwtService.Subject(claims.Subject), nil
 }
 
 type jwtClaims struct {

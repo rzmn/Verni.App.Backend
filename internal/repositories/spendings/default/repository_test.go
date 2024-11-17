@@ -11,8 +11,8 @@ import (
 	postgresDb "verni/internal/db/postgres"
 	"verni/internal/repositories/spendings"
 	defaultRepository "verni/internal/repositories/spendings/default"
-	"verni/internal/services/logging"
-	"verni/internal/services/pathProvider"
+	standartOutputLoggingService "verni/internal/services/logging/standartOutput"
+	envBasedPathProvider "verni/internal/services/pathProvider/env"
 
 	"github.com/google/uuid"
 )
@@ -22,8 +22,8 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	logger := logging.TestService()
-	pathProvider := pathProvider.VerniEnvService(logger)
+	logger := standartOutputLoggingService.New()
+	pathProvider := envBasedPathProvider.New(logger)
 	database = func() db.DB {
 		configFile, err := os.Open(pathProvider.AbsolutePath("./config/test/postgres_storage.json"))
 		if err != nil {
@@ -66,7 +66,7 @@ func expensesAreEqual(lhs spendings.Expense, rhs spendings.Expense) bool {
 }
 
 func TestGetExpensesEmpty(t *testing.T) {
-	repository := defaultRepository.New(database, logging.TestService())
+	repository := defaultRepository.New(database, standartOutputLoggingService.New())
 	expenseId := randomEid()
 
 	shouldBeEmpty, err := repository.GetExpense(expenseId)
@@ -79,7 +79,7 @@ func TestGetExpensesEmpty(t *testing.T) {
 }
 
 func TestGetBalanceEmpty(t *testing.T) {
-	repository := defaultRepository.New(database, logging.TestService())
+	repository := defaultRepository.New(database, standartOutputLoggingService.New())
 	counterparty := randomUid()
 
 	shouldBeEmpty, err := repository.GetBalance(counterparty)
@@ -92,7 +92,7 @@ func TestGetBalanceEmpty(t *testing.T) {
 }
 
 func TestExpensesAndCounterparties(t *testing.T) {
-	repository := defaultRepository.New(database, logging.TestService())
+	repository := defaultRepository.New(database, standartOutputLoggingService.New())
 	firstCounterparty := randomUid()
 	secondCounterparty := randomUid()
 	cost1 := spendings.Cost(456)
@@ -266,7 +266,7 @@ func TestExpensesAndCounterparties(t *testing.T) {
 }
 
 func TestAddAndRemoveExpense(t *testing.T) {
-	repository := defaultRepository.New(database, logging.TestService())
+	repository := defaultRepository.New(database, standartOutputLoggingService.New())
 	counterparty1 := randomUid()
 	counterparty2 := randomUid()
 	cost := spendings.Cost(456)

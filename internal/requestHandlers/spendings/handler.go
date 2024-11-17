@@ -4,8 +4,8 @@ import (
 	spendingsController "verni/internal/controllers/spendings"
 	"verni/internal/schema"
 	"verni/internal/services/logging"
-	"verni/internal/services/longpoll"
 	"verni/internal/services/pushNotifications"
+	"verni/internal/services/realtimeEvents"
 )
 
 type RequestsHandler interface {
@@ -43,13 +43,13 @@ type RequestsHandler interface {
 func DefaultHandler(
 	controller spendingsController.Controller,
 	pushService pushNotifications.Service,
-	pollingService longpoll.Service,
+	realtimeEvents realtimeEvents.Service,
 	logger logging.Service,
 ) RequestsHandler {
 	return &defaultRequestsHandler{
 		controller:     controller,
 		pushService:    pushService,
-		pollingService: pollingService,
+		realtimeEvents: realtimeEvents,
 		logger:         logger,
 	}
 }

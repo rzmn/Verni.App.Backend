@@ -11,8 +11,8 @@ import (
 	postgresDb "verni/internal/db/postgres"
 	"verni/internal/repositories/auth"
 	defaultRepository "verni/internal/repositories/auth/default"
-	"verni/internal/services/logging"
-	"verni/internal/services/pathProvider"
+	standartOutputLoggingService "verni/internal/services/logging/standartOutput"
+	envBasedPathProvider "verni/internal/services/pathProvider/env"
 
 	"github.com/google/uuid"
 )
@@ -22,8 +22,8 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	logger := logging.TestService()
-	pathProvider := pathProvider.VerniEnvService(logger)
+	logger := standartOutputLoggingService.New()
+	pathProvider := envBasedPathProvider.New(logger)
 	database = func() db.DB {
 		configFile, err := os.Open(pathProvider.AbsolutePath("./config/test/postgres_storage.json"))
 		if err != nil {
@@ -56,7 +56,7 @@ func randomEmail() string {
 }
 
 func TestGetUserInfo(t *testing.T) {
-	repository := defaultRepository.New(database, logging.TestService())
+	repository := defaultRepository.New(database, standartOutputLoggingService.New())
 	userId := randomUid()
 	userEmail := randomEmail()
 	userToken := uuid.New().String()
@@ -92,7 +92,7 @@ func TestGetUserInfo(t *testing.T) {
 }
 
 func TestMarkUserEmailValidated(t *testing.T) {
-	repository := defaultRepository.New(database, logging.TestService())
+	repository := defaultRepository.New(database, standartOutputLoggingService.New())
 	userId := randomUid()
 	userEmail := randomEmail()
 	userToken := uuid.New().String()
@@ -129,7 +129,7 @@ func TestMarkUserEmailValidated(t *testing.T) {
 }
 
 func TestIsUserExists(t *testing.T) {
-	repository := defaultRepository.New(database, logging.TestService())
+	repository := defaultRepository.New(database, standartOutputLoggingService.New())
 	userId := randomUid()
 	userEmail := randomEmail()
 	userToken := uuid.New().String()
@@ -166,7 +166,7 @@ func TestIsUserExists(t *testing.T) {
 }
 
 func TestCheckCredentials(t *testing.T) {
-	repository := defaultRepository.New(database, logging.TestService())
+	repository := defaultRepository.New(database, standartOutputLoggingService.New())
 	userId := randomUid()
 	userEmail := randomEmail()
 	userToken := uuid.New().String()
@@ -198,7 +198,7 @@ func TestCheckCredentials(t *testing.T) {
 }
 
 func TestGetUserIdByEmail(t *testing.T) {
-	repository := defaultRepository.New(database, logging.TestService())
+	repository := defaultRepository.New(database, standartOutputLoggingService.New())
 	userId := randomUid()
 	userEmail := randomEmail()
 	userToken := uuid.New().String()
@@ -238,7 +238,7 @@ func TestGetUserIdByEmail(t *testing.T) {
 }
 
 func TestUpdateRefreshToken(t *testing.T) {
-	repository := defaultRepository.New(database, logging.TestService())
+	repository := defaultRepository.New(database, standartOutputLoggingService.New())
 	userId := randomUid()
 	userEmail := randomEmail()
 	userToken := uuid.New().String()
@@ -276,7 +276,7 @@ func TestUpdateRefreshToken(t *testing.T) {
 }
 
 func TestUpdatePassword(t *testing.T) {
-	repository := defaultRepository.New(database, logging.TestService())
+	repository := defaultRepository.New(database, standartOutputLoggingService.New())
 	userId := randomUid()
 	userEmail := randomEmail()
 	userToken := uuid.New().String()
@@ -314,7 +314,7 @@ func TestUpdatePassword(t *testing.T) {
 }
 
 func TestUpdateEmail(t *testing.T) {
-	repository := defaultRepository.New(database, logging.TestService())
+	repository := defaultRepository.New(database, standartOutputLoggingService.New())
 	userId := randomUid()
 	userEmail := randomEmail()
 	userToken := uuid.New().String()

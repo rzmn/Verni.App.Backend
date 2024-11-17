@@ -1,4 +1,4 @@
-package logging
+package prodLoggingService
 
 import (
 	"context"
@@ -8,8 +8,42 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"verni/internal/services/logging"
+	standartOutputLoggingService "verni/internal/services/logging/standartOutput"
 	"verni/internal/services/watchdog"
 )
+
+type ProdLoggerConfig struct {
+	Watchdog         watchdog.Service
+	LoggingDirectory string
+}
+
+func New(configProvider func() *ProdLoggerConfig) logging.Service {
+	logger := &prodLoggingService{
+		consoleLogger: standartOutputLoggingService.New(),
+		watchdogProvider: func() *watchdog.Service {
+			config := configProvider()
+			if config == nil {
+				return nil
+			}
+			return &config.Watchdog
+		},
+		logsDirectoryProvider: func() *string {
+			config := configProvider()
+			if config == nil {
+				return nil
+			}
+			return &config.LoggingDirectory
+		},
+		wg:                           sync.WaitGroup{},
+		logger:                       make(chan func(), 10),
+		delayedLinesToWriteToLogFile: []string{},
+		watchdogContext:              createWatchdogContext(),
+		delayedWatchdogCalls:         []func(watchdog.Service){},
+	}
+	go logger.logImpl(context.Background())
+	return logger
+}
 
 type watchdogContext struct {
 	capacity int
@@ -47,7 +81,7 @@ func createWatchdogContext() watchdogContext {
 }
 
 type prodLoggingService struct {
-	consoleLogger                Service
+	consoleLogger                logging.Service
 	watchdogProvider             func() *watchdog.Service
 	logsDirectoryProvider        func() *string
 	wg                           sync.WaitGroup

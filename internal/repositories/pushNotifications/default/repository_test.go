@@ -9,8 +9,8 @@ import (
 	postgresDb "verni/internal/db/postgres"
 	"verni/internal/repositories/pushNotifications"
 	defaultRepository "verni/internal/repositories/pushNotifications/default"
-	"verni/internal/services/logging"
-	"verni/internal/services/pathProvider"
+	standartOutputLoggingService "verni/internal/services/logging/standartOutput"
+	envBasedPathProvider "verni/internal/services/pathProvider/env"
 
 	"github.com/google/uuid"
 )
@@ -20,8 +20,8 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	logger := logging.TestService()
-	pathProvider := pathProvider.VerniEnvService(logger)
+	logger := standartOutputLoggingService.New()
+	pathProvider := envBasedPathProvider.New(logger)
 	database = func() db.DB {
 		configFile, err := os.Open(pathProvider.AbsolutePath("./config/test/postgres_storage.json"))
 		if err != nil {
@@ -50,7 +50,7 @@ func randomUid() pushNotifications.UserId {
 }
 
 func TestStorePushToken(t *testing.T) {
-	repository := defaultRepository.New(database, logging.TestService())
+	repository := defaultRepository.New(database, standartOutputLoggingService.New())
 
 	// initially token should be nil
 

@@ -6,7 +6,8 @@ import (
 	"verni/internal/requestHandlers/accessToken"
 	"verni/internal/schema"
 	"verni/internal/services/logging"
-	"verni/internal/services/longpoll"
+	"verni/internal/services/realtimeEvents"
+	ginLongpollRealtimeEvents "verni/internal/services/realtimeEvents/longpoll"
 
 	"github.com/gin-gonic/gin"
 )
@@ -24,7 +25,7 @@ func (c *ginServer) ListenAndServe() {
 func createGinServer(
 	config GinConfig,
 	accessTokenChecker accessToken.RequestHandler,
-	requestHandlersBuilder func(longpoll longpoll.Service) RequestHandlers,
+	requestHandlersBuilder func(realtimeEvents realtimeEvents.Service) RequestHandlers,
 	logger logging.Service,
 ) ginServer {
 	logger.LogInfo("creating gin server with config %v", config)
@@ -47,7 +48,7 @@ func createGinServer(
 			return schema.UserId(c.Request.Header.Get(accessTokenSubjectKey))
 		},
 	}
-	longpollService := longpoll.GinService(router, logger, tokenChecker.handler)
+	longpollService := ginLongpollRealtimeEvents.New(router, logger, tokenChecker.handler)
 	handlers := requestHandlersBuilder(longpollService)
 	{
 		auth := router.Group("/auth")

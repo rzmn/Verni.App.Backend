@@ -1,12 +1,19 @@
-package formatValidation
+package defaultFormatValidation
 
 import (
 	"fmt"
 	"net/mail"
 	"regexp"
 	"strings"
+	"verni/internal/services/formatValidation"
 	"verni/internal/services/logging"
 )
+
+func New(logger logging.Service) formatValidation.Service {
+	return &defaultService{
+		logger: logger,
+	}
+}
 
 type defaultService struct {
 	logger logging.Service

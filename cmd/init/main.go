@@ -6,13 +6,13 @@ import (
 	"os"
 	"verni/internal/db"
 	postgresDb "verni/internal/db/postgres"
-	"verni/internal/services/logging"
-	"verni/internal/services/pathProvider"
+	standartOutputLoggingService "verni/internal/services/logging/standartOutput"
+	envBasedPathProvider "verni/internal/services/pathProvider/env"
 )
 
 func main() {
-	logger := logging.StandartOutput()
-	pathProvider := pathProvider.VerniEnvService(logger)
+	logger := standartOutputLoggingService.New()
+	pathProvider := envBasedPathProvider.New(logger)
 	configFile, err := os.Open(pathProvider.AbsolutePath("./config/prod/verni.json"))
 	if err != nil {
 		logger.LogFatal("failed to open config file: %s", err)

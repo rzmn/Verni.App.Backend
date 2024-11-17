@@ -36,13 +36,20 @@ import (
 	"verni/internal/server"
 
 	"verni/internal/services/emailSender"
+	yandexEmailSender "verni/internal/services/emailSender/yandex"
 	"verni/internal/services/formatValidation"
+	defaultFormatValidation "verni/internal/services/formatValidation/default"
 	"verni/internal/services/jwt"
+	defaultJwtService "verni/internal/services/jwt/default"
 	"verni/internal/services/logging"
-	"verni/internal/services/longpoll"
+	prodLoggingService "verni/internal/services/logging/prod"
 	"verni/internal/services/pathProvider"
+	envBasedPathProvider "verni/internal/services/pathProvider/env"
 	"verni/internal/services/pushNotifications"
+	applePushNotifications "verni/internal/services/pushNotifications/apns"
+	"verni/internal/services/realtimeEvents"
 	"verni/internal/services/watchdog"
+	telegramWatchdog "verni/internal/services/watchdog/telegram"
 
 	authController "verni/internal/controllers/auth"
 	defaultAuthController "verni/internal/controllers/auth/default"
@@ -104,19 +111,19 @@ func main() {
 		startupTime := time.Now()
 		var loggingDirectoryRef *string = nil
 		var watchdogRef *watchdog.Service = nil
-		logger := logging.Prod(func() *logging.ProdLoggerConfig {
+		logger := prodLoggingService.New(func() *prodLoggingService.ProdLoggerConfig {
 			if loggingDirectoryRef == nil {
 				return nil
 			}
 			if watchdogRef == nil {
 				return nil
 			}
-			return &logging.ProdLoggerConfig{
+			return &prodLoggingService.ProdLoggerConfig{
 				Watchdog:         *watchdogRef,
 				LoggingDirectory: *loggingDirectoryRef,
 			}
 		})
-		pathProvider := pathProvider.VerniEnvService(logger)
+		pathProvider := envBasedPathProvider.New(logger)
 		loggingDirectory := pathProvider.AbsolutePath(fmt.Sprintf("./session[%s].log", startupTime.Format("2006.01.02 15:04:05")))
 		if err := os.MkdirAll(loggingDirectory, os.ModePerm); err != nil {
 			loggingDirectoryRef = nil
@@ -141,10 +148,10 @@ func main() {
 				if err != nil {
 					logger.LogFatal("failed to serialize telegram watchdog config err: %v", err)
 				}
-				var telegramConfig watchdog.TelegramConfig
+				var telegramConfig telegramWatchdog.TelegramConfig
 				json.Unmarshal(data, &telegramConfig)
 				logger.LogInfo("creating telegram watchdog with config %v", telegramConfig)
-				watchdog, err := watchdog.TelegramService(telegramConfig)
+				watchdog, err := telegramWatchdog.New(telegramConfig)
 				if err != nil {
 					logger.LogFatal("failed to initialize telegram watchdog err: %v", err)
 				}
@@ -199,10 +206,10 @@ func main() {
 				if err != nil {
 					logger.LogFatal("failed to serialize apple apns config err: %v", err)
 				}
-				var apnsConfig pushNotifications.ApnsConfig
+				var apnsConfig applePushNotifications.ApnsConfig
 				json.Unmarshal(data, &apnsConfig)
 				logger.LogInfo("creating apple apns service with config %v", apnsConfig)
-				service, err := pushNotifications.ApnsService(apnsConfig, logger, pathProvider, repositories.pushRegistry)
+				service, err := applePushNotifications.New(apnsConfig, logger, pathProvider, repositories.pushRegistry)
 				if err != nil {
 					logger.LogFatal("failed to initialize apple apns service err: %v", err)
 				}
@@ -220,10 +227,10 @@ func main() {
 				if err != nil {
 					logger.LogFatal("failed to serialize jwt config err: %v", err)
 				}
-				var defaultConfig jwt.DefaultConfig
+				var defaultConfig defaultJwtService.DefaultConfig
 				json.Unmarshal(data, &defaultConfig)
 				logger.LogInfo("creating jwt token service with config %v", defaultConfig)
-				return jwt.DefaultService(
+				return defaultJwtService.New(
 					defaultConfig,
 					logger,
 					func() time.Time {
@@ -242,17 +249,17 @@ func main() {
 				if err != nil {
 					logger.LogFatal("failed to serialize yandex email sender config err: %v", err)
 				}
-				var yandexConfig emailSender.YandexConfig
+				var yandexConfig yandexEmailSender.YandexConfig
 				json.Unmarshal(data, &yandexConfig)
 				logger.LogInfo("creating yandex email sender with config %v", yandexConfig)
-				return emailSender.YandexService(yandexConfig, logger)
+				return yandexEmailSender.New(yandexConfig, logger)
 			default:
 				logger.LogFatal("unknown email sender type %s", config.EmailSender.Type)
 				return nil
 			}
 		}(),
 		formatValidationService: func() formatValidation.Service {
-			return formatValidation.DefaultService(logger)
+			return defaultFormatValidation.New(logger)
 		}(),
 	}
 	controllers := Controllers{
@@ -313,7 +320,7 @@ func main() {
 					services.jwt,
 					logger,
 				),
-				func(longpoll longpoll.Service) server.RequestHandlers {
+				func(realtimeEvents realtimeEvents.Service) server.RequestHandlers {
 					return server.RequestHandlers{
 						Auth: auth.DefaultHandler(
 							controllers.auth,
@@ -322,13 +329,13 @@ func main() {
 						Spendings: spendings.DefaultHandler(
 							controllers.spendings,
 							services.push,
-							longpoll,
+							realtimeEvents,
 							logger,
 						),
 						Friends: friends.DefaultHandler(
 							controllers.friends,
 							services.push,
-							longpoll,
+							realtimeEvents,
 							logger,
 						),
 						Profile: profile.DefaultHandler(

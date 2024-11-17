@@ -1,15 +1,17 @@
-package jwt
+package defaultJwtService_test
 
 import (
 	"testing"
 	"time"
-	"verni/internal/services/logging"
+	"verni/internal/services/jwt"
+	defaultJwtService "verni/internal/services/jwt/default"
+	standartOutputLoggingService "verni/internal/services/logging/standartOutput"
 
 	"github.com/google/uuid"
 )
 
-func createConfig() DefaultConfig {
-	return DefaultConfig{
+func createConfig() defaultJwtService.DefaultConfig {
+	return defaultJwtService.DefaultConfig{
 		RefreshTokenLifetimeHours: 24 * 30,
 		AccessTokenLifetimeHours:  1,
 		RefreshTokenSecret:        "RefreshTokenSecret",
@@ -18,14 +20,14 @@ func createConfig() DefaultConfig {
 }
 
 func TestIssuedRefreshTokenIsValid(t *testing.T) {
-	service := DefaultService(
+	service := defaultJwtService.New(
 		createConfig(),
-		logging.TestService(),
+		standartOutputLoggingService.New(),
 		func() time.Time {
 			return time.Now()
 		},
 	)
-	subject := Subject(uuid.New().String())
+	subject := jwt.Subject(uuid.New().String())
 	token, err := service.IssueRefreshToken(subject)
 	if err != nil {
 		t.Fatalf("IssueRefreshToken err: %v", err)
@@ -36,56 +38,56 @@ func TestIssuedRefreshTokenIsValid(t *testing.T) {
 }
 
 func TestIssuedRefreshTokenIsNotAnAccessToken(t *testing.T) {
-	service := DefaultService(
+	service := defaultJwtService.New(
 		createConfig(),
-		logging.TestService(),
+		standartOutputLoggingService.New(),
 		func() time.Time {
 			return time.Now()
 		},
 	)
-	subject := Subject(uuid.New().String())
+	subject := jwt.Subject(uuid.New().String())
 	token, err := service.IssueRefreshToken(subject)
 	if err != nil {
 		t.Fatalf("IssueRefreshToken err: %v", err)
 	}
-	validateAccessTokenError := service.ValidateAccessToken(AccessToken(token))
+	validateAccessTokenError := service.ValidateAccessToken(jwt.AccessToken(token))
 	if validateAccessTokenError == nil {
 		t.Fatalf("refresh token is recognized as a valid access token")
-	} else if validateAccessTokenError.Code != CodeTokenInvalid {
+	} else if validateAccessTokenError.Code != jwt.CodeTokenInvalid {
 		t.Fatalf("ValidateAccessToken unexpected err: %v", validateAccessTokenError)
 	}
 }
 
 func TestIssuedRefreshTokenSubjectInaccessibleAsAnAccessToken(t *testing.T) {
-	service := DefaultService(
+	service := defaultJwtService.New(
 		createConfig(),
-		logging.TestService(),
+		standartOutputLoggingService.New(),
 		func() time.Time {
 			return time.Now()
 		},
 	)
-	subject := Subject(uuid.New().String())
+	subject := jwt.Subject(uuid.New().String())
 	token, err := service.IssueRefreshToken(subject)
 	if err != nil {
 		t.Fatalf("IssueRefreshToken err: %v", err)
 	}
-	subjectFromTokenAsAccessToken, err := service.GetAccessTokenSubject(AccessToken(token))
+	subjectFromTokenAsAccessToken, err := service.GetAccessTokenSubject(jwt.AccessToken(token))
 	if err == nil {
 		t.Fatalf("unexpected valid subject from access token %s", subjectFromTokenAsAccessToken)
-	} else if err.Code != CodeTokenInvalid {
+	} else if err.Code != jwt.CodeTokenInvalid {
 		t.Fatalf("unexpected err getting subject from access token %v", err)
 	}
 }
 
 func TestIssuedRefreshTokenSubject(t *testing.T) {
-	service := DefaultService(
+	service := defaultJwtService.New(
 		createConfig(),
-		logging.TestService(),
+		standartOutputLoggingService.New(),
 		func() time.Time {
 			return time.Now()
 		},
 	)
-	subject := Subject(uuid.New().String())
+	subject := jwt.Subject(uuid.New().String())
 	token, err := service.IssueRefreshToken(subject)
 	if err != nil {
 		t.Fatalf("IssueRefreshToken err: %v", err)
@@ -100,14 +102,14 @@ func TestIssuedRefreshTokenSubject(t *testing.T) {
 }
 
 func TestExpiredRefreshToken(t *testing.T) {
-	service := DefaultService(
+	service := defaultJwtService.New(
 		createConfig(),
-		logging.TestService(),
+		standartOutputLoggingService.New(),
 		func() time.Time {
 			return time.Now().Add(-(time.Hour*time.Duration(createConfig().RefreshTokenLifetimeHours) + time.Hour))
 		},
 	)
-	subject := Subject(uuid.New().String())
+	subject := jwt.Subject(uuid.New().String())
 	token, err := service.IssueRefreshToken(subject)
 	if err != nil {
 		t.Fatalf("IssueRefreshToken err: %v", err)
@@ -115,20 +117,20 @@ func TestExpiredRefreshToken(t *testing.T) {
 	err = service.ValidateRefreshToken(token)
 	if err == nil {
 		t.Fatalf("outdated token should not be valid")
-	} else if err.Code != CodeTokenExpired {
+	} else if err.Code != jwt.CodeTokenExpired {
 		t.Fatalf("outdated token unexpected validation err %v", err)
 	}
 }
 
 func TestRefreshTokenValidOnTheLastMinute(t *testing.T) {
-	service := DefaultService(
+	service := defaultJwtService.New(
 		createConfig(),
-		logging.TestService(),
+		standartOutputLoggingService.New(),
 		func() time.Time {
 			return time.Now().Add(-(time.Hour*time.Duration(createConfig().RefreshTokenLifetimeHours) - time.Minute))
 		},
 	)
-	subject := Subject(uuid.New().String())
+	subject := jwt.Subject(uuid.New().String())
 	token, err := service.IssueRefreshToken(subject)
 	if err != nil {
 		t.Fatalf("IssueRefreshToken err: %v", err)
@@ -139,14 +141,14 @@ func TestRefreshTokenValidOnTheLastMinute(t *testing.T) {
 }
 
 func TestIssuedAccessTokenIsValid(t *testing.T) {
-	service := DefaultService(
+	service := defaultJwtService.New(
 		createConfig(),
-		logging.TestService(),
+		standartOutputLoggingService.New(),
 		func() time.Time {
 			return time.Now()
 		},
 	)
-	subject := Subject(uuid.New().String())
+	subject := jwt.Subject(uuid.New().String())
 	token, err := service.IssueAccessToken(subject)
 	if err != nil {
 		t.Fatalf("IssueAccessToken err: %v", err)
@@ -157,56 +159,56 @@ func TestIssuedAccessTokenIsValid(t *testing.T) {
 }
 
 func TestIssuedAccessTokenIsNotARefreshToken(t *testing.T) {
-	service := DefaultService(
+	service := defaultJwtService.New(
 		createConfig(),
-		logging.TestService(),
+		standartOutputLoggingService.New(),
 		func() time.Time {
 			return time.Now()
 		},
 	)
-	subject := Subject(uuid.New().String())
+	subject := jwt.Subject(uuid.New().String())
 	token, err := service.IssueAccessToken(subject)
 	if err != nil {
 		t.Fatalf("IssueAccessToken err: %v", err)
 	}
-	validateRefreshTokenError := service.ValidateRefreshToken(RefreshToken(token))
+	validateRefreshTokenError := service.ValidateRefreshToken(jwt.RefreshToken(token))
 	if validateRefreshTokenError == nil {
 		t.Fatalf("access token is recognized as a valid refresh token")
-	} else if validateRefreshTokenError.Code != CodeTokenInvalid {
+	} else if validateRefreshTokenError.Code != jwt.CodeTokenInvalid {
 		t.Fatalf("ValidateRefreshToken unexpected err: %v", validateRefreshTokenError)
 	}
 }
 
 func TestIssuedAccessTokenSubjectInaccessibleAsAnRefreshToken(t *testing.T) {
-	service := DefaultService(
+	service := defaultJwtService.New(
 		createConfig(),
-		logging.TestService(),
+		standartOutputLoggingService.New(),
 		func() time.Time {
 			return time.Now()
 		},
 	)
-	subject := Subject(uuid.New().String())
+	subject := jwt.Subject(uuid.New().String())
 	token, err := service.IssueAccessToken(subject)
 	if err != nil {
 		t.Fatalf("IssueAccessToken err: %v", err)
 	}
-	subjectFromTokenAsRefreshToken, err := service.GetRefreshTokenSubject(RefreshToken(token))
+	subjectFromTokenAsRefreshToken, err := service.GetRefreshTokenSubject(jwt.RefreshToken(token))
 	if err == nil {
 		t.Fatalf("unexpected valid subject from refresh token %s", subjectFromTokenAsRefreshToken)
-	} else if err.Code != CodeTokenInvalid {
+	} else if err.Code != jwt.CodeTokenInvalid {
 		t.Fatalf("unexpected err getting subject from refresh token %v", err)
 	}
 }
 
 func TestIssuedAccessTokenSubject(t *testing.T) {
-	service := DefaultService(
+	service := defaultJwtService.New(
 		createConfig(),
-		logging.TestService(),
+		standartOutputLoggingService.New(),
 		func() time.Time {
 			return time.Now()
 		},
 	)
-	subject := Subject(uuid.New().String())
+	subject := jwt.Subject(uuid.New().String())
 	token, err := service.IssueAccessToken(subject)
 	if err != nil {
 		t.Fatalf("IssueAccessToken err: %v", err)
@@ -221,14 +223,14 @@ func TestIssuedAccessTokenSubject(t *testing.T) {
 }
 
 func TestExpiredAccessToken(t *testing.T) {
-	service := DefaultService(
+	service := defaultJwtService.New(
 		createConfig(),
-		logging.TestService(),
+		standartOutputLoggingService.New(),
 		func() time.Time {
 			return time.Now().Add(-(time.Hour + time.Hour))
 		},
 	)
-	subject := Subject(uuid.New().String())
+	subject := jwt.Subject(uuid.New().String())
 	token, err := service.IssueAccessToken(subject)
 	if err != nil {
 		t.Fatalf("IssueAccessToken err: %v", err)
@@ -236,20 +238,20 @@ func TestExpiredAccessToken(t *testing.T) {
 	err = service.ValidateAccessToken(token)
 	if err == nil {
 		t.Fatalf("outdated token should not be valid")
-	} else if err.Code != CodeTokenExpired {
+	} else if err.Code != jwt.CodeTokenExpired {
 		t.Fatalf("outdated token unexpected validation err %v", err)
 	}
 }
 
 func TestAccessTokenValidOnTheLastMinute(t *testing.T) {
-	service := DefaultService(
+	service := defaultJwtService.New(
 		createConfig(),
-		logging.TestService(),
+		standartOutputLoggingService.New(),
 		func() time.Time {
 			return time.Now().Add(-(time.Hour - time.Minute))
 		},
 	)
-	subject := Subject(uuid.New().String())
+	subject := jwt.Subject(uuid.New().String())
 	token, err := service.IssueAccessToken(subject)
 	if err != nil {
 		t.Fatalf("IssueRefreshToken err: %v", err)

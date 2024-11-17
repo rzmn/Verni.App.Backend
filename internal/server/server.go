@@ -11,7 +11,7 @@ import (
 	"verni/internal/requestHandlers/verification"
 	"verni/internal/schema"
 	"verni/internal/services/logging"
-	"verni/internal/services/longpoll"
+	"verni/internal/services/realtimeEvents"
 
 	"github.com/gin-gonic/gin"
 )
@@ -49,7 +49,7 @@ const (
 func GinServer(
 	config GinConfig,
 	accessTokenChecker accessToken.RequestHandler,
-	requestHandlersBuilder func(longpoll longpoll.Service) RequestHandlers,
+	requestHandlersBuilder func(realtimeEvents realtimeEvents.Service) RequestHandlers,
 	logger logging.Service,
 ) Server {
 	server := createGinServer(

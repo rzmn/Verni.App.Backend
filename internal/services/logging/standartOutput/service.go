@@ -1,6 +1,13 @@
-package logging
+package standartOutputLoggingService
 
-import "log"
+import (
+	"log"
+	"verni/internal/services/logging"
+)
+
+func New() logging.Service {
+	return &standartOutputLoggingService{}
+}
 
 type standartOutputLoggingService struct{}
 

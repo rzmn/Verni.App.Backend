@@ -7,14 +7,14 @@ import (
 	spendingsRepository "verni/internal/repositories/spendings"
 	"verni/internal/schema"
 	"verni/internal/services/logging"
-	"verni/internal/services/longpoll"
 	"verni/internal/services/pushNotifications"
+	"verni/internal/services/realtimeEvents"
 )
 
 type defaultRequestsHandler struct {
 	controller     spendingsController.Controller
 	pushService    pushNotifications.Service
-	pollingService longpoll.Service
+	realtimeEvents realtimeEvents.Service
 	logger         logging.Service
 }
 
@@ -46,8 +46,8 @@ func (c *defaultRequestsHandler) AddExpense(
 			pushNotifications.Expense(mapIdentifiableExpense(expense)),
 			pushNotifications.UserId(subject),
 		)
-		c.pollingService.ExpensesUpdated(longpoll.UserId(share.Counterparty), longpoll.UserId(subject))
-		c.pollingService.CounterpartiesUpdated(longpoll.UserId(share.Counterparty))
+		c.realtimeEvents.ExpensesUpdated(realtimeEvents.UserId(share.Counterparty), realtimeEvents.UserId(subject))
+		c.realtimeEvents.CounterpartiesUpdated(realtimeEvents.UserId(share.Counterparty))
 	}
 	success(http.StatusOK, schema.Success(mapIdentifiableExpense(expense)))
 }
@@ -82,8 +82,8 @@ func (c *defaultRequestsHandler) RemoveExpense(
 			pushNotifications.Expense(mapIdentifiableExpense(expense)),
 			pushNotifications.UserId(subject),
 		)
-		c.pollingService.ExpensesUpdated(longpoll.UserId(share.Counterparty), longpoll.UserId(subject))
-		c.pollingService.CounterpartiesUpdated(longpoll.UserId(share.Counterparty))
+		c.realtimeEvents.ExpensesUpdated(realtimeEvents.UserId(share.Counterparty), realtimeEvents.UserId(subject))
+		c.realtimeEvents.CounterpartiesUpdated(realtimeEvents.UserId(share.Counterparty))
 	}
 	success(http.StatusOK, schema.Success(mapIdentifiableExpense(expense)))
 }

@@ -7,7 +7,7 @@ import (
 	defaultController "verni/internal/controllers/avatars/default"
 	"verni/internal/repositories/images"
 	images_mock "verni/internal/repositories/images/mock"
-	"verni/internal/services/logging"
+	standartOutputLoggingService "verni/internal/services/logging/standartOutput"
 )
 
 func TestGetAvatarsCannotGetFromRepository(t *testing.T) {
@@ -16,7 +16,7 @@ func TestGetAvatarsCannotGetFromRepository(t *testing.T) {
 			return []images.Image{}, errors.New("some error")
 		},
 	}
-	controller := defaultController.New(&repository, logging.TestService())
+	controller := defaultController.New(&repository, standartOutputLoggingService.New())
 	_, err := controller.GetAvatars([]avatars.AvatarId{})
 	if err == nil {
 		t.Fatalf("`GetAvatars` should fail with err, found nil")
@@ -32,7 +32,7 @@ func TestGetAvatarsOk(t *testing.T) {
 			return []images.Image{}, nil
 		},
 	}
-	controller := defaultController.New(&repository, logging.TestService())
+	controller := defaultController.New(&repository, standartOutputLoggingService.New())
 	_, err := controller.GetAvatars([]avatars.AvatarId{})
 	if err != nil {
 		t.Fatalf("`GetAvatars` should not fail with err, found %v", err)

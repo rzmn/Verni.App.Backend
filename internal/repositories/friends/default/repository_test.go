@@ -12,8 +12,8 @@ import (
 	"verni/internal/repositories"
 	"verni/internal/repositories/friends"
 	defaultRepository "verni/internal/repositories/friends/default"
-	"verni/internal/services/logging"
-	"verni/internal/services/pathProvider"
+	standartOutputLoggingService "verni/internal/services/logging/standartOutput"
+	envBasedPathProvider "verni/internal/services/pathProvider/env"
 
 	"github.com/google/uuid"
 )
@@ -23,8 +23,8 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	logger := logging.TestService()
-	pathProvider := pathProvider.VerniEnvService(logger)
+	logger := standartOutputLoggingService.New()
+	pathProvider := envBasedPathProvider.New(logger)
 	database = func() db.DB {
 		configFile, err := os.Open(pathProvider.AbsolutePath("./config/test/postgres_storage.json"))
 		if err != nil {
@@ -53,7 +53,7 @@ func randomUid() friends.UserId {
 }
 
 func TestSubscribtion(t *testing.T) {
-	repository := defaultRepository.New(database, logging.TestService())
+	repository := defaultRepository.New(database, standartOutputLoggingService.New())
 	subscriber := randomUid()
 	subscription := randomUid()
 
@@ -83,7 +83,7 @@ func TestSubscribtion(t *testing.T) {
 }
 
 func TestStoreAndRemoveFriendRequest(t *testing.T) {
-	repository := defaultRepository.New(database, logging.TestService())
+	repository := defaultRepository.New(database, standartOutputLoggingService.New())
 	subscriber := randomUid()
 	subscription := randomUid()
 
@@ -114,7 +114,7 @@ func TestStoreAndRemoveFriendRequest(t *testing.T) {
 }
 
 func TestFriendship(t *testing.T) {
-	repository := defaultRepository.New(database, logging.TestService())
+	repository := defaultRepository.New(database, standartOutputLoggingService.New())
 	subscriber := randomUid()
 	subscription := randomUid()
 
@@ -151,26 +151,26 @@ func TestFriendship(t *testing.T) {
 }
 
 func TestHasFriendRequestEmpty(t *testing.T) {
-	repository := defaultRepository.New(database, logging.TestService())
+	repository := defaultRepository.New(database, standartOutputLoggingService.New())
 	subscriber := randomUid()
 	subscription := randomUid()
 	ensureFriendRequest(repository, t, subscriber, subscription, false)
 }
 
 func TestGetSubscribersEmpty(t *testing.T) {
-	repository := defaultRepository.New(database, logging.TestService())
+	repository := defaultRepository.New(database, standartOutputLoggingService.New())
 	uid := randomUid()
 	ensureSubscribersIgnoringOrder(repository, t, uid, []friends.UserId{})
 }
 
 func TestGetSubsriptionsEmpty(t *testing.T) {
-	repository := defaultRepository.New(database, logging.TestService())
+	repository := defaultRepository.New(database, standartOutputLoggingService.New())
 	uid := randomUid()
 	ensureSubscriptionsIgnoringOrder(repository, t, uid, []friends.UserId{})
 }
 
 func TestGetFriendsEmpty(t *testing.T) {
-	repository := defaultRepository.New(database, logging.TestService())
+	repository := defaultRepository.New(database, standartOutputLoggingService.New())
 	uid := randomUid()
 	ensureFriendsIgnoringOrder(repository, t, uid, []friends.UserId{})
 }

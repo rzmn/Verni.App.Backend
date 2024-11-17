@@ -9,8 +9,8 @@ import (
 	postgresDb "verni/internal/db/postgres"
 	"verni/internal/repositories/images"
 	defaultRepository "verni/internal/repositories/images/default"
-	"verni/internal/services/logging"
-	"verni/internal/services/pathProvider"
+	standartOutputLoggingService "verni/internal/services/logging/standartOutput"
+	envBasedPathProvider "verni/internal/services/pathProvider/env"
 
 	"github.com/google/uuid"
 )
@@ -20,8 +20,8 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	logger := logging.TestService()
-	pathProvider := pathProvider.VerniEnvService(logger)
+	logger := standartOutputLoggingService.New()
+	pathProvider := envBasedPathProvider.New(logger)
 	database = func() db.DB {
 		configFile, err := os.Open(pathProvider.AbsolutePath("./config/test/postgres_storage.json"))
 		if err != nil {
@@ -46,7 +46,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestUpload(t *testing.T) {
-	repository := defaultRepository.New(database, logging.TestService())
+	repository := defaultRepository.New(database, standartOutputLoggingService.New())
 	base64 := uuid.New().String()
 
 	transaction := repository.UploadImageBase64(base64)
@@ -74,7 +74,7 @@ func TestUpload(t *testing.T) {
 }
 
 func TestGetEmpty(t *testing.T) {
-	repository := defaultRepository.New(database, logging.TestService())
+	repository := defaultRepository.New(database, standartOutputLoggingService.New())
 	id := images.ImageId(uuid.New().String())
 
 	shouldBeEmpty, err := repository.GetImagesBase64([]images.ImageId{id})

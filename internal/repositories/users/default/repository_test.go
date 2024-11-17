@@ -10,8 +10,8 @@ import (
 	postgresDb "verni/internal/db/postgres"
 	"verni/internal/repositories/users"
 	defaultRepository "verni/internal/repositories/users/default"
-	"verni/internal/services/logging"
-	"verni/internal/services/pathProvider"
+	standartOutputLoggingService "verni/internal/services/logging/standartOutput"
+	envBasedPathProvider "verni/internal/services/pathProvider/env"
 
 	"github.com/google/uuid"
 )
@@ -21,8 +21,8 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	logger := logging.TestService()
-	pathProvider := pathProvider.VerniEnvService(logger)
+	logger := standartOutputLoggingService.New()
+	pathProvider := envBasedPathProvider.New(logger)
 	database = func() db.DB {
 		configFile, err := os.Open(pathProvider.AbsolutePath("./config/test/postgres_storage.json"))
 		if err != nil {
@@ -67,7 +67,7 @@ func TestStore(t *testing.T) {
 }
 
 func storeUser(user users.User, t *testing.T) {
-	repository := defaultRepository.New(database, logging.TestService())
+	repository := defaultRepository.New(database, standartOutputLoggingService.New())
 
 	// if no user with this id, should return []
 
@@ -117,7 +117,7 @@ func storeUser(user users.User, t *testing.T) {
 }
 
 func TestUpdateDisplayName(t *testing.T) {
-	repository := defaultRepository.New(database, logging.TestService())
+	repository := defaultRepository.New(database, standartOutputLoggingService.New())
 	user := randomUserWithAvatar(true)
 	storeTransaction := repository.StoreUser(user)
 	if err := storeTransaction.Perform(); err != nil {
@@ -159,7 +159,7 @@ func TestUpdateAvatar(t *testing.T) {
 }
 
 func testUpdateAvatar(user users.User, newAvatar *users.AvatarId, t *testing.T) {
-	repository := defaultRepository.New(database, logging.TestService())
+	repository := defaultRepository.New(database, standartOutputLoggingService.New())
 	storeTransaction := repository.StoreUser(user)
 	if err := storeTransaction.Perform(); err != nil {
 		t.Fatalf("failed to perform `storeTransaction` err: %v", err)

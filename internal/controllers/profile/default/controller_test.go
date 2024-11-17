@@ -14,7 +14,7 @@ import (
 	"verni/internal/repositories/users"
 	users_mock "verni/internal/repositories/users/mock"
 	formatValidation_mock "verni/internal/services/formatValidation/mock"
-	"verni/internal/services/logging"
+	standartOutputLoggingService "verni/internal/services/logging/standartOutput"
 
 	"github.com/google/uuid"
 )
@@ -30,7 +30,7 @@ func TestGetInfoGetUsersFailed(t *testing.T) {
 	friendsRepository := friends_mock.RepositoryMock{}
 	formatValidation := formatValidation_mock.ServiceMock{}
 
-	controller := defaultController.New(&authRepository, &imagesRepository, &usersRepository, &friendsRepository, &formatValidation, logging.TestService())
+	controller := defaultController.New(&authRepository, &imagesRepository, &usersRepository, &friendsRepository, &formatValidation, standartOutputLoggingService.New())
 	_, err := controller.GetProfileInfo(profile.UserId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`GetProfileInfo` should be failed, found no err")
@@ -51,7 +51,7 @@ func TestGetInfoNoUsersFound(t *testing.T) {
 	friendsRepository := friends_mock.RepositoryMock{}
 	formatValidation := formatValidation_mock.ServiceMock{}
 
-	controller := defaultController.New(&authRepository, &imagesRepository, &usersRepository, &friendsRepository, &formatValidation, logging.TestService())
+	controller := defaultController.New(&authRepository, &imagesRepository, &usersRepository, &friendsRepository, &formatValidation, standartOutputLoggingService.New())
 	_, err := controller.GetProfileInfo(profile.UserId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`GetProfileInfo` should be failed, found no err")
@@ -76,7 +76,7 @@ func TestGetInfoGetCredentialsFailed(t *testing.T) {
 	friendsRepository := friends_mock.RepositoryMock{}
 	formatValidation := formatValidation_mock.ServiceMock{}
 
-	controller := defaultController.New(&authRepository, &imagesRepository, &usersRepository, &friendsRepository, &formatValidation, logging.TestService())
+	controller := defaultController.New(&authRepository, &imagesRepository, &usersRepository, &friendsRepository, &formatValidation, standartOutputLoggingService.New())
 	_, err := controller.GetProfileInfo(profile.UserId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`GetProfileInfo` should be failed, found no err")
@@ -101,7 +101,7 @@ func TestGetInfoOk(t *testing.T) {
 	friendsRepository := friends_mock.RepositoryMock{}
 	formatValidation := formatValidation_mock.ServiceMock{}
 
-	controller := defaultController.New(&authRepository, &imagesRepository, &usersRepository, &friendsRepository, &formatValidation, logging.TestService())
+	controller := defaultController.New(&authRepository, &imagesRepository, &usersRepository, &friendsRepository, &formatValidation, standartOutputLoggingService.New())
 	_, err := controller.GetProfileInfo(profile.UserId(uuid.New().String()))
 	if err != nil {
 		t.Fatalf("`GetProfileInfo` should not be failed, found err %v", err)
@@ -118,7 +118,7 @@ func TestUpdateDisplayNameWrongFormat(t *testing.T) {
 			return errors.New("some error")
 		},
 	}
-	controller := defaultController.New(&authRepository, &imagesRepository, &usersRepository, &friendsRepository, &formatValidation, logging.TestService())
+	controller := defaultController.New(&authRepository, &imagesRepository, &usersRepository, &friendsRepository, &formatValidation, standartOutputLoggingService.New())
 	err := controller.UpdateDisplayName(uuid.New().String(), profile.UserId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`UpdateDisplayName` should be failed, found no err")
@@ -146,7 +146,7 @@ func TestUpdateDisplayNameUpdateFailed(t *testing.T) {
 			return nil
 		},
 	}
-	controller := defaultController.New(&authRepository, &imagesRepository, &usersRepository, &friendsRepository, &formatValidation, logging.TestService())
+	controller := defaultController.New(&authRepository, &imagesRepository, &usersRepository, &friendsRepository, &formatValidation, standartOutputLoggingService.New())
 	err := controller.UpdateDisplayName(uuid.New().String(), profile.UserId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`UpdateDisplayName` should be failed, found no err")
@@ -176,7 +176,7 @@ func TestUpdateDisplayNameOk(t *testing.T) {
 			return nil
 		},
 	}
-	controller := defaultController.New(&authRepository, &imagesRepository, &usersRepository, &friendsRepository, &formatValidation, logging.TestService())
+	controller := defaultController.New(&authRepository, &imagesRepository, &usersRepository, &friendsRepository, &formatValidation, standartOutputLoggingService.New())
 	err := controller.UpdateDisplayName(uuid.New().String(), profile.UserId(uuid.New().String()))
 	if err != nil {
 		t.Fatalf("`UpdateDisplayName` should not be failed, found err %v", err)
@@ -200,7 +200,7 @@ func TestUpdateAvatarFailedToUploadData(t *testing.T) {
 	usersRepository := users_mock.RepositoryMock{}
 	friendsRepository := friends_mock.RepositoryMock{}
 	formatValidation := formatValidation_mock.ServiceMock{}
-	controller := defaultController.New(&authRepository, &imagesRepository, &usersRepository, &friendsRepository, &formatValidation, logging.TestService())
+	controller := defaultController.New(&authRepository, &imagesRepository, &usersRepository, &friendsRepository, &formatValidation, standartOutputLoggingService.New())
 	_, err := controller.UpdateAvatar(uuid.New().String(), profile.UserId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`UpdateAvatar` should be failed, found no err")
@@ -240,7 +240,7 @@ func TestUpdateAvatarFailedToStoreAvatar(t *testing.T) {
 	}
 	friendsRepository := friends_mock.RepositoryMock{}
 	formatValidation := formatValidation_mock.ServiceMock{}
-	controller := defaultController.New(&authRepository, &imagesRepository, &usersRepository, &friendsRepository, &formatValidation, logging.TestService())
+	controller := defaultController.New(&authRepository, &imagesRepository, &usersRepository, &friendsRepository, &formatValidation, standartOutputLoggingService.New())
 	_, err := controller.UpdateAvatar(uuid.New().String(), profile.UserId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`UpdateAvatar` should be failed, found no err")
@@ -283,7 +283,7 @@ func TestUpdateAvatarOk(t *testing.T) {
 	}
 	friendsRepository := friends_mock.RepositoryMock{}
 	formatValidation := formatValidation_mock.ServiceMock{}
-	controller := defaultController.New(&authRepository, &imagesRepository, &usersRepository, &friendsRepository, &formatValidation, logging.TestService())
+	controller := defaultController.New(&authRepository, &imagesRepository, &usersRepository, &friendsRepository, &formatValidation, standartOutputLoggingService.New())
 	_, err := controller.UpdateAvatar(uuid.New().String(), profile.UserId(uuid.New().String()))
 	if err != nil {
 		t.Fatalf("`UpdateAvatar` should not be failed, found err %v", err)

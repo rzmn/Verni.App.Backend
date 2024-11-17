@@ -6,14 +6,14 @@ import (
 	friendsController "verni/internal/controllers/friends"
 	"verni/internal/schema"
 	"verni/internal/services/logging"
-	"verni/internal/services/longpoll"
 	"verni/internal/services/pushNotifications"
+	"verni/internal/services/realtimeEvents"
 )
 
 type defaultRequestsHandler struct {
 	controller     friendsController.Controller
 	pushService    pushNotifications.Service
-	pollingService longpoll.Service
+	realtimeEvents realtimeEvents.Service
 	logger         logging.Service
 }
 

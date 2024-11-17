@@ -9,7 +9,7 @@ import (
 	friends_mock "verni/internal/repositories/friends/mock"
 	usersRepository "verni/internal/repositories/users"
 	users_mock "verni/internal/repositories/users/mock"
-	"verni/internal/services/logging"
+	standartOutputLoggingService "verni/internal/services/logging/standartOutput"
 
 	"github.com/google/uuid"
 )
@@ -25,7 +25,7 @@ func TestGetUsersFailed(t *testing.T) {
 			return map[friendsRepository.UserId]friendsRepository.FriendStatus{}, nil
 		},
 	}
-	controller := defaultController.New(&usersRepository, &friendsRepository, logging.TestService())
+	controller := defaultController.New(&usersRepository, &friendsRepository, standartOutputLoggingService.New())
 	_, err := controller.Get([]users.UserId{users.UserId(uuid.New().String())}, users.UserId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`Get` should be failed, found no err")
@@ -46,7 +46,7 @@ func TestGetFriendStatusesFailed(t *testing.T) {
 			return map[friendsRepository.UserId]friendsRepository.FriendStatus{}, errors.New("some error")
 		},
 	}
-	controller := defaultController.New(&usersRepository, &friendsRepository, logging.TestService())
+	controller := defaultController.New(&usersRepository, &friendsRepository, standartOutputLoggingService.New())
 	_, err := controller.Get([]users.UserId{users.UserId(uuid.New().String())}, users.UserId(uuid.New().String()))
 	if err == nil {
 		t.Fatalf("`Get` should be failed, found no err")

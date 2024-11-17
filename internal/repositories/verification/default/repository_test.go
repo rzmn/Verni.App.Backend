@@ -10,8 +10,8 @@ import (
 	"verni/internal/db"
 	postgresDb "verni/internal/db/postgres"
 	defaultRepository "verni/internal/repositories/verification/default"
-	"verni/internal/services/logging"
-	"verni/internal/services/pathProvider"
+	standartOutputLoggingService "verni/internal/services/logging/standartOutput"
+	envBasedPathProvider "verni/internal/services/pathProvider/env"
 
 	"github.com/google/uuid"
 )
@@ -21,8 +21,8 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	logger := logging.TestService()
-	pathProvider := pathProvider.VerniEnvService(logger)
+	logger := standartOutputLoggingService.New()
+	pathProvider := envBasedPathProvider.New(logger)
 	database = func() db.DB {
 		configFile, err := os.Open(pathProvider.AbsolutePath("./config/test/postgres_storage.json"))
 		if err != nil {
@@ -55,7 +55,7 @@ func randomCode() string {
 }
 
 func TestStore(t *testing.T) {
-	repository := defaultRepository.New(database, logging.TestService())
+	repository := defaultRepository.New(database, standartOutputLoggingService.New())
 	email := randomEmail()
 
 	// if no code was stored, should return nil
@@ -135,7 +135,7 @@ func TestStore(t *testing.T) {
 }
 
 func TestRemoveEmpty(t *testing.T) {
-	repository := defaultRepository.New(database, logging.TestService())
+	repository := defaultRepository.New(database, standartOutputLoggingService.New())
 	email := randomEmail()
 
 	// check if remove works when there is no token stored previously
@@ -167,7 +167,7 @@ func TestRemoveEmpty(t *testing.T) {
 }
 
 func TestRemoveNonEmpty(t *testing.T) {
-	repository := defaultRepository.New(database, logging.TestService())
+	repository := defaultRepository.New(database, standartOutputLoggingService.New())
 	email := randomEmail()
 	codeToStore := randomCode()
 	storeTransaction := repository.StoreEmailVerificationCode(email, codeToStore)
