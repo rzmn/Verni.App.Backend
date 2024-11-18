@@ -10,6 +10,7 @@ import (
 	envBasedPathProvider "verni/internal/services/pathProvider/env"
 )
 
+// initial setup for components to be used by server
 func main() {
 	logger := standartOutputLoggingService.New()
 	pathProvider := envBasedPathProvider.New(logger)
