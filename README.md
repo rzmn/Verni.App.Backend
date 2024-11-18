@@ -41,8 +41,8 @@ Each part of domain or data layer has its own *abstract* module containing a set
 
 No *abstract* module depends on any *implementation* module, which is strictly prohibited to ensure proper encapsulation. It can guarantee that touching implementations will not trigger recompilation of other implementation modules, only that of the final target, which in most cases can leverage incremental compilation. It is highly recommended to keep *abstract* modules without any dependencies to provide better testability.
 
-## [Implementation Overview](#ImplementationOverview)
-### [Services Layer](#ServicesLayer)
+## Implementation Overview
+### Services Layer
 Service is an abstraction over some 3rdparty library (like JWT or some hashing algorithms) or some real-world event (SMTP, logging, databases etc.) to ensure the possibility to mock or replace them.
 
 ---
