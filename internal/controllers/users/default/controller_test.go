@@ -55,3 +55,59 @@ func TestGetFriendStatusesFailed(t *testing.T) {
 		t.Fatalf("`Get` should be failed with `internal`, found err %v", err)
 	}
 }
+
+func TestGetUsersMissingUserStatus(t *testing.T) {
+	userA := usersRepository.User{
+		Id: usersRepository.UserId(uuid.New().String()),
+	}
+	userB := usersRepository.User{
+		Id: usersRepository.UserId(uuid.New().String()),
+	}
+	usersRepository := users_mock.RepositoryMock{
+		GetUsersImpl: func(ids []usersRepository.UserId) ([]usersRepository.User, error) {
+			return []usersRepository.User{userA, userB}, nil
+		},
+	}
+	friendsRepository := friends_mock.RepositoryMock{
+		GetStatusesImpl: func(sender friendsRepository.UserId, ids []friendsRepository.UserId) (map[friendsRepository.UserId]friendsRepository.FriendStatus, error) {
+			return map[friendsRepository.UserId]friendsRepository.FriendStatus{
+				friendsRepository.UserId(userA.Id): friendsRepository.FriendStatusSubscriber,
+			}, nil
+		},
+	}
+	controller := defaultController.New(&usersRepository, &friendsRepository, standartOutputLoggingService.New())
+	_, err := controller.Get([]users.UserId{users.UserId(uuid.New().String())}, users.UserId(uuid.New().String()))
+	if err == nil {
+		t.Fatalf("`Get` should be failed, found no err")
+	}
+	if err.Code != users.GetUsersUserNotFound {
+		t.Fatalf("`Get` should be failed with `not found`, found err %v", err)
+	}
+}
+
+func TestGetUsersOk(t *testing.T) {
+	userA := usersRepository.User{
+		Id: usersRepository.UserId(uuid.New().String()),
+	}
+	userB := usersRepository.User{
+		Id: usersRepository.UserId(uuid.New().String()),
+	}
+	usersRepository := users_mock.RepositoryMock{
+		GetUsersImpl: func(ids []usersRepository.UserId) ([]usersRepository.User, error) {
+			return []usersRepository.User{userA, userB}, nil
+		},
+	}
+	friendsRepository := friends_mock.RepositoryMock{
+		GetStatusesImpl: func(sender friendsRepository.UserId, ids []friendsRepository.UserId) (map[friendsRepository.UserId]friendsRepository.FriendStatus, error) {
+			return map[friendsRepository.UserId]friendsRepository.FriendStatus{
+				friendsRepository.UserId(userA.Id): friendsRepository.FriendStatusSubscriber,
+				friendsRepository.UserId(userB.Id): friendsRepository.FriendStatusSubscription,
+			}, nil
+		},
+	}
+	controller := defaultController.New(&usersRepository, &friendsRepository, standartOutputLoggingService.New())
+	_, err := controller.Get([]users.UserId{users.UserId(uuid.New().String())}, users.UserId(uuid.New().String()))
+	if err != nil {
+		t.Fatalf("`Get` should not be failed, found err: %v", err)
+	}
+}
