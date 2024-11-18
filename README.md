@@ -16,17 +16,17 @@ The main feature of the application is a complete absence of a desire to monetiz
 # Table of Contents
 1. [Tech Stack](https://github.com/rzmn/Verni.App.Backend?tab=readme-ov-file#tech-stack)
 2. [Features](https://github.com/rzmn/Verni.App.Backend?tab=readme-ov-file#features)
-3. [Architecture Overview](https://github.com/rzmn/Verni.App.Backend?tab=readme-ov-file#implementation-overview)
+3. [Architecture Overview](https://github.com/rzmn/Verni.App.Backend?tab=readme-ov-file#architecture-overview)
 4. [Implementation Overview](https://github.com/rzmn/Verni.App.Backend?tab=readme-ov-file#implementation-overview)
-## [Tech Stack](#TechStack)
+## Tech Stack
 - Go
 - Gin (HTTP)
 - PostgreSQL
 - Telegram (watchdog alerts)
 - JWT (auth)
-## [Features](#Features)
+## Features
 - tbd
-## [Architecture Overview](#ArchitectureOverview)
+## Architecture Overview
 The App's architecture can be considered as a set of _Layers_. Each layer knows only about the layer "below".
 
 ```mermaid
