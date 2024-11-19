@@ -1,31 +1,36 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/rzmn/governi)](https://goreportcard.com/report/github.com/rzmn/governi) 
 [![Build](https://github.com/rzmn/governi/actions/workflows/build.yml/badge.svg)](https://github.com/rzmn/governi/actions/workflows/build.yml)
 
+---
 # governi
-Server side for Verni App. 
-
-Verni is an open-source shared expenses tracker.
-
-The core value of the App is a focus on extensibility and reliability of the infrastructure it's built with.
-Infrastructure refers to both the codebase, api design and the user interface design.
-
-The main feature of the application is a complete absence of a desire to monetize user journeys. The user's needs should be met in the simplest possible way, forever free.
-
+Open-source shared expenses tracker
 **Project is under development.**
-
 # Table of Contents
-1. [Tech Stack](https://github.com/rzmn/governi?tab=readme-ov-file#tech-stack)
-2. [Features](https://github.com/rzmn/governi?tab=readme-ov-file#features)
-3. [Architecture Overview](https://github.com/rzmn/governi?tab=readme-ov-file#architecture-overview)
-4. [Implementation Overview](https://github.com/rzmn/governi?tab=readme-ov-file#implementation-overview)
+1. [👋 About](https://github.com/rzmn/governi?tab=readme-ov-file#about)
+2. [👀 What's Verni?](https://github.com/rzmn/governi?tab=readme-ov-file#whats-verni)
+3. [📋 Tech Stack](https://github.com/rzmn/governi?tab=readme-ov-file#tech-stack)
+4. [🚀 Features](https://github.com/rzmn/governi?tab=readme-ov-file#features)
+5. [💡 Architecture Overview](https://github.com/rzmn/governi?tab=readme-ov-file#architecture-overview)
+6. [⚙️ Implementation Overview](https://github.com/rzmn/governi?tab=readme-ov-file#implementation-overview)
+## About
+This project started as a system design practice. Over time, it evolved into the idea of ​​a product whose core value would be the scalability and reliability of the components it was made of. Components mean all stages of the implementation: starting from the codebase and ending with the design system.
+
+The main feature for final users is a complete absence of a desire to monetize user journeys. The user's needs should be met in the simplest possible way, forever free.
+## What's Verni?
+Verni is a mobile-first shared expenses tracker mostly inspired by [splitwise](splitwise.com). The app keeps track of your shared expenses and balances with friends. 
 ## Tech Stack
 - Go
 - Gin (HTTP)
 - PostgreSQL
-- Telegram (watchdog alerts)
-- JWT (auth)
 ## Features
-- tbd
+- User authentication (JWT)
+- Account verification (via email)
+- Profile editing (change password, email, display name, avatar etc.)
+- Send/Accept/Reject/Rollback friend request
+- List of friends/subscribers/subscriptions
+- Add/Remove spending
+- List of balances with each user
+- Spendings history with each user
 ## Architecture Overview
 The App's architecture can be considered as a set of _Layers_. Each layer knows only about the layer "below".
 
