@@ -20,7 +20,7 @@ The main feature for final users is a complete absence of a desire to monetize u
 ## What's Verni?
 Verni is a mobile-first shared expenses tracker mostly inspired by [splitwise](https://www.splitwise.com/). The app keeps track of your shared expenses and balances with friends. 
 
-[Verni iOS Client](https://github.com/rzmn/governi/)
+[Verni iOS Client](https://github.com/rzmn/swiftverni/)
 
 ## Tech Stack
 - Go
