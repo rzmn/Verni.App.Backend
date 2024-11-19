@@ -1,10 +1,10 @@
 package defaultRepository
 
 import (
-	"verni/internal/db"
-	"verni/internal/repositories"
-	"verni/internal/repositories/auth"
-	"verni/internal/services/logging"
+	"github.com/rzmn/Verni.App.Backend/internal/db"
+	"github.com/rzmn/Verni.App.Backend/internal/repositories"
+	"github.com/rzmn/Verni.App.Backend/internal/repositories/auth"
+	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
 
 	"golang.org/x/crypto/bcrypt"
 )

@@ -2,10 +2,11 @@ package defaultController
 
 import (
 	"slices"
-	"verni/internal/common"
-	"verni/internal/controllers/friends"
-	friendsRepository "verni/internal/repositories/friends"
-	"verni/internal/services/logging"
+
+	"github.com/rzmn/Verni.App.Backend/internal/common"
+	"github.com/rzmn/Verni.App.Backend/internal/controllers/friends"
+	friendsRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/friends"
+	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
 )
 
 type Repository friendsRepository.Repository

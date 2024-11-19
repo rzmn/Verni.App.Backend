@@ -2,11 +2,12 @@ package defaultAvatarsHandler
 
 import (
 	"net/http"
-	"verni/internal/common"
-	avatarsController "verni/internal/controllers/avatars"
-	"verni/internal/requestHandlers/avatars"
-	"verni/internal/schema"
-	"verni/internal/services/logging"
+
+	"github.com/rzmn/Verni.App.Backend/internal/common"
+	avatarsController "github.com/rzmn/Verni.App.Backend/internal/controllers/avatars"
+	"github.com/rzmn/Verni.App.Backend/internal/requestHandlers/avatars"
+	"github.com/rzmn/Verni.App.Backend/internal/schema"
+	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
 )
 
 func New(

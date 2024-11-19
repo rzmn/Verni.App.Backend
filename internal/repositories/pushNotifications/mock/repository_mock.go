@@ -1,8 +1,8 @@
 package pushNotifications_mock
 
 import (
-	"verni/internal/repositories"
-	"verni/internal/repositories/pushNotifications"
+	"github.com/rzmn/Verni.App.Backend/internal/repositories"
+	"github.com/rzmn/Verni.App.Backend/internal/repositories/pushNotifications"
 )
 
 type RepositoryMock struct {

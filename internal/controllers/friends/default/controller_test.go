@@ -3,12 +3,13 @@ package defaultController_test
 import (
 	"errors"
 	"testing"
-	"verni/internal/controllers/friends"
-	defaultController "verni/internal/controllers/friends/default"
-	"verni/internal/repositories"
-	friendsRepository "verni/internal/repositories/friends"
-	friends_mock "verni/internal/repositories/friends/mock"
-	standartOutputLoggingService "verni/internal/services/logging/standartOutput"
+
+	"github.com/rzmn/Verni.App.Backend/internal/controllers/friends"
+	defaultController "github.com/rzmn/Verni.App.Backend/internal/controllers/friends/default"
+	"github.com/rzmn/Verni.App.Backend/internal/repositories"
+	friendsRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/friends"
+	friends_mock "github.com/rzmn/Verni.App.Backend/internal/repositories/friends/mock"
+	standartOutputLoggingService "github.com/rzmn/Verni.App.Backend/internal/services/logging/standartOutput"
 
 	"github.com/google/uuid"
 )

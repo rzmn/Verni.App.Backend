@@ -1,8 +1,8 @@
 package spendings
 
 import (
-	"verni/internal/common"
-	spendingsRepository "verni/internal/repositories/spendings"
+	"github.com/rzmn/Verni.App.Backend/internal/common"
+	spendingsRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/spendings"
 )
 
 type CounterpartyId spendingsRepository.CounterpartyId

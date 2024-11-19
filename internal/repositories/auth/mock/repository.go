@@ -1,9 +1,9 @@
 package auth_mock
 
 import (
-	"verni/internal/repositories"
+	"github.com/rzmn/Verni.App.Backend/internal/repositories"
 
-	"verni/internal/repositories/auth"
+	"github.com/rzmn/Verni.App.Backend/internal/repositories/auth"
 )
 
 type RepositoryMock struct {

@@ -3,8 +3,9 @@ package yandexEmailSender
 import (
 	"fmt"
 	"net/smtp"
-	"verni/internal/services/emailSender"
-	"verni/internal/services/logging"
+
+	"github.com/rzmn/Verni.App.Backend/internal/services/emailSender"
+	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
 )
 
 type YandexConfig struct {

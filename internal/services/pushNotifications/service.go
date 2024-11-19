@@ -1,7 +1,7 @@
 package pushNotifications
 
 import (
-	"verni/internal/schema"
+	"github.com/rzmn/Verni.App.Backend/internal/schema"
 )
 
 type UserId schema.UserId

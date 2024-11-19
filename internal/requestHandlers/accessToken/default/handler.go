@@ -4,11 +4,12 @@ import (
 	"errors"
 	"net/http"
 	"strings"
-	authRepository "verni/internal/repositories/auth"
-	"verni/internal/requestHandlers/accessToken"
-	"verni/internal/schema"
-	"verni/internal/services/jwt"
-	"verni/internal/services/logging"
+
+	authRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/auth"
+	"github.com/rzmn/Verni.App.Backend/internal/requestHandlers/accessToken"
+	"github.com/rzmn/Verni.App.Backend/internal/schema"
+	"github.com/rzmn/Verni.App.Backend/internal/services/jwt"
+	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
 )
 
 func New(

@@ -2,8 +2,9 @@ package ginLongpollRealtimeEvents
 
 import (
 	"fmt"
-	"verni/internal/services/logging"
-	"verni/internal/services/realtimeEvents"
+
+	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
+	"github.com/rzmn/Verni.App.Backend/internal/services/realtimeEvents"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jcuga/golongpoll"

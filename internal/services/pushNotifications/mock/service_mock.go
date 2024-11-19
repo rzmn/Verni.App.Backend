@@ -1,6 +1,6 @@
 package pushNotifications_mock
 
-import "verni/internal/services/pushNotifications"
+import "github.com/rzmn/Verni.App.Backend/internal/services/pushNotifications"
 
 type ServiceMock struct {
 	FriendRequestHasBeenAcceptedImpl func(receiver pushNotifications.UserId, acceptedBy pushNotifications.UserId)

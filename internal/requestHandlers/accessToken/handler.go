@@ -1,7 +1,7 @@
 package accessToken
 
 import (
-	"verni/internal/schema"
+	"github.com/rzmn/Verni.App.Backend/internal/schema"
 )
 
 type RequestHandler interface {

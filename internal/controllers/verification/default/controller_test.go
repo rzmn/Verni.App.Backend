@@ -3,14 +3,15 @@ package defaultController_test
 import (
 	"errors"
 	"testing"
-	"verni/internal/controllers/verification"
-	defaultController "verni/internal/controllers/verification/default"
-	"verni/internal/repositories"
-	"verni/internal/repositories/auth"
-	auth_mock "verni/internal/repositories/auth/mock"
-	verification_mock "verni/internal/repositories/verification/mock"
-	emailSender_mock "verni/internal/services/emailSender/mock"
-	standartOutputLoggingService "verni/internal/services/logging/standartOutput"
+
+	"github.com/rzmn/Verni.App.Backend/internal/controllers/verification"
+	defaultController "github.com/rzmn/Verni.App.Backend/internal/controllers/verification/default"
+	"github.com/rzmn/Verni.App.Backend/internal/repositories"
+	"github.com/rzmn/Verni.App.Backend/internal/repositories/auth"
+	auth_mock "github.com/rzmn/Verni.App.Backend/internal/repositories/auth/mock"
+	verification_mock "github.com/rzmn/Verni.App.Backend/internal/repositories/verification/mock"
+	emailSender_mock "github.com/rzmn/Verni.App.Backend/internal/services/emailSender/mock"
+	standartOutputLoggingService "github.com/rzmn/Verni.App.Backend/internal/services/logging/standartOutput"
 
 	"github.com/google/uuid"
 )

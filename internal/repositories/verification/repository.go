@@ -1,7 +1,7 @@
 package verification
 
 import (
-	"verni/internal/repositories"
+	"github.com/rzmn/Verni.App.Backend/internal/repositories"
 )
 
 type Repository interface {

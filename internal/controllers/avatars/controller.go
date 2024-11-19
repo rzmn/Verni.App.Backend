@@ -1,8 +1,8 @@
 package avatars
 
 import (
-	"verni/internal/common"
-	imagesRepository "verni/internal/repositories/images"
+	"github.com/rzmn/Verni.App.Backend/internal/common"
+	imagesRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/images"
 )
 
 type AvatarId string

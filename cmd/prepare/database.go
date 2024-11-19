@@ -1,8 +1,8 @@
 package main
 
 import (
-	"verni/internal/db"
-	"verni/internal/services/logging"
+	"github.com/rzmn/Verni.App.Backend/internal/db"
+	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
 )
 
 type databaseActions struct {

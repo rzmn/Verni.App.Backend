@@ -1,4 +1,4 @@
-module verni
+module github.com/rzmn/Verni.App.Backend
 
 go 1.22.4
 

@@ -3,8 +3,9 @@ package postgresDb
 import (
 	"database/sql"
 	"fmt"
-	"verni/internal/db"
-	"verni/internal/services/logging"
+
+	"github.com/rzmn/Verni.App.Backend/internal/db"
+	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
 
 	_ "github.com/lib/pq"
 )

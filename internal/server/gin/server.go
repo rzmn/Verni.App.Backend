@@ -3,19 +3,20 @@ package ginServer
 import (
 	"net/http"
 	"time"
-	"verni/internal/requestHandlers/accessToken"
-	"verni/internal/requestHandlers/auth"
-	"verni/internal/requestHandlers/avatars"
-	"verni/internal/requestHandlers/friends"
-	"verni/internal/requestHandlers/profile"
-	"verni/internal/requestHandlers/spendings"
-	"verni/internal/requestHandlers/users"
-	"verni/internal/requestHandlers/verification"
-	"verni/internal/schema"
-	"verni/internal/server"
-	"verni/internal/services/logging"
-	"verni/internal/services/realtimeEvents"
-	ginLongpollRealtimeEvents "verni/internal/services/realtimeEvents/longpoll"
+
+	"github.com/rzmn/Verni.App.Backend/internal/requestHandlers/accessToken"
+	"github.com/rzmn/Verni.App.Backend/internal/requestHandlers/auth"
+	"github.com/rzmn/Verni.App.Backend/internal/requestHandlers/avatars"
+	"github.com/rzmn/Verni.App.Backend/internal/requestHandlers/friends"
+	"github.com/rzmn/Verni.App.Backend/internal/requestHandlers/profile"
+	"github.com/rzmn/Verni.App.Backend/internal/requestHandlers/spendings"
+	"github.com/rzmn/Verni.App.Backend/internal/requestHandlers/users"
+	"github.com/rzmn/Verni.App.Backend/internal/requestHandlers/verification"
+	"github.com/rzmn/Verni.App.Backend/internal/schema"
+	"github.com/rzmn/Verni.App.Backend/internal/server"
+	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
+	"github.com/rzmn/Verni.App.Backend/internal/services/realtimeEvents"
+	ginLongpollRealtimeEvents "github.com/rzmn/Verni.App.Backend/internal/services/realtimeEvents/longpoll"
 
 	"github.com/gin-gonic/gin"
 )
@@ -43,7 +44,7 @@ type ginAccessTokenChecker struct {
 }
 
 const (
-	accessTokenSubjectKey = "verni-subject"
+	accessTokenSubjectKey = "github.com/rzmn/Verni.App.Backend-subject"
 )
 
 func New(

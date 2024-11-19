@@ -1,7 +1,7 @@
 package jwt_mock
 
 import (
-	"verni/internal/services/jwt"
+	"github.com/rzmn/Verni.App.Backend/internal/services/jwt"
 )
 
 type ServiceMock struct {

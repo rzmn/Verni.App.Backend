@@ -3,12 +3,13 @@ package defaultController_test
 import (
 	"errors"
 	"testing"
-	"verni/internal/controllers/spendings"
-	defaultController "verni/internal/controllers/spendings/default"
-	"verni/internal/repositories"
-	spendingsRepository "verni/internal/repositories/spendings"
-	spendings_mock "verni/internal/repositories/spendings/mock"
-	standartOutputLoggingService "verni/internal/services/logging/standartOutput"
+
+	"github.com/rzmn/Verni.App.Backend/internal/controllers/spendings"
+	defaultController "github.com/rzmn/Verni.App.Backend/internal/controllers/spendings/default"
+	"github.com/rzmn/Verni.App.Backend/internal/repositories"
+	spendingsRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/spendings"
+	spendings_mock "github.com/rzmn/Verni.App.Backend/internal/repositories/spendings/mock"
+	standartOutputLoggingService "github.com/rzmn/Verni.App.Backend/internal/services/logging/standartOutput"
 
 	"github.com/google/uuid"
 )

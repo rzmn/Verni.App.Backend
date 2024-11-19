@@ -1,7 +1,7 @@
 package spendings
 
 import (
-	"verni/internal/schema"
+	"github.com/rzmn/Verni.App.Backend/internal/schema"
 )
 
 type RequestsHandler interface {

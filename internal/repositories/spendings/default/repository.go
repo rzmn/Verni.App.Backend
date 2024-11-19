@@ -3,10 +3,11 @@ package defaultRepository
 import (
 	"context"
 	"errors"
-	"verni/internal/db"
-	"verni/internal/repositories"
-	"verni/internal/repositories/spendings"
-	"verni/internal/services/logging"
+
+	"github.com/rzmn/Verni.App.Backend/internal/db"
+	"github.com/rzmn/Verni.App.Backend/internal/repositories"
+	"github.com/rzmn/Verni.App.Backend/internal/repositories/spendings"
+	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
 
 	"github.com/google/uuid"
 )

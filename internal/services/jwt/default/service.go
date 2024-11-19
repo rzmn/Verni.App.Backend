@@ -3,8 +3,9 @@ package defaultJwtService
 import (
 	"errors"
 	"time"
-	jwtService "verni/internal/services/jwt"
-	"verni/internal/services/logging"
+
+	jwtService "github.com/rzmn/Verni.App.Backend/internal/services/jwt"
+	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
 
 	"github.com/golang-jwt/jwt/v5"
 )

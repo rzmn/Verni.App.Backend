@@ -1,8 +1,8 @@
 package users
 
 import (
-	"verni/internal/common"
-	friendsRepository "verni/internal/repositories/friends"
+	"github.com/rzmn/Verni.App.Backend/internal/common"
+	friendsRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/friends"
 )
 
 type UserId string

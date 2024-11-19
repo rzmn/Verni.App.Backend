@@ -1,10 +1,10 @@
 package defaultController
 
 import (
-	"verni/internal/common"
-	"verni/internal/controllers/spendings"
-	spendingsRepository "verni/internal/repositories/spendings"
-	"verni/internal/services/logging"
+	"github.com/rzmn/Verni.App.Backend/internal/common"
+	"github.com/rzmn/Verni.App.Backend/internal/controllers/spendings"
+	spendingsRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/spendings"
+	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
 )
 
 type Repository spendingsRepository.Repository

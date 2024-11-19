@@ -1,7 +1,7 @@
 package telegramWatchdog
 
 import (
-	"verni/internal/services/watchdog"
+	"github.com/rzmn/Verni.App.Backend/internal/services/watchdog"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )

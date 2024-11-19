@@ -1,8 +1,8 @@
 package spendings_mock
 
 import (
-	"verni/internal/repositories"
-	"verni/internal/repositories/spendings"
+	"github.com/rzmn/Verni.App.Backend/internal/repositories"
+	"github.com/rzmn/Verni.App.Backend/internal/repositories/spendings"
 )
 
 type RepositoryMock struct {

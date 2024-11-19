@@ -2,14 +2,15 @@ package defaultSpendingsHandler
 
 import (
 	"net/http"
-	"verni/internal/common"
-	spendingsController "verni/internal/controllers/spendings"
-	spendingsRepository "verni/internal/repositories/spendings"
-	"verni/internal/requestHandlers/spendings"
-	"verni/internal/schema"
-	"verni/internal/services/logging"
-	"verni/internal/services/pushNotifications"
-	"verni/internal/services/realtimeEvents"
+
+	"github.com/rzmn/Verni.App.Backend/internal/common"
+	spendingsController "github.com/rzmn/Verni.App.Backend/internal/controllers/spendings"
+	spendingsRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/spendings"
+	"github.com/rzmn/Verni.App.Backend/internal/requestHandlers/spendings"
+	"github.com/rzmn/Verni.App.Backend/internal/schema"
+	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
+	"github.com/rzmn/Verni.App.Backend/internal/services/pushNotifications"
+	"github.com/rzmn/Verni.App.Backend/internal/services/realtimeEvents"
 )
 
 func New(

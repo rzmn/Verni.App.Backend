@@ -3,11 +3,12 @@ package defaultRepository
 import (
 	"fmt"
 	"strings"
-	"verni/internal/common"
-	"verni/internal/db"
-	"verni/internal/repositories"
-	"verni/internal/repositories/friends"
-	"verni/internal/services/logging"
+
+	"github.com/rzmn/Verni.App.Backend/internal/common"
+	"github.com/rzmn/Verni.App.Backend/internal/db"
+	"github.com/rzmn/Verni.App.Backend/internal/repositories"
+	"github.com/rzmn/Verni.App.Backend/internal/repositories/friends"
+	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
 )
 
 func New(db db.DB, logger logging.Service) friends.Repository {

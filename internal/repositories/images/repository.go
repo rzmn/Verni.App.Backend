@@ -1,7 +1,7 @@
 package images
 
 import (
-	"verni/internal/repositories"
+	"github.com/rzmn/Verni.App.Backend/internal/repositories"
 )
 
 type ImageId string

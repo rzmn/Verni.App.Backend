@@ -3,12 +3,13 @@ package defaultController
 import (
 	"fmt"
 	"math/rand"
-	"verni/internal/common"
-	"verni/internal/controllers/verification"
-	authRepository "verni/internal/repositories/auth"
-	verificationRepository "verni/internal/repositories/verification"
-	"verni/internal/services/emailSender"
-	"verni/internal/services/logging"
+
+	"github.com/rzmn/Verni.App.Backend/internal/common"
+	"github.com/rzmn/Verni.App.Backend/internal/controllers/verification"
+	authRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/auth"
+	verificationRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/verification"
+	"github.com/rzmn/Verni.App.Backend/internal/services/emailSender"
+	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
 )
 
 type VerificationRepository verificationRepository.Repository

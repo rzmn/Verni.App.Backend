@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	pushNotificationsRepository "verni/internal/repositories/pushNotifications"
-	"verni/internal/services/logging"
-	"verni/internal/services/pathProvider"
-	"verni/internal/services/pushNotifications"
+
+	pushNotificationsRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/pushNotifications"
+	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
+	"github.com/rzmn/Verni.App.Backend/internal/services/pathProvider"
+	"github.com/rzmn/Verni.App.Backend/internal/services/pushNotifications"
 
 	"github.com/sideshow/apns2"
 	"github.com/sideshow/apns2/certificate"

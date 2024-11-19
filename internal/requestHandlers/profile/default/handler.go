@@ -2,10 +2,11 @@ package defaultProfileHandler
 
 import (
 	"net/http"
-	profileController "verni/internal/controllers/profile"
-	"verni/internal/requestHandlers/profile"
-	"verni/internal/schema"
-	"verni/internal/services/logging"
+
+	profileController "github.com/rzmn/Verni.App.Backend/internal/controllers/profile"
+	"github.com/rzmn/Verni.App.Backend/internal/requestHandlers/profile"
+	"github.com/rzmn/Verni.App.Backend/internal/schema"
+	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
 )
 
 func New(

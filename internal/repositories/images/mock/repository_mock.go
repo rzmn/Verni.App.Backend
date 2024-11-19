@@ -1,8 +1,8 @@
 package images_mock
 
 import (
-	"verni/internal/repositories"
-	"verni/internal/repositories/images"
+	"github.com/rzmn/Verni.App.Backend/internal/repositories"
+	"github.com/rzmn/Verni.App.Backend/internal/repositories/images"
 )
 
 type RepositoryMock struct {

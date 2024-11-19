@@ -7,13 +7,14 @@ import (
 	"reflect"
 	"sort"
 	"testing"
-	"verni/internal/db"
-	postgresDb "verni/internal/db/postgres"
-	"verni/internal/repositories"
-	"verni/internal/repositories/friends"
-	defaultRepository "verni/internal/repositories/friends/default"
-	standartOutputLoggingService "verni/internal/services/logging/standartOutput"
-	envBasedPathProvider "verni/internal/services/pathProvider/env"
+
+	"github.com/rzmn/Verni.App.Backend/internal/db"
+	postgresDb "github.com/rzmn/Verni.App.Backend/internal/db/postgres"
+	"github.com/rzmn/Verni.App.Backend/internal/repositories"
+	"github.com/rzmn/Verni.App.Backend/internal/repositories/friends"
+	defaultRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/friends/default"
+	standartOutputLoggingService "github.com/rzmn/Verni.App.Backend/internal/services/logging/standartOutput"
+	envBasedPathProvider "github.com/rzmn/Verni.App.Backend/internal/services/pathProvider/env"
 
 	"github.com/google/uuid"
 )

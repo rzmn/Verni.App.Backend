@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"io"
 	"os"
-	"verni/internal/db"
-	postgresDb "verni/internal/db/postgres"
-	standartOutputLoggingService "verni/internal/services/logging/standartOutput"
-	envBasedPathProvider "verni/internal/services/pathProvider/env"
+
+	"github.com/rzmn/Verni.App.Backend/internal/db"
+	postgresDb "github.com/rzmn/Verni.App.Backend/internal/db/postgres"
+	standartOutputLoggingService "github.com/rzmn/Verni.App.Backend/internal/services/logging/standartOutput"
+	envBasedPathProvider "github.com/rzmn/Verni.App.Backend/internal/services/pathProvider/env"
 )
 
 // initial setup for components to be used by server

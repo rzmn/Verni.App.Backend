@@ -2,10 +2,11 @@ package defaultVerificationHandler
 
 import (
 	"net/http"
-	verificationController "verni/internal/controllers/verification"
-	"verni/internal/requestHandlers/verification"
-	"verni/internal/schema"
-	"verni/internal/services/logging"
+
+	verificationController "github.com/rzmn/Verni.App.Backend/internal/controllers/verification"
+	"github.com/rzmn/Verni.App.Backend/internal/requestHandlers/verification"
+	"github.com/rzmn/Verni.App.Backend/internal/schema"
+	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
 )
 
 func New(

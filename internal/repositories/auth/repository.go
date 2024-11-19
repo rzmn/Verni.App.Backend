@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"verni/internal/repositories"
+	"github.com/rzmn/Verni.App.Backend/internal/repositories"
 )
 
 type UserId string

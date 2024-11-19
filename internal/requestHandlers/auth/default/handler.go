@@ -2,10 +2,11 @@ package defaultAuthHandler
 
 import (
 	"net/http"
-	authController "verni/internal/controllers/auth"
-	"verni/internal/requestHandlers/auth"
-	"verni/internal/schema"
-	"verni/internal/services/logging"
+
+	authController "github.com/rzmn/Verni.App.Backend/internal/controllers/auth"
+	"github.com/rzmn/Verni.App.Backend/internal/requestHandlers/auth"
+	"github.com/rzmn/Verni.App.Backend/internal/schema"
+	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
 )
 
 func New(

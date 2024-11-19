@@ -3,8 +3,9 @@ package envBasedPathProvider
 import (
 	"os"
 	"path/filepath"
-	"verni/internal/services/logging"
-	"verni/internal/services/pathProvider"
+
+	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
+	"github.com/rzmn/Verni.App.Backend/internal/services/pathProvider"
 )
 
 func New(logger logging.Service) pathProvider.Service {

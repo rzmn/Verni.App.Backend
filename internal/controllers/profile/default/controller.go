@@ -2,17 +2,18 @@ package defaultController
 
 import (
 	"errors"
-	"verni/internal/common"
-	"verni/internal/controllers/profile"
-	"verni/internal/repositories/auth"
-	"verni/internal/repositories/users"
-	"verni/internal/services/formatValidation"
-	"verni/internal/services/logging"
 
-	authRepository "verni/internal/repositories/auth"
-	friendsRepository "verni/internal/repositories/friends"
-	imagesRepository "verni/internal/repositories/images"
-	usersRepository "verni/internal/repositories/users"
+	"github.com/rzmn/Verni.App.Backend/internal/common"
+	"github.com/rzmn/Verni.App.Backend/internal/controllers/profile"
+	"github.com/rzmn/Verni.App.Backend/internal/repositories/auth"
+	"github.com/rzmn/Verni.App.Backend/internal/repositories/users"
+	"github.com/rzmn/Verni.App.Backend/internal/services/formatValidation"
+	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
+
+	authRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/auth"
+	friendsRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/friends"
+	imagesRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/images"
+	usersRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/users"
 )
 
 type AuthRepository authRepository.Repository

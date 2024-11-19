@@ -3,9 +3,10 @@ package defaultJwtService_test
 import (
 	"testing"
 	"time"
-	"verni/internal/services/jwt"
-	defaultJwtService "verni/internal/services/jwt/default"
-	standartOutputLoggingService "verni/internal/services/logging/standartOutput"
+
+	"github.com/rzmn/Verni.App.Backend/internal/services/jwt"
+	defaultJwtService "github.com/rzmn/Verni.App.Backend/internal/services/jwt/default"
+	standartOutputLoggingService "github.com/rzmn/Verni.App.Backend/internal/services/logging/standartOutput"
 
 	"github.com/google/uuid"
 )
