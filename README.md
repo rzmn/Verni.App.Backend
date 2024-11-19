@@ -4,6 +4,7 @@
 ---
 # governi
 Open-source shared expenses tracker
+
 **Project is under development.**
 # Table of Contents
 1. [👋 About](https://github.com/rzmn/governi?tab=readme-ov-file#about)
@@ -49,8 +50,6 @@ No *abstract* module depends on any *implementation* module, which is strictly p
 ## Implementation Overview
 ### Services Layer
 Service is an abstraction over some 3rdparty library (like JWT or some hashing algorithms) or some real-world event (SMTP, logging, databases etc.) to ensure the possibility to mock or replace them.
-
----
 
 - `watchdog` - interface for sending alerts as files or messages. Production watchdog is sending notifications to telegram channel.
 - `logging` - logging interface with severity support. Production logger is sending notifications to `watchdog` service when called with `error` severity level attaching last 1000 sent messages.
