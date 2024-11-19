@@ -2,7 +2,7 @@
 [![Build](https://github.com/rzmn/governi/actions/workflows/build.yml/badge.svg)](https://github.com/rzmn/governi/actions/workflows/build.yml)
 
 ---
-# governi
+# Verni
 Open-source shared expenses tracker
 
 **Project is under development.**
@@ -19,6 +19,9 @@ This project started as a system design practice. Over time, it evolved into the
 The main feature for final users is a complete absence of a desire to monetize user journeys. The user's needs should be met in the simplest possible way, forever free.
 ## What's Verni?
 Verni is a mobile-first shared expenses tracker mostly inspired by [splitwise](https://www.splitwise.com/). The app keeps track of your shared expenses and balances with friends. 
+
+[Verni iOS Client](https://github.com/rzmn/governi/)
+
 ## Tech Stack
 - Go
 - Gin (HTTP)
