@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 
-	"github.com/rzmn/Verni.App.Backend/internal/db"
-	"github.com/rzmn/Verni.App.Backend/internal/repositories"
-	"github.com/rzmn/Verni.App.Backend/internal/repositories/spendings"
-	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
+	"github.com/rzmn/governi/internal/db"
+	"github.com/rzmn/governi/internal/repositories"
+	"github.com/rzmn/governi/internal/repositories/spendings"
+	"github.com/rzmn/governi/internal/services/logging"
 
 	"github.com/google/uuid"
 )

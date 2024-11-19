@@ -1,10 +1,10 @@
 package defaultController
 
 import (
-	"github.com/rzmn/Verni.App.Backend/internal/common"
-	"github.com/rzmn/Verni.App.Backend/internal/controllers/avatars"
-	imagesRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/images"
-	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
+	"github.com/rzmn/governi/internal/common"
+	"github.com/rzmn/governi/internal/controllers/avatars"
+	imagesRepository "github.com/rzmn/governi/internal/repositories/images"
+	"github.com/rzmn/governi/internal/services/logging"
 )
 
 type Repository imagesRepository.Repository

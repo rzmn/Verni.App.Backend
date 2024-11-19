@@ -4,12 +4,12 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/rzmn/Verni.App.Backend/internal/controllers/spendings"
-	defaultController "github.com/rzmn/Verni.App.Backend/internal/controllers/spendings/default"
-	"github.com/rzmn/Verni.App.Backend/internal/repositories"
-	spendingsRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/spendings"
-	spendings_mock "github.com/rzmn/Verni.App.Backend/internal/repositories/spendings/mock"
-	standartOutputLoggingService "github.com/rzmn/Verni.App.Backend/internal/services/logging/standartOutput"
+	"github.com/rzmn/governi/internal/controllers/spendings"
+	defaultController "github.com/rzmn/governi/internal/controllers/spendings/default"
+	"github.com/rzmn/governi/internal/repositories"
+	spendingsRepository "github.com/rzmn/governi/internal/repositories/spendings"
+	spendings_mock "github.com/rzmn/governi/internal/repositories/spendings/mock"
+	standartOutputLoggingService "github.com/rzmn/governi/internal/services/logging/standartOutput"
 
 	"github.com/google/uuid"
 )

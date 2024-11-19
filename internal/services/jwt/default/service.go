@@ -4,8 +4,8 @@ import (
 	"errors"
 	"time"
 
-	jwtService "github.com/rzmn/Verni.App.Backend/internal/services/jwt"
-	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
+	jwtService "github.com/rzmn/governi/internal/services/jwt"
+	"github.com/rzmn/governi/internal/services/logging"
 
 	"github.com/golang-jwt/jwt/v5"
 )

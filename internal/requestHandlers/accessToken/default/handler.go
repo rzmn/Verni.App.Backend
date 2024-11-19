@@ -5,11 +5,11 @@ import (
 	"net/http"
 	"strings"
 
-	authRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/auth"
-	"github.com/rzmn/Verni.App.Backend/internal/requestHandlers/accessToken"
-	"github.com/rzmn/Verni.App.Backend/internal/schema"
-	"github.com/rzmn/Verni.App.Backend/internal/services/jwt"
-	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
+	authRepository "github.com/rzmn/governi/internal/repositories/auth"
+	"github.com/rzmn/governi/internal/requestHandlers/accessToken"
+	"github.com/rzmn/governi/internal/schema"
+	"github.com/rzmn/governi/internal/services/jwt"
+	"github.com/rzmn/governi/internal/services/logging"
 )
 
 func New(

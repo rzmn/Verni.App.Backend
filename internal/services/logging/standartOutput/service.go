@@ -3,7 +3,7 @@ package standartOutputLoggingService
 import (
 	"log"
 
-	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
+	"github.com/rzmn/governi/internal/services/logging"
 )
 
 func New() logging.Service {

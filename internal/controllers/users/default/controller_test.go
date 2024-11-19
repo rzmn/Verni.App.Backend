@@ -4,13 +4,13 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/rzmn/Verni.App.Backend/internal/controllers/users"
-	defaultController "github.com/rzmn/Verni.App.Backend/internal/controllers/users/default"
-	friendsRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/friends"
-	friends_mock "github.com/rzmn/Verni.App.Backend/internal/repositories/friends/mock"
-	usersRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/users"
-	users_mock "github.com/rzmn/Verni.App.Backend/internal/repositories/users/mock"
-	standartOutputLoggingService "github.com/rzmn/Verni.App.Backend/internal/services/logging/standartOutput"
+	"github.com/rzmn/governi/internal/controllers/users"
+	defaultController "github.com/rzmn/governi/internal/controllers/users/default"
+	friendsRepository "github.com/rzmn/governi/internal/repositories/friends"
+	friends_mock "github.com/rzmn/governi/internal/repositories/friends/mock"
+	usersRepository "github.com/rzmn/governi/internal/repositories/users"
+	users_mock "github.com/rzmn/governi/internal/repositories/users/mock"
+	standartOutputLoggingService "github.com/rzmn/governi/internal/services/logging/standartOutput"
 
 	"github.com/google/uuid"
 )

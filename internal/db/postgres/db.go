@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/rzmn/Verni.App.Backend/internal/db"
-	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
+	"github.com/rzmn/governi/internal/db"
+	"github.com/rzmn/governi/internal/services/logging"
 
 	_ "github.com/lib/pq"
 )

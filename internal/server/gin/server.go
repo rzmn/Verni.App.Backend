@@ -4,19 +4,19 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/rzmn/Verni.App.Backend/internal/requestHandlers/accessToken"
-	"github.com/rzmn/Verni.App.Backend/internal/requestHandlers/auth"
-	"github.com/rzmn/Verni.App.Backend/internal/requestHandlers/avatars"
-	"github.com/rzmn/Verni.App.Backend/internal/requestHandlers/friends"
-	"github.com/rzmn/Verni.App.Backend/internal/requestHandlers/profile"
-	"github.com/rzmn/Verni.App.Backend/internal/requestHandlers/spendings"
-	"github.com/rzmn/Verni.App.Backend/internal/requestHandlers/users"
-	"github.com/rzmn/Verni.App.Backend/internal/requestHandlers/verification"
-	"github.com/rzmn/Verni.App.Backend/internal/schema"
-	"github.com/rzmn/Verni.App.Backend/internal/server"
-	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
-	"github.com/rzmn/Verni.App.Backend/internal/services/realtimeEvents"
-	ginLongpollRealtimeEvents "github.com/rzmn/Verni.App.Backend/internal/services/realtimeEvents/longpoll"
+	"github.com/rzmn/governi/internal/requestHandlers/accessToken"
+	"github.com/rzmn/governi/internal/requestHandlers/auth"
+	"github.com/rzmn/governi/internal/requestHandlers/avatars"
+	"github.com/rzmn/governi/internal/requestHandlers/friends"
+	"github.com/rzmn/governi/internal/requestHandlers/profile"
+	"github.com/rzmn/governi/internal/requestHandlers/spendings"
+	"github.com/rzmn/governi/internal/requestHandlers/users"
+	"github.com/rzmn/governi/internal/requestHandlers/verification"
+	"github.com/rzmn/governi/internal/schema"
+	"github.com/rzmn/governi/internal/server"
+	"github.com/rzmn/governi/internal/services/logging"
+	"github.com/rzmn/governi/internal/services/realtimeEvents"
+	ginLongpollRealtimeEvents "github.com/rzmn/governi/internal/services/realtimeEvents/longpoll"
 
 	"github.com/gin-gonic/gin"
 )
@@ -44,7 +44,7 @@ type ginAccessTokenChecker struct {
 }
 
 const (
-	accessTokenSubjectKey = "github.com/rzmn/Verni.App.Backend-subject"
+	accessTokenSubjectKey = "github.com/rzmn/governi-subject"
 )
 
 func New(

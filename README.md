@@ -1,7 +1,7 @@
-[![Go Report Card](https://goreportcard.com/badge/rzmn/Verni.App.Backend)](https://goreportcard.com/report/rzmn/Verni.App.Backend) 
-[![Build](https://github.com/rzmn/Verni.App.Backend/actions/workflows/build.yml/badge.svg)](https://github.com/rzmn/Verni.App.Backend/actions/workflows/build.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/rzmn/governi)](https://goreportcard.com/report/github.com/rzmn/governi) 
+[![Build](https://github.com/rzmn/governi/actions/workflows/build.yml/badge.svg)](https://github.com/rzmn/governi/actions/workflows/build.yml)
 
-# Verni.App.Backend
+# governi
 Server side for Verni App. 
 
 Verni is an open-source shared expenses tracker.
@@ -14,10 +14,10 @@ The main feature of the application is a complete absence of a desire to monetiz
 **Project is under development.**
 
 # Table of Contents
-1. [Tech Stack](https://github.com/rzmn/Verni.App.Backend?tab=readme-ov-file#tech-stack)
-2. [Features](https://github.com/rzmn/Verni.App.Backend?tab=readme-ov-file#features)
-3. [Architecture Overview](https://github.com/rzmn/Verni.App.Backend?tab=readme-ov-file#architecture-overview)
-4. [Implementation Overview](https://github.com/rzmn/Verni.App.Backend?tab=readme-ov-file#implementation-overview)
+1. [Tech Stack](https://github.com/rzmn/governi?tab=readme-ov-file#tech-stack)
+2. [Features](https://github.com/rzmn/governi?tab=readme-ov-file#features)
+3. [Architecture Overview](https://github.com/rzmn/governi?tab=readme-ov-file#architecture-overview)
+4. [Implementation Overview](https://github.com/rzmn/governi?tab=readme-ov-file#implementation-overview)
 ## Tech Stack
 - Go
 - Gin (HTTP)
@@ -37,7 +37,7 @@ graph LR
     RequestHandlers(Request Handlers)-. knows about .-> Controllers(Controllers)
 ```
 
-Each part of domain or data layer has its own *abstract* module containing a set of interfaces/entities and at least one *implementation* module. If necessary, implementation modules can be dependent on the [Services Layer](https://github.com/rzmn/Verni.App.Backend?tab=readme-ov-file#services-layer).
+Each part of domain or data layer has its own *abstract* module containing a set of interfaces/entities and at least one *implementation* module. If necessary, implementation modules can be dependent on the [Services Layer](https://github.com/rzmn/governi?tab=readme-ov-file#services-layer).
 
 No *abstract* module depends on any *implementation* module, which is strictly prohibited to ensure proper encapsulation. It can guarantee that touching implementations will not trigger recompilation of other implementation modules, only that of the final target, which in most cases can leverage incremental compilation. It is highly recommended to keep *abstract* modules without any dependencies to provide better testability.
 

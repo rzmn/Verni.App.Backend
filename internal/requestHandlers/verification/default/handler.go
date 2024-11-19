@@ -3,10 +3,10 @@ package defaultVerificationHandler
 import (
 	"net/http"
 
-	verificationController "github.com/rzmn/Verni.App.Backend/internal/controllers/verification"
-	"github.com/rzmn/Verni.App.Backend/internal/requestHandlers/verification"
-	"github.com/rzmn/Verni.App.Backend/internal/schema"
-	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
+	verificationController "github.com/rzmn/governi/internal/controllers/verification"
+	"github.com/rzmn/governi/internal/requestHandlers/verification"
+	"github.com/rzmn/governi/internal/schema"
+	"github.com/rzmn/governi/internal/services/logging"
 )
 
 func New(

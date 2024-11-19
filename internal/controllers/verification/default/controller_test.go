@@ -4,14 +4,14 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/rzmn/Verni.App.Backend/internal/controllers/verification"
-	defaultController "github.com/rzmn/Verni.App.Backend/internal/controllers/verification/default"
-	"github.com/rzmn/Verni.App.Backend/internal/repositories"
-	"github.com/rzmn/Verni.App.Backend/internal/repositories/auth"
-	auth_mock "github.com/rzmn/Verni.App.Backend/internal/repositories/auth/mock"
-	verification_mock "github.com/rzmn/Verni.App.Backend/internal/repositories/verification/mock"
-	emailSender_mock "github.com/rzmn/Verni.App.Backend/internal/services/emailSender/mock"
-	standartOutputLoggingService "github.com/rzmn/Verni.App.Backend/internal/services/logging/standartOutput"
+	"github.com/rzmn/governi/internal/controllers/verification"
+	defaultController "github.com/rzmn/governi/internal/controllers/verification/default"
+	"github.com/rzmn/governi/internal/repositories"
+	"github.com/rzmn/governi/internal/repositories/auth"
+	auth_mock "github.com/rzmn/governi/internal/repositories/auth/mock"
+	verification_mock "github.com/rzmn/governi/internal/repositories/verification/mock"
+	emailSender_mock "github.com/rzmn/governi/internal/services/emailSender/mock"
+	standartOutputLoggingService "github.com/rzmn/governi/internal/services/logging/standartOutput"
 
 	"github.com/google/uuid"
 )

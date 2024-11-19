@@ -1,7 +1,7 @@
 package avatars
 
 import (
-	"github.com/rzmn/Verni.App.Backend/internal/schema"
+	"github.com/rzmn/governi/internal/schema"
 )
 
 type RequestsHandler interface {

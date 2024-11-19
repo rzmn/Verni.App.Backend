@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/rzmn/Verni.App.Backend/internal/common"
-	"github.com/rzmn/Verni.App.Backend/internal/db"
-	"github.com/rzmn/Verni.App.Backend/internal/repositories"
-	"github.com/rzmn/Verni.App.Backend/internal/repositories/images"
-	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
+	"github.com/rzmn/governi/internal/common"
+	"github.com/rzmn/governi/internal/db"
+	"github.com/rzmn/governi/internal/repositories"
+	"github.com/rzmn/governi/internal/repositories/images"
+	"github.com/rzmn/governi/internal/services/logging"
 
 	"github.com/google/uuid"
 )

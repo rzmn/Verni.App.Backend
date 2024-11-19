@@ -3,11 +3,11 @@ package defaultController
 import (
 	"fmt"
 
-	"github.com/rzmn/Verni.App.Backend/internal/common"
-	"github.com/rzmn/Verni.App.Backend/internal/controllers/users"
-	friendsRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/friends"
-	usersRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/users"
-	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
+	"github.com/rzmn/governi/internal/common"
+	"github.com/rzmn/governi/internal/controllers/users"
+	friendsRepository "github.com/rzmn/governi/internal/repositories/friends"
+	usersRepository "github.com/rzmn/governi/internal/repositories/users"
+	"github.com/rzmn/governi/internal/services/logging"
 )
 
 type UsersRepository usersRepository.Repository

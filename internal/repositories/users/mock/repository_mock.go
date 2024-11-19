@@ -1,8 +1,8 @@
 package users_mock
 
 import (
-	"github.com/rzmn/Verni.App.Backend/internal/repositories"
-	"github.com/rzmn/Verni.App.Backend/internal/repositories/users"
+	"github.com/rzmn/governi/internal/repositories"
+	"github.com/rzmn/governi/internal/repositories/users"
 )
 
 type RepositoryMock struct {

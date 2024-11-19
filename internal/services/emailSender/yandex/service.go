@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/smtp"
 
-	"github.com/rzmn/Verni.App.Backend/internal/services/emailSender"
-	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
+	"github.com/rzmn/governi/internal/services/emailSender"
+	"github.com/rzmn/governi/internal/services/logging"
 )
 
 type YandexConfig struct {

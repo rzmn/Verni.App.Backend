@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/rzmn/Verni.App.Backend/internal/common"
-	"github.com/rzmn/Verni.App.Backend/internal/controllers/verification"
-	authRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/auth"
-	verificationRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/verification"
-	"github.com/rzmn/Verni.App.Backend/internal/services/emailSender"
-	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
+	"github.com/rzmn/governi/internal/common"
+	"github.com/rzmn/governi/internal/controllers/verification"
+	authRepository "github.com/rzmn/governi/internal/repositories/auth"
+	verificationRepository "github.com/rzmn/governi/internal/repositories/verification"
+	"github.com/rzmn/governi/internal/services/emailSender"
+	"github.com/rzmn/governi/internal/services/logging"
 )
 
 type VerificationRepository verificationRepository.Repository

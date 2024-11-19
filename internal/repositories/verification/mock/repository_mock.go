@@ -1,6 +1,6 @@
 package verification_mock
 
-import "github.com/rzmn/Verni.App.Backend/internal/repositories"
+import "github.com/rzmn/governi/internal/repositories"
 
 type RepositoryMock struct {
 	StoreEmailVerificationCodeImpl  func(email string, code string) repositories.MutationWorkItem

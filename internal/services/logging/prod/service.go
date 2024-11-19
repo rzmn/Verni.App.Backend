@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
-	standartOutputLoggingService "github.com/rzmn/Verni.App.Backend/internal/services/logging/standartOutput"
-	"github.com/rzmn/Verni.App.Backend/internal/services/watchdog"
+	"github.com/rzmn/governi/internal/services/logging"
+	standartOutputLoggingService "github.com/rzmn/governi/internal/services/logging/standartOutput"
+	"github.com/rzmn/governi/internal/services/watchdog"
 )
 
 type ProdLoggerConfig struct {

@@ -3,11 +3,11 @@ package defaultUsersHandler
 import (
 	"net/http"
 
-	"github.com/rzmn/Verni.App.Backend/internal/common"
-	usersController "github.com/rzmn/Verni.App.Backend/internal/controllers/users"
-	"github.com/rzmn/Verni.App.Backend/internal/requestHandlers/users"
-	"github.com/rzmn/Verni.App.Backend/internal/schema"
-	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
+	"github.com/rzmn/governi/internal/common"
+	usersController "github.com/rzmn/governi/internal/controllers/users"
+	"github.com/rzmn/governi/internal/requestHandlers/users"
+	"github.com/rzmn/governi/internal/schema"
+	"github.com/rzmn/governi/internal/services/logging"
 )
 
 func New(

@@ -1,4 +1,4 @@
-module github.com/rzmn/Verni.App.Backend
+module github.com/rzmn/governi
 
 go 1.22.4
 

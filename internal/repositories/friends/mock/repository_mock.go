@@ -1,8 +1,8 @@
 package friends_mock
 
 import (
-	"github.com/rzmn/Verni.App.Backend/internal/repositories"
-	"github.com/rzmn/Verni.App.Backend/internal/repositories/friends"
+	"github.com/rzmn/governi/internal/repositories"
+	"github.com/rzmn/governi/internal/repositories/friends"
 )
 
 type RepositoryMock struct {

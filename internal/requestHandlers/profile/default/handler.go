@@ -3,10 +3,10 @@ package defaultProfileHandler
 import (
 	"net/http"
 
-	profileController "github.com/rzmn/Verni.App.Backend/internal/controllers/profile"
-	"github.com/rzmn/Verni.App.Backend/internal/requestHandlers/profile"
-	"github.com/rzmn/Verni.App.Backend/internal/schema"
-	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
+	profileController "github.com/rzmn/governi/internal/controllers/profile"
+	"github.com/rzmn/governi/internal/requestHandlers/profile"
+	"github.com/rzmn/governi/internal/schema"
+	"github.com/rzmn/governi/internal/services/logging"
 )
 
 func New(

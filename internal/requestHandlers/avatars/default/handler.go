@@ -3,11 +3,11 @@ package defaultAvatarsHandler
 import (
 	"net/http"
 
-	"github.com/rzmn/Verni.App.Backend/internal/common"
-	avatarsController "github.com/rzmn/Verni.App.Backend/internal/controllers/avatars"
-	"github.com/rzmn/Verni.App.Backend/internal/requestHandlers/avatars"
-	"github.com/rzmn/Verni.App.Backend/internal/schema"
-	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
+	"github.com/rzmn/governi/internal/common"
+	avatarsController "github.com/rzmn/governi/internal/controllers/avatars"
+	"github.com/rzmn/governi/internal/requestHandlers/avatars"
+	"github.com/rzmn/governi/internal/schema"
+	"github.com/rzmn/governi/internal/services/logging"
 )
 
 func New(

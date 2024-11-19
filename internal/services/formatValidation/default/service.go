@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/rzmn/Verni.App.Backend/internal/services/formatValidation"
-	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
+	"github.com/rzmn/governi/internal/services/formatValidation"
+	"github.com/rzmn/governi/internal/services/logging"
 )
 
 func New(logger logging.Service) formatValidation.Service {

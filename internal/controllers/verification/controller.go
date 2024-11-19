@@ -1,7 +1,7 @@
 package verification
 
 import (
-	"github.com/rzmn/Verni.App.Backend/internal/common"
+	"github.com/rzmn/governi/internal/common"
 )
 
 type UserId string

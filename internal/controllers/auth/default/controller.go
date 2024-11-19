@@ -3,17 +3,17 @@ package defaultController
 import (
 	"strings"
 
-	"github.com/rzmn/Verni.App.Backend/internal/common"
+	"github.com/rzmn/governi/internal/common"
 
-	"github.com/rzmn/Verni.App.Backend/internal/services/formatValidation"
-	"github.com/rzmn/Verni.App.Backend/internal/services/jwt"
-	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
+	"github.com/rzmn/governi/internal/services/formatValidation"
+	"github.com/rzmn/governi/internal/services/jwt"
+	"github.com/rzmn/governi/internal/services/logging"
 
-	"github.com/rzmn/Verni.App.Backend/internal/controllers/auth"
+	"github.com/rzmn/governi/internal/controllers/auth"
 
-	authRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/auth"
-	pushNotificationsRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/pushNotifications"
-	usersRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/users"
+	authRepository "github.com/rzmn/governi/internal/repositories/auth"
+	pushNotificationsRepository "github.com/rzmn/governi/internal/repositories/pushNotifications"
+	usersRepository "github.com/rzmn/governi/internal/repositories/users"
 
 	"github.com/google/uuid"
 )

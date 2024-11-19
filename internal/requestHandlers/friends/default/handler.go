@@ -3,13 +3,13 @@ package defaultFriendsHandler
 import (
 	"net/http"
 
-	"github.com/rzmn/Verni.App.Backend/internal/common"
-	friendsController "github.com/rzmn/Verni.App.Backend/internal/controllers/friends"
-	"github.com/rzmn/Verni.App.Backend/internal/requestHandlers/friends"
-	"github.com/rzmn/Verni.App.Backend/internal/schema"
-	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
-	"github.com/rzmn/Verni.App.Backend/internal/services/pushNotifications"
-	"github.com/rzmn/Verni.App.Backend/internal/services/realtimeEvents"
+	"github.com/rzmn/governi/internal/common"
+	friendsController "github.com/rzmn/governi/internal/controllers/friends"
+	"github.com/rzmn/governi/internal/requestHandlers/friends"
+	"github.com/rzmn/governi/internal/schema"
+	"github.com/rzmn/governi/internal/services/logging"
+	"github.com/rzmn/governi/internal/services/pushNotifications"
+	"github.com/rzmn/governi/internal/services/realtimeEvents"
 )
 
 func New(

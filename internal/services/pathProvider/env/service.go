@@ -4,8 +4,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
-	"github.com/rzmn/Verni.App.Backend/internal/services/pathProvider"
+	"github.com/rzmn/governi/internal/services/logging"
+	"github.com/rzmn/governi/internal/services/pathProvider"
 )
 
 func New(logger logging.Service) pathProvider.Service {

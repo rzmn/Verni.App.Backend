@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"os"
 
-	pushNotificationsRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/pushNotifications"
-	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
-	"github.com/rzmn/Verni.App.Backend/internal/services/pathProvider"
-	"github.com/rzmn/Verni.App.Backend/internal/services/pushNotifications"
+	pushNotificationsRepository "github.com/rzmn/governi/internal/repositories/pushNotifications"
+	"github.com/rzmn/governi/internal/services/logging"
+	"github.com/rzmn/governi/internal/services/pathProvider"
+	"github.com/rzmn/governi/internal/services/pushNotifications"
 
 	"github.com/sideshow/apns2"
 	"github.com/sideshow/apns2/certificate"

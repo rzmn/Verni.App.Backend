@@ -3,17 +3,17 @@ package defaultController
 import (
 	"errors"
 
-	"github.com/rzmn/Verni.App.Backend/internal/common"
-	"github.com/rzmn/Verni.App.Backend/internal/controllers/profile"
-	"github.com/rzmn/Verni.App.Backend/internal/repositories/auth"
-	"github.com/rzmn/Verni.App.Backend/internal/repositories/users"
-	"github.com/rzmn/Verni.App.Backend/internal/services/formatValidation"
-	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
+	"github.com/rzmn/governi/internal/common"
+	"github.com/rzmn/governi/internal/controllers/profile"
+	"github.com/rzmn/governi/internal/repositories/auth"
+	"github.com/rzmn/governi/internal/repositories/users"
+	"github.com/rzmn/governi/internal/services/formatValidation"
+	"github.com/rzmn/governi/internal/services/logging"
 
-	authRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/auth"
-	friendsRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/friends"
-	imagesRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/images"
-	usersRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/users"
+	authRepository "github.com/rzmn/governi/internal/repositories/auth"
+	friendsRepository "github.com/rzmn/governi/internal/repositories/friends"
+	imagesRepository "github.com/rzmn/governi/internal/repositories/images"
+	usersRepository "github.com/rzmn/governi/internal/repositories/users"
 )
 
 type AuthRepository authRepository.Repository

@@ -8,12 +8,12 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/rzmn/Verni.App.Backend/internal/db"
-	postgresDb "github.com/rzmn/Verni.App.Backend/internal/db/postgres"
-	"github.com/rzmn/Verni.App.Backend/internal/repositories/spendings"
-	defaultRepository "github.com/rzmn/Verni.App.Backend/internal/repositories/spendings/default"
-	standartOutputLoggingService "github.com/rzmn/Verni.App.Backend/internal/services/logging/standartOutput"
-	envBasedPathProvider "github.com/rzmn/Verni.App.Backend/internal/services/pathProvider/env"
+	"github.com/rzmn/governi/internal/db"
+	postgresDb "github.com/rzmn/governi/internal/db/postgres"
+	"github.com/rzmn/governi/internal/repositories/spendings"
+	defaultRepository "github.com/rzmn/governi/internal/repositories/spendings/default"
+	standartOutputLoggingService "github.com/rzmn/governi/internal/services/logging/standartOutput"
+	envBasedPathProvider "github.com/rzmn/governi/internal/services/pathProvider/env"
 
 	"github.com/google/uuid"
 )

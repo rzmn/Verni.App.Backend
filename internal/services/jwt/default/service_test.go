@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rzmn/Verni.App.Backend/internal/services/jwt"
-	defaultJwtService "github.com/rzmn/Verni.App.Backend/internal/services/jwt/default"
-	standartOutputLoggingService "github.com/rzmn/Verni.App.Backend/internal/services/logging/standartOutput"
+	"github.com/rzmn/governi/internal/services/jwt"
+	defaultJwtService "github.com/rzmn/governi/internal/services/jwt/default"
+	standartOutputLoggingService "github.com/rzmn/governi/internal/services/logging/standartOutput"
 
 	"github.com/google/uuid"
 )

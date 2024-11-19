@@ -3,10 +3,10 @@ package defaultAuthHandler
 import (
 	"net/http"
 
-	authController "github.com/rzmn/Verni.App.Backend/internal/controllers/auth"
-	"github.com/rzmn/Verni.App.Backend/internal/requestHandlers/auth"
-	"github.com/rzmn/Verni.App.Backend/internal/schema"
-	"github.com/rzmn/Verni.App.Backend/internal/services/logging"
+	authController "github.com/rzmn/governi/internal/controllers/auth"
+	"github.com/rzmn/governi/internal/requestHandlers/auth"
+	"github.com/rzmn/governi/internal/schema"
+	"github.com/rzmn/governi/internal/services/logging"
 )
 
 func New(
