@@ -55,7 +55,7 @@ No *abstract* module depends on any *implementation* module, which is strictly p
 Service is an abstraction over some 3rdparty library (like JWT or some hashing algorithms) or some real-world event (SMTP, logging, databases etc.) to ensure the possibility to mock or replace them.
 
 - `watchdog` - interface for sending alerts as files or messages. Current implementation is sending notifications to telegram channel.
-- `logging` - logging interface with severity support. Current implementation is sending notifications to `watchdog` service when called with `error` severity level attaching last 1000 sent messages.
+- `logging` - logging interface with severity support. Current implementation is writing every message to local db and sending notifications to `watchdog` service when called with `error/fatal` severity level attaching last 1000 sent messages.
 - `db` - interface which `database/sql` functions conform with. Current implementation is a `PostgreSQL` driver.
 - `emailSender` - interface for sending email messages. Current implementation is a Yandex SMTP service.
 - `formatValidation` - interface for various data types format validation, like display names, emails, passwords. If necessary, it can be split into a set of separate interfaces for each data type.
