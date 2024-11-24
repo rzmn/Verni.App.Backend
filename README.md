@@ -1,5 +1,6 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/rzmn/governi)](https://goreportcard.com/report/github.com/rzmn/governi) 
 [![Build](https://github.com/rzmn/governi/actions/workflows/build.yml/badge.svg)](https://github.com/rzmn/governi/actions/workflows/build.yml)
+[![Test](https://github.com/rzmn/governi/actions/workflows/test.yml/badge.svg)](https://github.com/rzmn/governi/actions/workflows/test.yml)
 
 ---
 # Verni

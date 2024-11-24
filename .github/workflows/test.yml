@@ -1,0 +1,52 @@
+name: Run unit tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:14-alpine
+        env:
+          POSTGRES_USER: root
+          POSTGRES_PASSWORD: verni_pwd
+          POSTGRES_DB: verni_test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.22'
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+
+    - name: Test
+      run: |
+        set -e -x
+        cd $(git rev-parse --show-toplevel)
+        export VERNI_PROJECT_ROOT=$(pwd)
+        mkdir -p ./config/test/
+        echo '{"host":"localhost","port":5432,"user":"root","password":"verni_pwd","dbName":"verni_test_db"}' > ./config/test/postgres_storage.json
+        cd cmd/utilities
+        go build .
+        ./utilities --command create-tables --config-path ./config/test/postgres_storage.json
+        cd $(git rev-parse --show-toplevel)
+        go test ./...
+
+
