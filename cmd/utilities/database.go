@@ -1,7 +1,10 @@
 package main
 
 import (
+	"encoding/json"
+
 	"github.com/rzmn/governi/internal/db"
+	postgresDb "github.com/rzmn/governi/internal/db/postgres"
 	"github.com/rzmn/governi/internal/services/logging"
 )
 
@@ -10,7 +13,15 @@ type databaseActions struct {
 	drop  func()
 }
 
-func createDatabaseActions(database db.DB, logger logging.Service) databaseActions {
+func createDatabaseActions(configData []byte, logger logging.Service) (databaseActions, error) {
+	var postgresConfig postgresDb.PostgresConfig
+	json.Unmarshal(configData, &postgresConfig)
+	logger.LogInfo("creating postgres with config %v", postgresConfig)
+	database, err := postgresDb.Postgres(postgresConfig, logger)
+	if err != nil {
+		logger.LogFatal("failed to initialize postgres err: %v", err)
+	}
+	logger.LogInfo("initialized postgres")
 	return databaseActions{
 		setup: func() {
 			for _, table := range tables() {
@@ -28,7 +39,7 @@ func createDatabaseActions(database db.DB, logger logging.Service) databaseActio
 				logger.LogInfo("droped table %s", table.name)
 			}
 		},
-	}
+	}, nil
 }
 
 type table struct {
