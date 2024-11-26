@@ -173,15 +173,18 @@ func TestCheckCredentials(t *testing.T) {
 	userToken := uuid.New().String()
 	userPassword := uuid.New().String()
 
-	_, err := repository.CheckCredentials(userEmail, userPassword)
-	if err == nil {
-		t.Fatalf("[initial] expected to get error from `CheckCredentials` info, found nil")
+	passed, err := repository.CheckCredentials(userEmail, userPassword)
+	if err != nil {
+		t.Fatalf("[initial] failed to perform `CheckCredentials`, err: %v", err)
+	}
+	if passed {
+		t.Fatalf("`CheckCredentials` should return false, arg %v", userPassword)
 	}
 	createUserTransaction := repository.CreateUser(userId, userEmail, userPassword, userToken)
 	if err := createUserTransaction.Perform(); err != nil {
 		t.Fatalf("failed to perform `createUserTransaction` err: %v", err)
 	}
-	passed, err := repository.CheckCredentials(userEmail, userPassword)
+	passed, err = repository.CheckCredentials(userEmail, userPassword)
 	if err != nil {
 		t.Fatalf("failed to run `CheckCredentials` err: %v", err)
 	}
