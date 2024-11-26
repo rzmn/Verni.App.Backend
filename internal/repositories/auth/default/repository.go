@@ -1,6 +1,8 @@
 package defaultRepository
 
 import (
+	"database/sql"
+
 	"github.com/rzmn/governi/internal/db"
 	"github.com/rzmn/governi/internal/repositories"
 	"github.com/rzmn/governi/internal/repositories/auth"
@@ -48,8 +50,13 @@ func (c *defaultRepository) CheckCredentials(email string, password string) (boo
 	row := c.db.QueryRow(query, email)
 	var passwordHash string
 	if err := row.Scan(&passwordHash); err != nil {
-		c.logger.LogInfo("%s: failed to perform scan err: %v", op, err)
-		return false, err
+		if err == sql.ErrNoRows {
+			c.logger.LogInfo("%s: no user associated with email err: %v", op, err)
+			return false, nil
+		} else {
+			c.logger.LogInfo("%s: failed to perform scan err: %v", op, err)
+			return false, err
+		}
 	}
 	c.logger.LogInfo("%s: start[email=%s]", op, email)
 	return checkPasswordHash(password, passwordHash), nil
