@@ -109,7 +109,7 @@ func createGinServer(
 			auth.PUT("/login", ginRequestHandler(func(c *gin.Context, request schema.LoginRequest) {
 				handlers.Auth.Login(request, ginSuccessResponse[schema.Response[schema.Session]](c), ginFailureResponse(c))
 			}))
-			auth.PUT("/refresh", tokenChecker.handler, ginRequestHandler(func(c *gin.Context, request schema.RefreshRequest) {
+			auth.PUT("/refresh", ginRequestHandler(func(c *gin.Context, request schema.RefreshRequest) {
 				handlers.Auth.Refresh(request, ginSuccessResponse[schema.Response[schema.Session]](c), ginFailureResponse(c))
 			}))
 			auth.PUT("/updateEmail", tokenChecker.handler, ginRequestHandler(func(c *gin.Context, request schema.UpdateEmailRequest) {
