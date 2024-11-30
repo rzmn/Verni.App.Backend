@@ -3,7 +3,6 @@ package defaultFormatValidation
 import (
 	"fmt"
 	"net/mail"
-	"regexp"
 	"strings"
 
 	"github.com/rzmn/governi/internal/services/formatValidation"
@@ -39,9 +38,6 @@ func (c *defaultService) ValidatePasswordFormat(password string) error {
 }
 
 func (c *defaultService) ValidateDisplayNameFormat(name string) error {
-	if !regexp.MustCompile(`^[A-Za-z]+$`).MatchString(name) {
-		return fmt.Errorf("display name is invalid: should contain latin characters only")
-	}
 	if len(name) < 4 {
 		return fmt.Errorf("display name is invalid: should contain at least 4 characters")
 	}
