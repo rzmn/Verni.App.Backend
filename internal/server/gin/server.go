@@ -1,6 +1,8 @@
 package ginServer
 
 import (
+	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
@@ -143,11 +145,11 @@ func createGinServer(
 				subject := schema.UserId(tokenChecker.accessToken(c))
 				handlers.Spendings.GetBalance(subject, ginSuccessResponse[schema.Response[[]schema.Balance]](c), ginFailureResponse(c))
 			})
-			spendings.GET("/getExpenses", ginRequestHandler(func(c *gin.Context, request schema.GetExpensesRequest) {
+			spendings.GET("/getExpenses", ginGetRequestHandler(func(c *gin.Context, request schema.GetExpensesRequest) {
 				subject := schema.UserId(tokenChecker.accessToken(c))
 				handlers.Spendings.GetExpenses(subject, request, ginSuccessResponse[schema.Response[[]schema.IdentifiableExpense]](c), ginFailureResponse(c))
 			}))
-			spendings.GET("/getExpense", ginRequestHandler(func(c *gin.Context, request schema.GetExpenseRequest) {
+			spendings.GET("/getExpense", ginGetRequestHandler(func(c *gin.Context, request schema.GetExpenseRequest) {
 				subject := schema.UserId(tokenChecker.accessToken(c))
 				handlers.Spendings.GetExpense(subject, request, ginSuccessResponse[schema.Response[schema.IdentifiableExpense]](c), ginFailureResponse(c))
 			}))
@@ -158,7 +160,7 @@ func createGinServer(
 				subject := schema.UserId(tokenChecker.accessToken(c))
 				handlers.Friends.AcceptRequest(subject, request, ginSuccessResponse[schema.VoidResponse](c), ginFailureResponse(c))
 			}))
-			friends.GET("/get", ginRequestHandler(func(c *gin.Context, request schema.GetFriendsRequest) {
+			friends.GET("/get", ginGetRequestHandler(func(c *gin.Context, request schema.GetFriendsRequest) {
 				subject := schema.UserId(tokenChecker.accessToken(c))
 				handlers.Friends.GetFriends(subject, request, ginSuccessResponse[schema.Response[map[schema.FriendStatus][]schema.UserId]](c), ginFailureResponse(c))
 			}))
@@ -207,14 +209,14 @@ func createGinServer(
 		}
 		users := router.Group("/users", tokenChecker.handler)
 		{
-			users.GET("/get", ginRequestHandler(func(c *gin.Context, request schema.GetUsersRequest) {
+			users.GET("/get", ginGetRequestHandler(func(c *gin.Context, request schema.GetUsersRequest) {
 				subject := schema.UserId(tokenChecker.accessToken(c))
 				handlers.Users.GetUsers(subject, request, ginSuccessResponse[schema.Response[[]schema.User]](c), ginFailureResponse(c))
 			}))
 		}
 		avatars := router.Group("/avatars")
 		{
-			avatars.GET("/get", ginRequestHandler(func(c *gin.Context, request schema.GetAvatarsRequest) {
+			avatars.GET("/get", ginGetRequestHandler(func(c *gin.Context, request schema.GetAvatarsRequest) {
 				handlers.Avatars.GetAvatars(request, ginSuccessResponse[schema.Response[map[schema.ImageId]schema.Image]](c), ginFailureResponse(c))
 			}))
 		}
@@ -227,6 +229,24 @@ func createGinServer(
 			WriteTimeout: time.Second * time.Duration(config.IdleTimeoutSec),
 		},
 		logger: logger,
+	}
+}
+
+func ginGetRequestHandler[R any](success func(*gin.Context, R)) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		value, ok := c.GetQuery("data")
+		if !ok {
+			failure := ginFailureResponse(c)
+			failure(http.StatusBadRequest, schema.Failure(errors.New("indalid or missing value for `data` key"), schema.CodeBadRequest))
+			return
+		}
+		var request R
+		if err := json.Unmarshal([]byte(value), &request); err != nil {
+			failure := ginFailureResponse(c)
+			failure(http.StatusBadRequest, schema.Failure(err, schema.CodeBadRequest))
+		} else {
+			success(c, request)
+		}
 	}
 }
 
