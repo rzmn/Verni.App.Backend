@@ -185,7 +185,7 @@ func (c *defaultController) Refresh(refreshToken string) (auth.Session, *common.
 		c.logger.LogInfo("%s: issuing refresh token failed err: %v", op, err)
 		return auth.Session{}, common.NewErrorWithDescription(auth.RefreshErrorInternal, err.Error())
 	}
-	transaction := c.authRepository.UpdateRefreshToken(authRepository.UserId(uid), refreshToken)
+	transaction := c.authRepository.UpdateRefreshToken(authRepository.UserId(uid), string(newRefreshToken))
 	if err := transaction.Perform(); err != nil {
 		c.logger.LogInfo("%s: storing refresh token to db failed err: %v", op, err)
 		return auth.Session{}, common.NewErrorWithDescription(auth.RefreshErrorInternal, err.Error())
