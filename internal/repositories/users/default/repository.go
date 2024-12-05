@@ -218,3 +218,49 @@ func (c *defaultRepository) updateAvatarId(avatarId *users.AvatarId, id users.Us
 	c.logger.LogInfo("%s: start[success=%v id=%s]", op, avatarId, id)
 	return nil
 }
+
+func (c *defaultRepository) SearchUsers(searchQuery string) ([]users.User, error) {
+	const op = "repositories.users.postgresRepository.SearchUsers"
+	c.logger.LogInfo("%s: start", op)
+	if len(searchQuery) == 0 {
+		c.logger.LogInfo("%s: success", op)
+		return []users.User{}, nil
+	}
+	query := fmt.Sprintf(
+		`SELECT id, displayName, avatarId FROM users WHERE displayName LIKE '%%%s%%';`,
+		searchQuery,
+	)
+	rows, err := c.db.Query(query)
+	if err != nil {
+		c.logger.LogInfo("%s: failed to perform query err: %v", op, err)
+		return []users.User{}, err
+	}
+	defer rows.Close()
+	result := []users.User{}
+	for rows.Next() {
+		var id string
+		var displayName string
+		var sqlAvatarId sql.NullString
+		if err := rows.Scan(&id, &displayName, &sqlAvatarId); err != nil {
+			c.logger.LogInfo("%s: failed to perform scan err: %v", op, err)
+			return []users.User{}, err
+		}
+		var avatarId *users.AvatarId
+		if sqlAvatarId.Valid {
+			avatarId = (*users.AvatarId)(&sqlAvatarId.String)
+		} else {
+			avatarId = nil
+		}
+		result = append(result, users.User{
+			Id:          users.UserId(id),
+			DisplayName: displayName,
+			AvatarId:    avatarId,
+		})
+	}
+	if err := rows.Err(); err != nil {
+		c.logger.LogInfo("%s: found rows err: %v", op, err)
+		return []users.User{}, err
+	}
+	c.logger.LogInfo("%s: success", op)
+	return result, nil
+}

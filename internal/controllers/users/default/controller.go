@@ -61,3 +61,36 @@ func (c *defaultController) Get(ids []users.UserId, sender users.UserId) ([]user
 	c.logger.LogInfo("%s: success[sender=%s, ids=%v]", op, sender, ids)
 	return result, nil
 }
+
+func (c *defaultController) Search(query string, sender users.UserId) ([]users.User, *common.CodeBasedError[users.SearchUsersErrorCode]) {
+	const op = "users.defaultController.Search"
+	c.logger.LogInfo("%s: start[sender=%s, query=%v]", op, sender, query)
+	usersFromRepository, err := c.users.SearchUsers(query)
+	if err != nil {
+		c.logger.LogInfo("%s: cannot get users from db err: %v", op, err)
+		return []users.User{}, common.NewErrorWithDescription(users.SearchUsersErrorInternal, err.Error())
+	}
+	userStatuses, err := c.friends.GetStatuses(friendsRepository.UserId(sender), common.Map(usersFromRepository, func(user usersRepository.User) friendsRepository.UserId {
+		return friendsRepository.UserId(user.Id)
+	}))
+	if err != nil {
+		c.logger.LogInfo("%s: cannot get friend statuses from db err: %v", op, err)
+		return []users.User{}, common.NewErrorWithDescription(users.SearchUsersErrorInternal, err.Error())
+	}
+	result := []users.User{}
+	for _, user := range usersFromRepository {
+		status, ok := userStatuses[friendsRepository.UserId(user.Id)]
+		if !ok {
+			c.logger.LogInfo("%s: cannot get friend status of user %s", op, user.Id)
+			return []users.User{}, common.NewErrorWithDescription(users.SearchUsersErrorInternal, fmt.Sprintf("user id: %s", user.Id))
+		}
+		result = append(result, users.User{
+			Id:           users.UserId(user.Id),
+			DisplayName:  user.DisplayName,
+			AvatarId:     (*users.AvatarId)(user.AvatarId),
+			FriendStatus: users.FriendStatus(status),
+		})
+	}
+	c.logger.LogInfo("%s: success[sender=%s, query=%v]", op, sender, query)
+	return result, nil
+}

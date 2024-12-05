@@ -213,6 +213,10 @@ func createGinServer(
 				subject := schema.UserId(tokenChecker.accessToken(c))
 				handlers.Users.GetUsers(subject, request, ginSuccessResponse[schema.Response[[]schema.User]](c), ginFailureResponse(c))
 			}))
+			users.GET("/search", ginGetRequestHandler(func(c *gin.Context, request schema.SearchUsersRequest) {
+				subject := schema.UserId(tokenChecker.accessToken(c))
+				handlers.Users.SearchUsers(subject, request, ginSuccessResponse[schema.Response[[]schema.User]](c), ginFailureResponse(c))
+			}))
 		}
 		avatars := router.Group("/avatars")
 		{

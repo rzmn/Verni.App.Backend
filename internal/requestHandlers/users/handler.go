@@ -11,4 +11,10 @@ type RequestsHandler interface {
 		success func(schema.StatusCode, schema.Response[[]schema.User]),
 		failure func(schema.StatusCode, schema.Response[schema.Error]),
 	)
+	SearchUsers(
+		subject schema.UserId,
+		request schema.SearchUsersRequest,
+		success func(schema.StatusCode, schema.Response[[]schema.User]),
+		failure func(schema.StatusCode, schema.Response[schema.Error]),
+	)
 }

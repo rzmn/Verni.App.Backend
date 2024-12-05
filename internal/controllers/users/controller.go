@@ -18,4 +18,5 @@ type User struct {
 
 type Controller interface {
 	Get(ids []UserId, sender UserId) ([]User, *common.CodeBasedError[GetUsersErrorCode])
+	Search(query string, sender UserId) ([]User, *common.CodeBasedError[SearchUsersErrorCode])
 }
