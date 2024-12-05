@@ -135,7 +135,7 @@ func TestUpdateDisplayName(t *testing.T) {
 		t.Fatalf("failed to get `shouldBeUserWithNewDisplayName` err: %v", err)
 	}
 	if len(shouldBeUserWithNewDisplayName) != 1 || !reflect.DeepEqual(shouldBeUserWithNewDisplayName[0], userWithNewDisplayName) {
-		t.Fatalf("`shouldBeUserWithNewDisplayName` is %v, expected %v", userWithNewDisplayName, userWithNewDisplayName)
+		t.Fatalf("`shouldBeUserWithNewDisplayName` is %v, expected %v", shouldBeUserWithNewDisplayName, userWithNewDisplayName)
 	}
 	if err := updateDisplayNameTransaction.Rollback(); err != nil {
 		t.Fatalf("failed to rollback `updateDisplayNameTransaction` err: %v", err)
@@ -176,7 +176,7 @@ func testUpdateAvatar(user users.User, newAvatar *users.AvatarId, t *testing.T) 
 		t.Fatalf("failed to get `shouldBeUserWithNewAvatar` err: %v", err)
 	}
 	if len(shouldBeUserWithNewAvatar) != 1 || !reflect.DeepEqual(shouldBeUserWithNewAvatar[0], userWithNewAvatar) {
-		t.Fatalf("`shouldBeUserWithNewAvatar` is %v, expected %v", userWithNewAvatar, userWithNewAvatar)
+		t.Fatalf("`shouldBeUserWithNewAvatar` is %v, expected %v", shouldBeUserWithNewAvatar, userWithNewAvatar)
 	}
 	if err := updateAvatarTransaction.Rollback(); err != nil {
 		t.Fatalf("failed to rollback `updateAvatarTransaction` err: %v", err)
@@ -187,5 +187,53 @@ func testUpdateAvatar(user users.User, newAvatar *users.AvatarId, t *testing.T) 
 	}
 	if len(shouldBeUserWithOldAvatar) != 1 || !reflect.DeepEqual(shouldBeUserWithOldAvatar[0], user) {
 		t.Fatalf("`shouldBeUserWithOldAvatar` is %v, expected %v", shouldBeUserWithOldAvatar, user)
+	}
+}
+
+func TestSearchNameContainsSubstring(t *testing.T) {
+	repository := defaultRepository.New(database, standartOutputLoggingService.New())
+	user := randomUserWithAvatar(true)
+	storeTransaction := repository.StoreUser(user)
+	if err := storeTransaction.Perform(); err != nil {
+		t.Fatalf("failed to perform `storeTransaction` err: %v", err)
+	}
+	shouldContainUser, err := repository.SearchUsers(user.DisplayName[1:4])
+	if err != nil {
+		t.Fatalf("failed to get `shouldContainUser` err: %v", err)
+	}
+	if len(shouldContainUser) != 1 || !reflect.DeepEqual(shouldContainUser[0], user) {
+		t.Fatalf("`shouldContainUser` is %v, expected %v", shouldContainUser, user)
+	}
+}
+
+func TestSearchNameContainsWholeString(t *testing.T) {
+	repository := defaultRepository.New(database, standartOutputLoggingService.New())
+	user := randomUserWithAvatar(true)
+	storeTransaction := repository.StoreUser(user)
+	if err := storeTransaction.Perform(); err != nil {
+		t.Fatalf("failed to perform `storeTransaction` err: %v", err)
+	}
+	shouldContainUser, err := repository.SearchUsers(user.DisplayName)
+	if err != nil {
+		t.Fatalf("failed to get `shouldContainUser` err: %v", err)
+	}
+	if len(shouldContainUser) != 1 || !reflect.DeepEqual(shouldContainUser[0], user) {
+		t.Fatalf("`shouldContainUser` is %v, expected %v", shouldContainUser, user)
+	}
+}
+
+func TestSearchNameDidNotMatch(t *testing.T) {
+	repository := defaultRepository.New(database, standartOutputLoggingService.New())
+	user := randomUserWithAvatar(true)
+	storeTransaction := repository.StoreUser(user)
+	if err := storeTransaction.Perform(); err != nil {
+		t.Fatalf("failed to perform `storeTransaction` err: %v", err)
+	}
+	shouldNotContainUser, err := repository.SearchUsers("#$#$!@#$%)")
+	if err != nil {
+		t.Fatalf("failed to get `shouldNotContainUser` err: %v", err)
+	}
+	if len(shouldNotContainUser) != 0 {
+		t.Fatalf("`shouldNotContainUser` is %v, expected empty", shouldNotContainUser)
 	}
 }
