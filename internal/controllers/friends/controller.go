@@ -9,9 +9,9 @@ type FriendStatus int
 
 const (
 	_ FriendStatus = iota
-	FriendStatusFriends
-	FriendStatusSubscription
 	FriendStatusSubscriber
+	FriendStatusSubscription
+	FriendStatusFriends
 )
 
 type Controller interface {
